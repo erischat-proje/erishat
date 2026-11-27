@@ -66,7 +66,9 @@ jobs:
           backend/tests/test_nobility_online_api_v13.py \
           backend/tests/test_nobility_room_priority_v12.py \
           backend/tests/test_nobility_appearance_v11.py \
-          backend/tests/test_nobility_banner_policy_v11.py
+          backend/tests/test_nobility_banner_policy_v11.py \
+          backend/tests/test_nobility_gift_payout_v11.py \
+          backend/tests/test_nobility_count_bonus_v1211.py
 
       - name: Nobility frontend regression
         run: node --test frontend/tests/nobility-*.test.cjs
@@ -104,3 +106,32 @@ jobs:
           print("FINANCIAL TESTS:", len(cases))
           print("FINANCIAL SECURITY: PASS")
           PY
+
+  king-browser-regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install King browser verification
+        run: |
+          npm install --prefix "$RUNNER_TEMP/king-browser" --no-save --package-lock=false playwright@1.55.0
+          "$RUNNER_TEMP/king-browser/node_modules/.bin/playwright" install --with-deps chromium
+
+      - name: King Final V4.6 browser regression
+        run: |
+          export NODE_PATH="$RUNNER_TEMP/king-browser/node_modules"
+          timeout 180s node tests/king-final-v46.browser.cjs
+
+      - name: Upload King visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lidyachat-king-final-v46-evidence
+          path: king-final-browser-results/
+          if-no-files-found: ignore

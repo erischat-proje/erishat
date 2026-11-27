@@ -43,5 +43,18 @@ test('King gift renders dynamic fields',()=>{
  assert.equal(cards[0].children.length,5);
  assert.equal(cards[0].children[1].textContent,d.nickname);
  assert.equal(cards[0].children[2].src,'./hediyesistemi/28.png');
- assert.equal(cards[0].children[3].textContent,'Toprak Bardak ×3');
+ const label=cards[0].children[3];
+
+ assert.equal(label.children.length,2);
+
+ assert.equal(label.children[0].className,'ln-king-gift-name');
+ assert.equal(label.children[0].textContent,'Toprak Bardak');
+
+ assert.equal(label.children[1].className,'ln-king-gift-quantity');
+ assert.equal(label.children[1].textContent,'×3');
+
+ assert.equal(
+   cards[0].children[0].src,
+   './assets/lidya-nobility/king/gift-banner-dynamic.png'
+ );
 });

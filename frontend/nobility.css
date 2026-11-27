@@ -2044,112 +2044,103 @@ body:has(.lidya-king-notice) #eris-notice-stack{
 }
 
 
-/* KING DYNAMIC GIFT V2.3 */
-
+/* KING DYNAMIC GIFT V4.1 - Integrated 3:1 royal artwork */
 .lidya-nobility-live-banner.lidya-king-dynamic-gift{
- display:grid;
- grid-template-columns:34% minmax(0,1fr) 24%;
- grid-template-rows:68px 26px;
- align-items:center;
- gap:4px;
+ display:block;
+ width:min(94vw,520px);
+ top:calc(env(safe-area-inset-top,0px) + 76px);
+ aspect-ratio:3/1;
+ padding:0;
+ border:0;
+ background:transparent;
+ box-shadow:none;
  box-sizing:border-box;
- width:min(94vw,480px);
- padding:8px;
- border:2px solid #e9bf58;
- border-radius:16px;
- background:linear-gradient(
-   145deg,#780e20,#35070c 60%,#150405
- );
- box-shadow:0 5px 24px #0008,
-            inset 0 0 14px #ffd76b35;
+ container-type:inline-size;
 }
-
 .lidya-king-dynamic-gift .ln-dynamic-template{
- grid-column:1;
- grid-row:1/3;
+ display:block;
  width:100%;
- max-height:98px;
+ height:100%;
+ max-height:none;
+ aspect-ratio:3/1;
  object-fit:contain;
- border-radius:8px;
 }
-
 .lidya-king-dynamic-gift .ln-dynamic-sender{
- grid-column:2;
- grid-row:1/3;
- min-width:0;
- color:#fff0b8;
- font-size:clamp(11px,3.8vw,18px);
+ position:absolute;
+ left:29%; top:40%; width:38%; height:20%;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ box-sizing:border-box;
+ color:#fff1c6;
+ font-family:Georgia,serif;
  font-weight:900;
+ font-size:clamp(10px,4cqw,21px);
+ line-height:1.05;
  text-align:center;
  overflow:hidden;
  overflow-wrap:anywhere;
  text-shadow:0 2px 4px #000;
 }
-
-.lidya-king-dynamic-gift .ln-dynamic-sender::before{
- content:'KRAL';
- display:block;
- color:#ffdc70;
- font-family:Georgia,serif;
- font-size:13px;
- letter-spacing:2px;
- margin-bottom:6px;
-}
-
 .lidya-king-dynamic-gift .ln-dynamic-artwork{
- grid-column:3;
- grid-row:1;
- width:100%;
- height:68px;
- max-height:68px;
+ position:absolute;
+ left:75%; top:17%; width:17%; height:45%;
+ max-height:none;
+ aspect-ratio:auto;
  object-fit:contain;
  filter:drop-shadow(0 2px 5px #0008);
 }
-
 .lidya-king-dynamic-gift .ln-dynamic-label{
- grid-column:3;
- grid-row:2;
- color:#fff0c9;
- font-size:10px;
+ position:absolute;
+ left:74%; top:65%; width:19%; height:12%;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ gap:3px;
+ color:#fff1c6;
+ font-family:Georgia,serif;
  font-weight:800;
- text-align:center;
- overflow-wrap:anywhere;
- max-height:26px;
+ font-size:clamp(7px,2.5cqw,13px);
+ line-height:1.1;
+ text-shadow:0 1px 3px #000;
  overflow:hidden;
 }
-
-.lidya-king-dynamic-gift .ln-dynamic-fallback{
- display:none;
+.ln-king-gift-name{
+ min-width:0;
+ overflow:hidden;
+ white-space:nowrap;
+ text-overflow:ellipsis;
 }
-
+.ln-king-gift-quantity{
+ flex:none;
+ white-space:nowrap;
+ font-variant-numeric:tabular-nums;
+}
+.lidya-king-dynamic-gift .ln-dynamic-fallback{display:none;}
 .lidya-king-dynamic-gift.ln-dynamic-template-failed{
- grid-template-columns:1fr;
- grid-template-rows:auto;
+ aspect-ratio:auto;
+ background:#35070c;
+ border:1px solid #e9bf58;
+ border-radius:12px;
+ padding:8px;
 }
-
 .lidya-king-dynamic-gift.ln-dynamic-template-failed
-:is(.ln-dynamic-sender,.ln-dynamic-artwork,.ln-dynamic-label){
- display:none;
-}
-
-.lidya-king-dynamic-gift.ln-dynamic-template-failed
-.ln-dynamic-fallback{
+:is(.ln-dynamic-sender,.ln-dynamic-artwork,.ln-dynamic-label){display:none;}
+.lidya-king-dynamic-gift.ln-dynamic-template-failed .ln-dynamic-fallback{
  display:block;
  margin:0 auto;
 }
-
-.lidya-king-dynamic-gift img[hidden]{
- display:none!important;
-}
-
+.lidya-king-dynamic-gift img[hidden]{display:none!important;}
 body:has(.lidya-king-dynamic-gift) #eris-notice-stack{
- top:calc(env(safe-area-inset-top,0px) + 195px)!important;
+ top:calc(env(safe-area-inset-top,0px) + 86px + min(31.333vw,173.333px))!important;
 }
-
 @media(max-height:500px){
  .lidya-nobility-live-banner.lidya-king-dynamic-gift{
-   top:calc(env(safe-area-inset-top,0px) + 42px);
-   width:min(70vw,420px);
+  top:calc(env(safe-area-inset-top,0px) + 42px);
+  width:min(70vw,360px);
+ }
+ body:has(.lidya-king-dynamic-gift) #eris-notice-stack{
+  top:calc(env(safe-area-inset-top,0px) + 52px + min(23.333vw,120px))!important;
  }
 }
 
@@ -2182,6 +2173,255 @@ body:has(.lidya-king-dynamic-gift) #eris-notice-stack{
  }
 }
 
+
+
+/* KING ACTIVATION V4.2 */
+
+.lidya-nobility-live-banner.lidya-king-activation-banner:not(.ln-king-activation-fallback){
+ display:block;
+ position:fixed;
+ top:calc(env(safe-area-inset-top,0px) + 76px);
+ width:min(94vw,460px,85.27dvh);
+ aspect-ratio:392/285;
+ padding:0;
+ border:0;
+ background:transparent;
+ box-shadow:none;
+ container-type:inline-size;
+}
+
+.lidya-king-activation-banner:not(.ln-king-activation-fallback)>img{
+ display:block;
+ width:100%;
+ height:100%;
+ max-height:none;
+ object-fit:contain;
+ border-radius:12px;
+}
+
+.lidya-king-activation-banner:not(.ln-king-activation-fallback)
+.ln-king-activation-panel{
+ position:absolute;
+ left:10%;
+ bottom:5%;
+ width:80%;
+ height:27%;
+ box-sizing:border-box;
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ justify-content:center;
+ gap:2px;
+ padding:3px 6px;
+ border:1px solid #e9bf58;
+ border-radius:12px;
+ background:linear-gradient(145deg,#560a16f5,#180405f5);
+ box-shadow:inset 0 0 12px #ffd76b35;
+ overflow:hidden;
+}
+
+.lidya-king-activation-banner:not(.ln-king-activation-fallback)
+.ln-king-activation-title{
+ font-size:clamp(9px,3.2cqw,16px);
+ line-height:1;
+ letter-spacing:2px;
+}
+
+.lidya-king-activation-banner:not(.ln-king-activation-fallback)
+.ln-king-activation-name{
+ width:100%;
+ min-width:0;
+ max-width:100%;
+ box-sizing:border-box;
+ margin:0;
+ padding:0;
+ border:0;
+ background:transparent;
+ color:#fff1bd;
+ font-family:Georgia,serif;
+ font-size:clamp(12px,5cqw,23px);
+ font-weight:900;
+ line-height:1.1;
+ white-space:nowrap;
+ overflow:hidden;
+ text-overflow:ellipsis;
+}
+
+.lidya-king-activation-banner:not(.ln-king-activation-fallback)
+.ln-king-activation-action{
+ max-width:100%;
+ font-size:clamp(9px,3.1cqw,14px);
+ line-height:1.2;
+ color:#ffe8bd;
+ text-align:center;
+ overflow-wrap:anywhere;
+}
+
+.lidya-king-activation-banner.ln-king-activation-fallback{
+ display:block;
+ aspect-ratio:auto;
+ width:min(94vw,460px);
+}
+
+body:has(.lidya-king-activation-banner:not(.ln-king-activation-fallback)) #eris-notice-stack{
+ top:calc(
+  env(safe-area-inset-top,0px)
+  + 86px + min(68.34vw,334.44px,62dvh)
+ )!important;
+}
+
+@media(max-height:500px){
+ .lidya-nobility-live-banner.lidya-king-activation-banner:not(.ln-king-activation-fallback){
+  top:calc(env(safe-area-inset-top,0px) + 42px);
+  width:min(70vw,360px,85.27dvh);
+ }
+
+ body:has(.lidya-king-activation-banner:not(.ln-king-activation-fallback)) #eris-notice-stack{
+  top:calc(
+   env(safe-area-inset-top,0px)
+   + 52px + min(50.89vw,261.73px,62dvh)
+  )!important;
+ }
+}
+
+
+/* KING DAILY WELCOME V4.4 */
+
+.lidya-nobility-live-banner:is(
+ .lidya-king-daily-banner,
+ .lidya-king-room-welcome
+):not(.ln-king-activation-fallback){
+ display:block;
+ position:fixed;
+ top:calc(env(safe-area-inset-top,0px) + 76px);
+ width:min(94vw,460px,85dvh);
+ padding:0;
+ border:0;
+ background:transparent;
+ box-shadow:none;
+ container-type:inline-size;
+}
+
+.lidya-king-daily-banner:not(.ln-king-activation-fallback){
+ aspect-ratio:393/276;
+}
+
+.lidya-king-room-welcome:not(.ln-king-activation-fallback){
+ aspect-ratio:392/276;
+}
+
+.lidya-king-notice:is(
+ .lidya-king-daily-banner,
+ .lidya-king-room-welcome
+):not(.ln-king-activation-fallback)>img{
+ display:block;
+ width:100%;
+ height:100%;
+ max-height:none;
+ object-fit:contain;
+ border-radius:12px;
+}
+
+.lidya-king-notice:is(
+ .lidya-king-daily-banner,
+ .lidya-king-room-welcome
+):not(.ln-king-activation-fallback)
+.ln-king-activation-panel{
+ position:absolute;
+ left:12%;
+ bottom:5%;
+ width:76%;
+ height:25%;
+ padding:3px 6px;
+ box-sizing:border-box;
+ display:flex;
+ flex-direction:column;
+ justify-content:center;
+ align-items:center;
+ gap:3px;
+ border:1px solid #e9bf58;
+ border-radius:12px;
+ background:linear-gradient(
+  145deg,#560a16f5,#180405f5
+ );
+ box-shadow:inset 0 0 12px #ffd76b35;
+ overflow:hidden;
+}
+
+.lidya-king-notice:is(
+ .lidya-king-daily-banner,
+ .lidya-king-room-welcome
+):not(.ln-king-activation-fallback)
+.ln-king-activation-title{
+ font-size:clamp(9px,3cqw,15px);
+ line-height:1;
+ letter-spacing:2px;
+}
+
+.lidya-king-notice:is(
+ .lidya-king-daily-banner,
+ .lidya-king-room-welcome
+):not(.ln-king-activation-fallback)
+.ln-king-activation-name{
+ width:100%;
+ min-width:0;
+ max-width:100%;
+ margin:0;
+ padding:0;
+ border:0;
+ background:transparent;
+ color:#fff1bd;
+ font-family:Georgia,serif;
+ font-size:clamp(12px,5cqw,23px);
+ font-weight:900;
+ line-height:1.1;
+ white-space:nowrap;
+ overflow:hidden;
+ text-overflow:ellipsis;
+}
+
+.lidya-king-notice:is(
+ .lidya-king-daily-banner,
+ .lidya-king-room-welcome
+):not(.ln-king-activation-fallback)
+.ln-king-activation-action{
+ font-size:clamp(9px,3cqw,14px);
+ line-height:1.1;
+ color:#ffe8bd;
+ text-align:center;
+}
+
+body:has(.lidya-king-notice:is(
+ .lidya-king-daily-banner,
+ .lidya-king-room-welcome
+):not(.ln-king-activation-fallback))
+#eris-notice-stack{
+ top:calc(
+  env(safe-area-inset-top,0px)
+  + 86px + min(66.2vw,324px,60dvh)
+ )!important;
+}
+
+@media(max-height:500px){
+ .lidya-nobility-live-banner:is(
+  .lidya-king-daily-banner,
+  .lidya-king-room-welcome
+ ):not(.ln-king-activation-fallback){
+  top:calc(env(safe-area-inset-top,0px) + 42px);
+  width:min(70vw,360px,85dvh);
+ }
+
+ body:has(.lidya-king-notice:is(
+  .lidya-king-daily-banner,
+  .lidya-king-room-welcome
+ ):not(.ln-king-activation-fallback))
+ #eris-notice-stack{
+  top:calc(
+   env(safe-area-inset-top,0px)
+   + 52px + min(49.3vw,254px,60dvh)
+  )!important;
+ }
+}
 
 /* KING ENTRANCE V2.5.3 */
 

@@ -89,9 +89,7 @@
     const folder = ({1:'knight',2:'count',3:'duke',4:'king'})[data.rank];
     return {
       name:gift.name.slice(0,120),quantity:gift.quantity,src:'.'+path,
-      template:data.rank === 4
-        ? './assets/lidya-nobility/king/gift-banner.png'
-        : `./assets/lidya-nobility/${folder}/gift-banner-dynamic.png`,
+      template:`./assets/lidya-nobility/${folder}/gift-banner-dynamic.png`,
       className:`lidya-${folder}-dynamic-gift`
     };
   }
@@ -112,6 +110,16 @@
     const label = document.createElement('div');
     label.className = 'ln-dynamic-label';
     label.textContent = `${gift.name} ×${gift.quantity}`;
+    if(data.rank === 4){
+      label.textContent = '';
+      const giftName = document.createElement('div');
+      giftName.className = 'ln-king-gift-name';
+      giftName.textContent = gift.name;
+      const quantity = document.createElement('div');
+      quantity.className = 'ln-king-gift-quantity';
+      quantity.textContent = `×${gift.quantity}`;
+      label.append(giftName,quantity);
+    }
     const fallback = document.createElement('span');
     fallback.className = 'ln-dynamic-fallback';
     fallback.textContent = `${message(data)} ${gift.name} ×${gift.quantity}`;
