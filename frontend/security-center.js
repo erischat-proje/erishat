@@ -95,21 +95,52 @@
    const result=el('p','');
    const openedBody=body;
 
-   card.append(id,file,result);
+   // KING ROYAL AVATAR PRESETS V5 — DA-only grant flow; no entitlement changes.
+   const royalPresets=Object.freeze({
+     male:'king-avatar-male.webp',
+     female:'king-avatar-female.webp'
+   });
+   const preset=document.createElement('select');
+   preset.setAttribute('aria-label','Hazır Kral animasyonu');
+   preset.style.cssText='display:block;width:100%;box-sizing:border-box;margin:10px 0;padding:12px;border:1px solid var(--ea-line);border-radius:10px;background:var(--ea-panel);color:inherit';
+   for(const [value,label] of [['','Kendi GIF / WebP dosyanı seç'],['male','Kral — Erkek animasyonu'],['female','Kral — Kadın animasyonu']]){
+     const option=document.createElement('option');
+     option.value=value;
+     option.textContent=label;
+     preset.append(option);
+   }
+   const preview=document.createElement('img');
+   preview.alt='Seçilen Kral animasyonu önizlemesi';
+   preview.hidden=true;
+   preview.style.cssText='width:96px;height:96px;object-fit:cover;border-radius:50%;margin:10px auto;border:2px solid var(--ea-line)';
+   const presetURL=key=>'./assets/lidya-nobility/king/'+royalPresets[key];
+   preset.onchange=()=>{
+     const key=preset.value;
+     file.disabled=Boolean(key);
+     preview.hidden=!Object.hasOwn(royalPresets,key);
+     if(preview.hidden)preview.removeAttribute('src');
+     else preview.src=presetURL(key);
+   };
+   card.append(id,preset,preview,file,result);
 
    card.append(button('Animasyonu Tanımla',async()=>{
      const publicId=id.value.trim();
-     const selected=file.files?.[0];
+     const presetKey=preset.value;
+     const customFile=file.files?.[0];
+     let selected=presetKey ? null : customFile;
+     if(presetKey&&!Object.hasOwn(royalPresets,presetKey)){
+       throw Error('Geçersiz hazır animasyon.');
+     }
 
      if(!/^[0-9]{10,12}$/.test(publicId)){
        throw Error('Geçerli kullanıcı ID girin.');
      }
 
-     if(!selected){
+     if(!presetKey&&!selected){
        throw Error('Animasyon dosyası seçin.');
      }
 
-     if(selected.size>2*1024*1024){
+     if(selected&&selected.size>2*1024*1024){
        throw Error('Dosya en fazla 2 MB olabilir.');
      }
 
@@ -131,6 +162,19 @@
        throw Error('Oturum veya ekran değişti.');
      }
 
+     if(presetKey){
+       const asset=await fetch(presetURL(presetKey),{cache:'no-store'});
+       if(!asset.ok)throw Error('Hazır animasyon alınamadı.');
+       const blob=await asset.blob();
+       if(!blob.size||blob.size>2*1024*1024){
+         throw Error('Hazır animasyon dosyası geçersiz.');
+       }
+       selected=new File([blob],royalPresets[presetKey],{type:'image/webp'});
+       if(provider()!==token||body!==openedBody||!card.isConnected||
+          preset.value!==presetKey||id.value.trim()!==publicId){
+         throw Error('Oturum veya seçim değişti.');
+       }
+     }
      const data=new FormData();
      data.append('file',selected);
 
@@ -165,6 +209,8 @@
        new Date(payload.expires_at).toLocaleString('tr-TR');
 
      file.value='';
+     preset.value='';
+     preset.onchange();
      id.value='';
    }));
 

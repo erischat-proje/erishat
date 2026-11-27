@@ -69,7 +69,7 @@ test('Count and Duke bonus assets remain independent',()=>{
 
 for(const [id,filename,liveFile] of [
  ['gift_bonus','gift-bonus-preview.png','gift-bonus.png'],
- ['daily_banner','daily-banner-preview.png','daily-banner.png']
+ ['daily_banner','daily-banner-preview.png','king-daily-banner-v5.png']
 ]){
  test('King preview is independent: '+id,()=>{
   const prefix='./assets/lidya-nobility/king/';
@@ -91,4 +91,19 @@ test('Duke daily preview and live artwork remain unchanged',()=>{
   './assets/lidya-nobility/duke/daily-banner.png');
  assert.equal(assets.resolve(3,'daily_banner'),
   './assets/lidya-nobility/duke/daily-banner.png');
+});
+
+test('King V5 daily banner has exact dimensions',()=>{
+ const url=assets.resolve(4,'daily_banner');
+ const raw=fs.readFileSync('frontend/'+url.slice(2));
+
+ assert.equal(
+  raw.subarray(0,8).toString('hex'),
+  '89504e470d0a1a0a'
+ );
+ assert.equal(raw.readUInt32BE(16),1280);
+ assert.equal(raw.readUInt32BE(20),721);
+ assert.notEqual(
+  url,assets.resolvePreview(4,'daily_banner')
+ );
 });
