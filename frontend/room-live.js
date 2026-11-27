@@ -231,7 +231,7 @@
 
     if(!api)return;
 
-    const knight=[1,2].includes(seat.nobility?.rank) &&
+    const knight=[1,2,3].includes(seat.nobility?.rank) &&
       !staff &&
       Boolean(api.resolve(seat.nobility,'badge'));
 

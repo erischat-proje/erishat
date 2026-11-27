@@ -42,7 +42,7 @@
       }catch(e){if(active()&&current===generation)state('Liste yüklenemedi',e.message||'Bağlantını kontrol edip tekrar dene.',true)}finally{if(current===generation){busy=false;refresh.disabled=false;list.setAttribute('aria-busy','false')}}
     }
     function fanKnight(row){
-      if(![1,2].includes(row?.nobility?.rank))return null;
+      if(![1,2,3].includes(row?.nobility?.rank))return null;
 
       if(
         row.management_locked===true ||

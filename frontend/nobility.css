@@ -1491,3 +1491,395 @@ body:has(.lidya-count-dynamic-gift) #eris-notice-stack {
 .lidya-count-activation-banner.ln-count-activation-fallback {
   grid-template-columns:1fr;
 }
+
+
+/* DUKE ENTRANCE V1.21.3.2 */
+
+.ln-entrance-overlay.lidya-duke-timed-entrance{
+ position:fixed!important;
+ inset:0!important;
+ width:100%!important;
+ height:100%!important;
+ transform:none!important;
+ background:#000!important;
+ overflow:hidden!important;
+ z-index:2147483647!important;
+}
+
+.lidya-duke-timed-entrance .ln-entrance-stage{
+ position:relative;
+ width:min(100vw,56.25dvh)!important;
+ height:auto!important;
+ aspect-ratio:9/16;
+ max-height:100dvh!important;
+ border:0!important;
+ border-radius:0!important;
+ box-shadow:none!important;
+ overflow:hidden;
+}
+
+.lidya-duke-timed-entrance .ln-entrance-name{
+ position:absolute!important;
+ left:50%!important;
+ top:88.2%!important;
+ right:auto!important;
+ bottom:auto!important;
+ width:64%!important;
+ height:5.6%!important;
+ transform:translate(-50%,-50%)!important;
+ display:flex!important;
+ align-items:center!important;
+ justify-content:center!important;
+ padding:0!important;
+ margin:0!important;
+ background:transparent!important;
+ color:#ffe7a6!important;
+ font-size:clamp(12px,4.5vw,28px);
+ font-weight:800!important;
+ text-align:center!important;
+ text-shadow:0 2px 4px #000!important;
+ white-space:nowrap!important;
+ overflow:hidden!important;
+ box-sizing:border-box!important;
+ z-index:5!important;
+}
+
+.lidya-duke-timed-entrance .ln-entrance-name[hidden]{
+ display:none!important;
+}
+
+
+/* LIDYA DUKE DYNAMIC GIFT V1.21.6.2 */
+.lidya-nobility-live-banner.lidya-duke-dynamic-gift {
+  width:min(94vw,520px);
+  top:calc(env(safe-area-inset-top,0px) + 76px);
+  aspect-ratio:3 / 1;
+  padding:0;
+  container-type:inline-size;
+}
+.lidya-duke-dynamic-gift .ln-dynamic-template {
+  display:block;
+  width:100%;
+  height:100%;
+  max-height:none;
+  aspect-ratio:3 / 1;
+  object-fit:contain;
+}
+.lidya-duke-dynamic-gift .ln-dynamic-sender,
+.lidya-duke-dynamic-gift .ln-dynamic-label {
+  position:absolute;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  box-sizing:border-box;
+  color:#fff1c6;
+  font-weight:800;
+  font-family:Georgia,serif;
+  text-shadow:0 1px 2px #000,0 0 4px #000;
+  overflow:hidden;
+  overflow-wrap:anywhere;
+  line-height:1.05;
+}
+.lidya-duke-dynamic-gift .ln-dynamic-sender {
+  left:36%; top:41%; width:30%; height:16%;
+  font-size:clamp(9px,4vw,21px);
+  font-size:clamp(9px,4cqw,21px);
+}
+.lidya-duke-dynamic-gift .ln-dynamic-artwork {
+  position:absolute;
+  left:75%; top:18%; width:14%; height:43%;
+  object-fit:contain;
+  max-height:none;
+  aspect-ratio:auto;
+  filter:drop-shadow(0 2px 5px #0008);
+}
+.lidya-duke-dynamic-gift .ln-dynamic-label {
+  left:72%; top:66%; width:20%; height:11%;
+  font-size:clamp(7px,2.65vw,15px);
+  font-size:clamp(7px,2.8cqw,15px);
+}
+.lidya-duke-dynamic-gift .ln-dynamic-fallback {display:none;}
+.lidya-duke-dynamic-gift.ln-dynamic-template-failed {
+  aspect-ratio:auto;
+}
+.lidya-duke-dynamic-gift.ln-dynamic-template-failed .ln-dynamic-sender,
+.lidya-duke-dynamic-gift.ln-dynamic-template-failed .ln-dynamic-label,
+.lidya-duke-dynamic-gift.ln-dynamic-template-failed .ln-dynamic-artwork {display:none;}
+.lidya-duke-dynamic-gift.ln-dynamic-template-failed .ln-dynamic-fallback {display:block;}
+.lidya-duke-dynamic-gift img[hidden] {display:none!important;}
+
+
+/* DUKE NOTICE STACK V1.21.6.2 */
+
+body:has(.lidya-duke-dynamic-gift) #eris-notice-stack {
+  top:calc(
+    env(safe-area-inset-top, 0px)
+    + 86px + min(31.333vw, 173.333px)
+  ) !important;
+}
+
+@media(max-height:500px){
+  body:has(.lidya-duke-dynamic-gift) #eris-notice-stack {
+    top:calc(
+      env(safe-area-inset-top, 0px)
+      + 52px + min(31.333vw, 173.333px)
+    ) !important;
+  }
+}
+
+@media(max-height:500px){
+  .lidya-nobility-live-banner.lidya-duke-dynamic-gift {
+    top:calc(env(safe-area-inset-top,0px) + 42px);
+    width:min(70vw,360px);
+  }
+}
+
+
+/* DUKE NOTICES V1.21.7.1 */
+
+.lidya-nobility-live-banner.lidya-duke-notice{
+  display:grid;
+  grid-template-columns:42% 1fr;
+  align-items:center;
+  width:min(94vw,460px);
+  box-sizing:border-box;
+  padding:6px;
+  gap:6px;
+  border:2px solid #e4bd65;
+  border-radius:18px;
+  background:linear-gradient(
+    145deg,#173d91,#061330 65%,#030a1c
+  );
+  box-shadow:0 5px 24px #0008,
+             inset 0 0 15px #b7d1ff22;
+}
+
+.lidya-duke-notice img{
+  width:100%;
+  height:auto;
+  max-height:none;
+  border-radius:12px;
+}
+
+.ln-duke-notice-panel{
+  min-width:0;
+  padding:6px;
+  text-align:center;
+  color:#ffe8aa;
+}
+
+.ln-duke-notice-title{
+  font-family:Georgia,serif;
+  font-size:clamp(18px,5vw,28px);
+  font-weight:900;
+  letter-spacing:2px;
+  text-shadow:0 2px 4px #000;
+}
+
+.ln-duke-notice-name{
+  margin:6px 0;
+  padding:6px;
+  border:1px solid #e6bc65;
+  border-radius:8px;
+  background:#05163d;
+  color:#fff0cb;
+  font-size:14px;
+  font-weight:800;
+  overflow-wrap:anywhere;
+  max-height:48px;
+  overflow:hidden;
+}
+
+.ln-duke-notice-action{
+  font-size:12px;
+  font-weight:700;
+  overflow-wrap:anywhere;
+  color:#fff0c9;
+}
+
+.lidya-duke-notice img[hidden]{
+  display:none!important;
+}
+
+.lidya-duke-notice.ln-duke-notice-fallback{
+  grid-template-columns:1fr;
+}
+
+body:has(.lidya-duke-notice) #eris-notice-stack{
+  top:calc(
+    env(safe-area-inset-top,0px) + 240px
+  )!important;
+}
+
+@media(max-height:500px){
+  .lidya-nobility-live-banner.lidya-duke-notice{
+    top:calc(env(safe-area-inset-top,0px) + 42px);
+    width:min(70vw,360px);
+  }
+}
+
+
+/* DUKE ACTIVATION ART V1.21.11 */
+
+.lidya-duke-notice.lidya-duke-activation_banner{
+  display:block;
+  position:fixed;
+  width:min(94vw,460px);
+  aspect-ratio:900/655;
+  padding:0;
+  border:0;
+  background:transparent;
+  box-shadow:none;
+  container-type:inline-size;
+}
+
+.lidya-duke-activation_banner img{
+  display:block;
+  width:100%;
+  height:100%;
+  max-height:none;
+  object-fit:contain;
+  border-radius:14px;
+}
+
+.lidya-duke-activation_banner .ln-duke-notice-panel{
+  position:absolute;
+  left:22%;
+  top:54.5%;
+  width:56%;
+  height:17%;
+  padding:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:2px;
+  box-sizing:border-box;
+  overflow:hidden;
+}
+
+.lidya-duke-activation_banner .ln-duke-notice-title{
+  font-size:clamp(9px,3cqw,15px);
+  line-height:1;
+}
+
+.lidya-duke-activation_banner .ln-duke-notice-name{
+  max-width:100%;
+  margin:0;
+  padding:0;
+  border:0;
+  background:transparent;
+  font-size:clamp(11px,4cqw,21px);
+  line-height:1.1;
+  color:#fff0be;
+  text-shadow:0 2px 4px #000;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.lidya-duke-activation_banner .ln-duke-notice-action{
+  font-size:clamp(8px,2.8cqw,14px);
+  line-height:1.1;
+  color:#fff8de;
+}
+
+.lidya-duke-activation_banner.ln-duke-notice-fallback{
+  aspect-ratio:auto;
+  background:#061330;
+  border:1px solid #e4bd65;
+}
+
+.lidya-duke-activation_banner.ln-duke-notice-fallback
+.ln-duke-notice-panel{
+  position:static;
+  width:100%;
+  height:auto;
+  padding:12px;
+}
+
+body:has(.lidya-duke-activation_banner) #eris-notice-stack{
+  top:calc(
+    env(safe-area-inset-top,0px)
+    + 75px + min(68.42vw,334.78px)
+  )!important;
+}
+
+@media(max-height:500px){
+  .lidya-duke-notice.lidya-duke-activation_banner{
+    top:calc(env(safe-area-inset-top,0px) + 42px);
+    width:min(70vw,360px);
+  }
+}
+
+
+/* DUKE DAILY ART V1.21.16 */
+
+.lidya-duke-notice.lidya-duke-daily_banner{
+ display:block;
+ width:min(80vw,320px,52dvh);
+ aspect-ratio:822/900;
+ padding:0;
+ border:0;
+ background:transparent;
+ box-shadow:none;
+ container-type:inline-size;
+}
+
+.lidya-duke-daily_banner img{
+ width:100%;
+ height:100%;
+ max-height:none;
+ object-fit:contain;
+ border-radius:12px;
+}
+
+.lidya-duke-daily_banner:not(.ln-duke-notice-fallback)
+.ln-duke-notice-panel{
+ position:absolute;
+ left:28%;
+ top:67.3%;
+ width:44%;
+ height:5%;
+ padding:0;
+ transform:translateY(-50%);
+ display:flex;
+ align-items:center;
+ justify-content:center;
+}
+
+.lidya-duke-daily_banner:not(.ln-duke-notice-fallback)
+.ln-duke-notice-title,
+.lidya-duke-daily_banner:not(.ln-duke-notice-fallback)
+.ln-duke-notice-action{
+ display:none;
+}
+
+.lidya-duke-daily_banner:not(.ln-duke-notice-fallback)
+.ln-duke-notice-name{
+ max-width:100%;
+ margin:0;
+ padding:0;
+ border:0;
+ background:transparent;
+ color:#fff0be;
+ font-size:clamp(9px,4.5cqw,18px);
+ white-space:nowrap;
+ overflow:hidden;
+ text-overflow:ellipsis;
+ text-shadow:0 2px 4px #000;
+}
+
+.lidya-duke-daily_banner.ln-duke-notice-fallback{
+ aspect-ratio:auto;
+ background:#061330;
+ border:1px solid #e4bd65;
+}
+
+body:has(.lidya-duke-daily_banner) #eris-notice-stack{
+ top:calc(
+   env(safe-area-inset-top,0px)
+   + 75px + min(87.6vw,350.4px,56.94dvh)
+ )!important;
+}

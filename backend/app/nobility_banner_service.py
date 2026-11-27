@@ -109,7 +109,7 @@ async def announce_gift(
             if not payload:
                 return False
 
-            if payload["rank"] in (1, 2) and gift_details:
+            if payload["rank"] in (1, 2, 3) and gift_details:
                 payload["gift"] = dict(gift_details)
 
             if not reserve_gift_banner(
