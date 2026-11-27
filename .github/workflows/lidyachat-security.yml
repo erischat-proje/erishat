@@ -5,6 +5,9 @@ on:
     branches: [auth-unified-v1]
     paths:
       - 'backend/**'
+      - 'frontend/social-feed-live.js'
+      - 'frontend/explore-comments.js'
+      - 'tests/explore-workspace.dom.cjs'
       - 'frontend/screen-awake.js'
       - 'frontend/settings-live.js'
       - 'frontend/lidya-android-back-v1.js'
@@ -49,6 +52,10 @@ jobs:
           sparse-checkout: |
             /backend/
             /tests/security_guard/
+
+            /tests/explore-workspace.dom.cjs
+            /frontend/social-feed-live.js
+            /frontend/explore-comments.js
             /tests/test_security_center.py
             /tests/test_security_center_dm_id.py
             /tests/test_play_billing_v3.py
@@ -70,6 +77,25 @@ jobs:
         with:
           node-version: '22'
       - run: python -m pip install -r backend/requirements.txt httpx2 pip-audit pytest
+
+      - name: DA Explore SQLite authorization
+        env:
+          DATABASE_URL: "sqlite://"
+        run: |
+          PYTHONPATH=. python -m pytest -v backend/tests/test_da_explore_moderation_v1.py
+
+      - name: DA Explore PostgreSQL concurrency and audit
+        env:
+          DATABASE_URL: "sqlite://"
+          DA_PG_ISOLATED_CONFIRM: "YES"
+          DA_PG_TEST_DATABASE_URL: postgresql+psycopg://security_test:isolated_test_only@127.0.0.1:5432/lidyachat_security_test
+        run: |
+          PYTHONPATH=. python -m pytest -v backend/tests/test_da_explore_postgres_v1.py
+
+      - name: DA Explore frontend regression
+        run: |
+          npm install --prefix "$RUNNER_TEMP/lidya-da-tests" --no-save --package-lock=false jsdom@26.1.0
+          ERIS_JSDOM_MODULE="$RUNNER_TEMP/lidya-da-tests/node_modules/jsdom" node --test tests/explore-workspace.dom.cjs
 
       - name: Run Family V4 privacy and API tests
         env:

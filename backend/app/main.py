@@ -1720,6 +1720,95 @@ async def update_social_post(post_id: int, caption: str | None = Form(default=No
         "audience": post.audience, "is_hidden": post.is_hidden, "is_mine": True}
 
 
+
+# DA Explore Moderation V1
+class DAExploreRemoveInput(BaseModel):
+    reason: str = Field(min_length=3, max_length=2000)
+
+
+def _da_explore_allowed(db, user, lock=False):
+    if not user.is_active:
+        return False
+
+    query = select(AdminRole).where(
+        AdminRole.user_id == user.id
+    ).execution_options(populate_existing=True)
+
+    if lock:
+        query = query.with_for_update()
+
+    role = db.scalar(query)
+
+    return bool(role and role.role == "DA")
+
+
+@app.get("/v1/admin/explore/moderation")
+def da_explore_capability(
+    response: Response,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+):
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["Vary"] = "Authorization"
+
+    return {
+        "can_remove_post": _da_explore_allowed(db, user)
+    }
+
+
+@app.post("/v1/admin/explore/posts/{post_id}/remove")
+def da_explore_remove(
+    post_id: int,
+    payload: DAExploreRemoveInput,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+):
+    import json
+
+    if not _da_explore_allowed(db, user, lock=True):
+        raise HTTPException(403, "DA yetkisi gerekli")
+
+    reason = payload.reason.strip()
+
+    if len(reason) < 3:
+        raise HTTPException(422, "Silme nedeni gerekli")
+
+    post = db.scalar(
+        select(SocialPost)
+        .where(SocialPost.id == post_id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
+
+    if (
+        not post
+        or post.family_id is not None
+        or post.audience not in {"public", "followers"}
+        or post.is_hidden
+    ):
+        raise HTTPException(404, "Gonderi bulunamadi")
+
+    _social_access(db, post_id, user)
+
+    db.add(AdminAuditLog(
+        admin_id=user.id,
+        action="explore_post_remove",
+        target_user_id=post.user_id,
+        target_id=str(post.id),
+        details=json.dumps({
+            "actor_role": "DA",
+            "reason": reason,
+            "post_id": post.id,
+            "audience": post.audience,
+        }, ensure_ascii=False),
+    ))
+
+    db.delete(post)
+    db.commit()
+
+    return {"deleted": True, "post_id": post_id}
+
+
 @app.delete("/v1/posts/{post_id}")
 def delete_social_post(post_id: int, db: Session = Depends(get_db), user: User = Depends(current_user)):
     post = db.get(SocialPost, post_id)

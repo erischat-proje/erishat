@@ -26,3 +26,171 @@ test('empty saved and filtered results use clear end states',async()=>{const h=a
 
 test('failed save leaves state unchanged and allows retry',async()=>{const h=await setup();try{h.setHandler((path,opt)=>{if(opt.method==='PUT')throw Error('Offline');return Promise.resolve({})});const button=h.d.querySelector('[aria-label="Gönderiyi kaydet"]');button.click();await tick();assert.equal(button.getAttribute('aria-pressed'),'false');assert.equal(button.disabled,false)}finally{h.close()}});
 test('media is deferred to viewport and pending fetch aborts on feed replacement',async()=>{const h=await setup();try{let observe,signal;h.w.IntersectionObserver=class{constructor(fn){observe=fn}observe(){}disconnect(){}};h.w.fetch=(path,opt)=>{signal=opt.signal;return new Promise(()=>{})};h.setPage({items:[post(3,{media_url:'/posts/3/media',mime_type:'image/png'})],has_more:false,next_cursor:null});await h.w.ErisSocialFeed.load();assert.equal(signal,undefined);observe([{isIntersecting:true}]);assert.equal(signal.aborted,false);h.setPage({items:[],has_more:false,next_cursor:null});await h.w.ErisSocialFeed.load();assert.equal(signal.aborted,true)}finally{h.close()}});
+
+async function daSetup(allowed, removeHandler){
+ const h=await setup();
+
+ h.w.HTMLCanvasElement.prototype.getContext=()=>null;
+
+ h.setHandler(async(path,opt)=>{
+  if(path==='/admin/explore/moderation'){
+   return {can_remove_post:allowed};
+  }
+
+  if(path==='/admin/explore/posts/1/remove'){
+   return removeHandler(path,opt);
+  }
+
+  if(path.startsWith('/explore/feed')){
+   return {
+    items:[post(1)],
+    has_more:false,
+    next_cursor:null
+   };
+  }
+
+  return {};
+ });
+
+ click(h.d,'article [data-report]');
+ await tick();
+
+ return h;
+}
+
+test('DA V1 - ordinary user cannot see remove button',async()=>{
+ const h=await daSetup(false,()=>{
+  throw Error('Unauthorized request');
+ });
+
+ try{
+  assert.equal(
+   h.d.querySelector('[data-da-remove-post]'),null
+  );
+
+  assert.ok(h.d.querySelector('[data-submit]'));
+ }finally{h.close()}
+});
+
+test('DA V1 - authorized button is visible',async()=>{
+ const h=await daSetup(true,()=>({deleted:true}));
+
+ try{
+  assert.ok(h.d.querySelector('[data-da-remove-post]'));
+  assert.ok(h.d.querySelector('[data-submit]'));
+ }finally{h.close()}
+});
+
+test('DA V1 - cancelled removal sends no request',async()=>{
+ const h=await daSetup(true,()=>({deleted:true}));
+
+ try{
+  click(h.d,'[data-da-remove-post]');
+  click(h.d,'[data-no]');
+  await tick();
+
+  assert.ok(h.d.querySelector('article'));
+
+  assert.equal(h.calls.filter(c=>
+   c.path.endsWith('/remove')
+  ).length,0);
+ }finally{h.close()}
+});
+
+test('DA V1 - confirmed removal deletes card',async()=>{
+ const h=await daSetup(true,(path,opt)=>{
+  assert.equal(opt.method,'POST');
+
+  assert.equal(
+   JSON.parse(opt.body).reason,'+18 uygunsuz icerik'
+  );
+
+  return {deleted:true,post_id:1};
+ });
+
+ try{
+  h.d.querySelector('[data-reason]').value=
+   '+18 uygunsuz icerik';
+
+  click(h.d,'[data-da-remove-post]');
+  click(h.d,'[data-yes]');
+  await tick();
+
+  assert.equal(h.d.querySelector('article'),null);
+
+  assert.equal(h.calls.filter(c=>
+   c.path.endsWith('/remove')
+  ).length,1);
+
+  assert.equal(h.d.querySelector('.ec-social-modal'),null);
+ }finally{h.close()}
+});
+
+test('DA V1 - server denial preserves post',async()=>{
+ const h=await daSetup(true,()=>{
+  throw Error('DA yetkisi gerekli');
+ });
+
+ try{
+  click(h.d,'[data-da-remove-post]');
+  click(h.d,'[data-yes]');
+  await tick();
+
+  assert.ok(h.d.querySelector('article'));
+
+  assert.equal(
+   h.d.querySelector('[data-da-remove-post]').disabled,
+   false
+  );
+
+  assert.match(
+   h.d.querySelector('[data-error]').textContent,
+   /DA yetkisi/
+  );
+ }finally{h.close()}
+});
+
+test('DA V1 - missing deletion confirmation preserves card',async()=>{
+ const h=await daSetup(true,()=>({deleted:false}));
+
+ try{
+  click(h.d,'[data-da-remove-post]');
+  click(h.d,'[data-yes]');
+  await tick();
+
+  assert.ok(h.d.querySelector('article'));
+ }finally{h.close()}
+});
+
+test('DA V1 - repeated tap sends single removal',async()=>{
+ let finish;
+
+ const h=await daSetup(true,()=>new Promise(r=>{
+  finish=r;
+ }));
+
+ try{
+  const button=h.d.querySelector('[data-da-remove-post]');
+
+  button.click();
+  button.click();
+
+  assert.equal(
+   h.d.querySelectorAll('[data-yes]').length,1
+  );
+
+  click(h.d,'[data-yes]');
+  await tick();
+
+  button.click();
+
+  assert.equal(h.calls.filter(c=>
+   c.path.endsWith('/remove')
+  ).length,1);
+
+  finish({deleted:true,post_id:1});
+  await tick();
+
+  assert.equal(h.d.querySelector('article'),null);
+ }finally{h.close()}
+});
