@@ -56,6 +56,8 @@ const kingPreviews=Object.freeze({
  activation_banner:'activation-banner-preview.png',
  kick_protection:'kick-protection.png',
  room_welcome:'room-welcome-preview.png',
+ gift_bonus:'gift-bonus-preview.png',
+ daily_banner:'daily-banner-preview.png',
  animated_avatar:'animated-avatar.png',
  couple_repair:'couple-repair.png',
  super_kick:'super-kick.png',
