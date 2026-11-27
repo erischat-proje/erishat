@@ -278,16 +278,20 @@ test('King uses its own template and literal dynamic fields',()=>{
   const c=s.cards[0];
   assert.match(c.className,/lidya-king-dynamic-gift/);
   assert.doesNotMatch(c.className,/lidya-knight-dynamic-gift/);
-  assert.equal(c.children[0].src,'./assets/lidya-nobility/king/gift-banner.png');
+  assert.equal(c.children[0].src,'./assets/lidya-nobility/king/gift-banner-dynamic.png');
   assert.equal(c.children[1].textContent,'<b>Kont</b>');
   assert.equal(c.children[2].src,'./hediyesistemi/28.png');
-  assert.equal(c.children[3].textContent,'Yakut ×9');
+  assert.equal(c.children[3].children[0].textContent,'Yakut');
+  assert.equal(c.children[3].children[1].textContent,'×9');
   c.children[0].onerror();
   assert.match(c.className,/ln-dynamic-template-failed/);
   assert.match(c.children[4].textContent,/Yakut ×9/);
 });
 
 test('King template is a PNG',()=>{
-  const p='frontend/assets/lidya-nobility/king/gift-banner.png';
+  const p='frontend/assets/lidya-nobility/king/gift-banner-dynamic.png';
+  const png=fs.readFileSync(p);
+  assert.equal(png.readUInt32BE(16),1800);
+  assert.equal(png.readUInt32BE(20),600);
   assert.equal(fs.readFileSync(p).subarray(0,8).toString('hex'),'89504e470d0a1a0a');
 });
