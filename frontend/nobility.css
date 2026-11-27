@@ -1139,3 +1139,82 @@
   object-fit:contain;
   box-sizing:border-box;
 }
+
+
+/* LIDYA KNIGHT DYNAMIC GIFT V1.19.2 */
+.lidya-nobility-live-banner.lidya-knight-dynamic-gift {
+  width:min(94vw,520px);
+  aspect-ratio:3 / 1;
+  padding:0;
+  container-type:inline-size;
+}
+.lidya-knight-dynamic-gift .ln-dynamic-template {
+  display:block;
+  width:100%;
+  height:100%;
+  max-height:none;
+  aspect-ratio:3 / 1;
+  object-fit:contain;
+}
+.lidya-knight-dynamic-gift .ln-dynamic-sender,
+.lidya-knight-dynamic-gift .ln-dynamic-label {
+  position:absolute;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  box-sizing:border-box;
+  color:#fff1c6;
+  font-weight:800;
+  font-family:Georgia,serif;
+  text-shadow:0 1px 2px #000,0 0 4px #000;
+  overflow:hidden;
+  overflow-wrap:anywhere;
+  line-height:1.05;
+}
+.lidya-knight-dynamic-gift .ln-dynamic-sender {
+  left:36%; top:41%; width:28%; height:14%;
+  font-size:clamp(9px,4vw,21px);
+  font-size:clamp(9px,4cqw,21px);
+}
+.lidya-knight-dynamic-gift .ln-dynamic-artwork {
+  position:absolute;
+  left:73.5%; top:18%; width:14%; height:43%;
+  object-fit:contain;
+  max-height:none;
+  aspect-ratio:auto;
+  filter:drop-shadow(0 2px 5px #0008);
+}
+.lidya-knight-dynamic-gift .ln-dynamic-label {
+  left:70%; top:66.8%; width:21.8%; height:10%;
+  font-size:clamp(7px,2.65vw,15px);
+  font-size:clamp(7px,2.8cqw,15px);
+}
+.lidya-knight-dynamic-gift .ln-dynamic-fallback {display:none;}
+.lidya-knight-dynamic-gift.ln-dynamic-template-failed {
+  aspect-ratio:auto;
+}
+.lidya-knight-dynamic-gift.ln-dynamic-template-failed .ln-dynamic-sender,
+.lidya-knight-dynamic-gift.ln-dynamic-template-failed .ln-dynamic-label,
+.lidya-knight-dynamic-gift.ln-dynamic-template-failed .ln-dynamic-artwork {display:none;}
+.lidya-knight-dynamic-gift.ln-dynamic-template-failed .ln-dynamic-fallback {display:block;}
+.lidya-knight-dynamic-gift img[hidden] {display:none!important;}
+
+
+/* KNIGHT NOTICE STACK V1.19.3 */
+
+body:has(.lidya-knight-dynamic-gift) #eris-notice-stack {
+  top:calc(
+    env(safe-area-inset-top, 0px)
+    + 86px + min(31.333vw, 173.333px)
+  ) !important;
+}
+
+@media(max-height:500px){
+  body:has(.lidya-knight-dynamic-gift) #eris-notice-stack {
+    top:calc(
+      env(safe-area-inset-top, 0px)
+      + 52px + min(31.333vw, 173.333px)
+    ) !important;
+  }
+}

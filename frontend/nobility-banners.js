@@ -77,6 +77,44 @@
     seen.clear();
   }
 
+  // Only a server-authorized Knight gift with known local artwork uses this layout.
+  function dynamicGift(data){
+    if(data.rank !== 1 || data.kind !== 'gift_banner') return null;
+    const gift = data.gift;
+    if(!gift || typeof gift.name !== 'string' || !gift.name.trim() ||
+       !Number.isSafeInteger(gift.quantity) || gift.quantity < 1 ||
+       typeof gift.image_url !== 'string') return null;
+    const path = gift.image_url;
+    if(!/^\/(?:hediyesistemi\/[0-9]+|relationship-assets\/[A-Za-z0-9_-]+)\.png$/.test(path)) return null;
+    return {name:gift.name.slice(0,120),quantity:gift.quantity,src:'.'+path};
+  }
+
+  function buildDynamic(card, image, data, gift){
+    card.className += ' lidya-knight-dynamic-gift';
+    image.className = 'ln-dynamic-template';
+    image.src = './assets/lidya-nobility/knight/gift-banner-dynamic.png';
+    const sender = document.createElement('div');
+    sender.className = 'ln-dynamic-sender';
+    sender.textContent = data.nickname.slice(0,80);
+    const artwork = document.createElement('img');
+    artwork.className = 'ln-dynamic-artwork';
+    artwork.src = gift.src;
+    artwork.alt = gift.name;
+    artwork.draggable = false;
+    artwork.onerror = ()=>{artwork.hidden = true;};
+    const label = document.createElement('div');
+    label.className = 'ln-dynamic-label';
+    label.textContent = `${gift.name} ×${gift.quantity}`;
+    const fallback = document.createElement('span');
+    fallback.className = 'ln-dynamic-fallback';
+    fallback.textContent = `${message(data)} ${gift.name} ×${gift.quantity}`;
+    image.onerror = ()=>{
+      image.hidden = true;
+      card.className += ' ln-dynamic-template-failed';
+    };
+    card.append(image,sender,artwork,label,fallback);
+  }
+
   function next(){
     if(current || !queue.length) return;
 
@@ -87,9 +125,13 @@
       return;
     }
 
-    const asset = window.LidyaNobilityAssets?.resolve?.(
-      data.rank,data.kind
-    );
+    const dynamic = dynamicGift(data);
+
+    const asset = dynamic
+      ? './assets/lidya-nobility/knight/gift-banner-dynamic.png'
+      : window.LidyaNobilityAssets?.resolve?.(
+          data.rank,data.kind
+        );
 
     if(!asset){
       next();
@@ -124,7 +166,9 @@
     const text = document.createElement('span');
     text.textContent = message(data);
 
-    card.append(image,text);
+    const gift = dynamicGift(data);
+    if(gift) buildDynamic(card,image,data,gift);
+    else card.append(image,text);
     document.body.appendChild(card);
 
     current = card;
@@ -160,6 +204,9 @@
   });
 
   window.LidyaNobilityBanners = Object.freeze({
-    show,clear,validate
+    show,clear,validate,
+    replacesGift(data){
+      return validate(data) && Boolean(dynamicGift(data));
+    }
   });
 })();

@@ -91,7 +91,10 @@ async def publish_banner(payload):
         return False
 
 
-async def announce_gift(db, user_id, room_id, event_id):
+async def announce_gift(
+    db, user_id, room_id, event_id,
+    *, gift_details=None,
+):
     from sqlalchemy.orm import Session
     from .nobility_banner_limits import reserve_gift_banner
 
@@ -105,6 +108,9 @@ async def announce_gift(db, user_id, room_id, event_id):
 
             if not payload:
                 return False
+
+            if payload["rank"] == 1 and gift_details:
+                payload["gift"] = dict(gift_details)
 
             if not reserve_gift_banner(
                 banner_db, user_id, event_id
