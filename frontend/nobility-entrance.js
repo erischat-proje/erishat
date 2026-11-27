@@ -26,9 +26,11 @@ function close(){
 
 function play(rank,nickname,onDone,options={}){
  const knight=rank===1;
- const live=knight&&options.live===true;
+ const count=rank===2;
+ const timed=knight||count;
+ const live=timed&&options.live===true;
 
- if(knight&&document.hidden)return false;
+ if(timed&&document.hidden)return false;
  const assets=window.LidyaNobilityAssets;
  const src=assets?.resolve(rank,'entrance_video');
 
@@ -42,10 +44,15 @@ function play(rank,nickname,onDone,options={}){
  if(knight){
   overlay.className+=' lidya-knight-timed-entrance';
  }
+ if(count){
+  overlay.className+=' lidya-count-timed-entrance';
+ }
  if(live){
-  overlay.className+=' lidya-knight-live-entrance';
+  overlay.className+=knight
+   ? ' lidya-knight-live-entrance'
+   : ' lidya-count-live-entrance';
   overlay.setAttribute('role','region');
-  overlay.setAttribute('aria-label','Şövalye oda girişi');
+  overlay.setAttribute('aria-label',knight?'Şövalye oda girişi':'Kont oda girişi');
  }else{
   overlay.setAttribute('role','dialog');
   overlay.setAttribute('aria-modal','true');
@@ -56,10 +63,10 @@ function play(rank,nickname,onDone,options={}){
 
  const video=document.createElement('video');
  video.className='ln-entrance-video';
- video.muted=!knight;
- video.defaultMuted=!knight;
+ video.muted=!timed;
+ video.defaultMuted=!timed;
 
- if(knight)video.volume=1;
+ if(timed)video.volume=1;
  video.playsInline=true;
  video.preload='metadata';
  video.poster=assets.resolve(rank,'entrance');
@@ -71,7 +78,7 @@ function play(rank,nickname,onDone,options={}){
   nickname||'LidyaChat'
  ).slice(0,32);
 
- if(knight){
+ if(timed){
   name.hidden=true;
 
   function fitName(){
@@ -90,7 +97,10 @@ function play(rank,nickname,onDone,options={}){
   }
 
   video.ontimeupdate=()=>{
-   const visible=video.currentTime>=8;
+   const visible=knight
+    ? video.currentTime>=8
+    : video.currentTime>=7 &&
+      video.currentTime<9.8;
 
    if(name.hidden===visible){
     name.hidden=!visible;
@@ -111,7 +121,7 @@ function play(rank,nickname,onDone,options={}){
 
  const state={
   overlay,video,timer:null,onDone,
-  knight,live,userId:String(options.userId||''),
+  knight,timed,live,userId:String(options.userId||''),
   key:e=>{
    if(live)return;
 
@@ -140,7 +150,7 @@ function play(rank,nickname,onDone,options={}){
   video.removeAttribute('src');
   video.load();
 
-  if(knight){
+  if(timed){
    video.hidden=true;
    video.ontimeupdate=null;
    name.hidden=false;
@@ -166,10 +176,10 @@ function play(rank,nickname,onDone,options={}){
  document.addEventListener('keydown',state.key,true);
 
  state.timer=setTimeout(
-  finish,knight?12000:15000
+  finish,timed?12000:15000
  );
 
- if(knight&&window.matchMedia?.(
+ if(timed&&window.matchMedia?.(
   '(prefers-reduced-motion: reduce)'
  )?.matches){
   fallback();
@@ -200,7 +210,7 @@ window.addEventListener('erischat:room-closed',()=>{
 });
 
 window.addEventListener('erischat:auth',()=>{
- if(active?.knight)close();
+ if(active?.timed)close();
 });
 
 window.addEventListener('erischat:user-block-changed',event=>{
@@ -213,7 +223,7 @@ window.addEventListener('erischat:user-block-changed',event=>{
 });
 
 document.addEventListener('visibilitychange',()=>{
- if(document.hidden&&active?.knight)close();
+ if(document.hidden&&active?.timed)close();
 });
 
 window.LidyaNobilityEntrance=Object.freeze({

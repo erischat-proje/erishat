@@ -17,9 +17,10 @@ assert.ok(start>=0&&end>start);
 const window={
   LidyaNobilityAppearance:{
     resolve:(data,id)=>{
-      return data?.rank===1 &&
+      return [1,2].includes(data?.rank) &&
         data.privileges?.includes(id)
-        ? './assets/lidya-nobility/knight/'+id+'.png'
+        ? './assets/lidya-nobility/'+
+          (data.rank===1?'knight':'count')+'/'+id+'.png'
         : null;
     }
   }
@@ -91,7 +92,7 @@ for(const role of ['SA','UA','FA','DA']){
   });
 }
 
-for(const rank of [0,2,3,4]){
+for(const rank of [0,3,4]){
   test('Diger rutbe korunur: '+rank,()=>{
     const user={
       ...knight,
@@ -128,4 +129,52 @@ test('Asalet bilgisi yoksa normal gorunum',()=>{
   assert.ok(context.render({
     frame_asset:'/assets/normal-frame.png'
   }).includes('normal-frame.png'));
+});
+
+
+const count={
+  ...knight,
+  nobility:{
+    rank:2,
+    privileges:['badge','frame']
+  }
+};
+
+test('Kont kendi cercevesini kullanir',()=>{
+  const html=context.render(count);
+
+  assert.ok(html.includes('/count/frame.png'));
+  assert.ok(!html.includes('/knight/frame.png'));
+  assert.ok(!html.includes('normal-frame.png'));
+
+  assert.equal(
+    (html.match(/class="eris-follow-frame"/g)||[]).length,
+    1
+  );
+});
+
+test('Kont cercevesi cikarilinca normal cerceve doner',()=>{
+  const html=context.render({
+    ...count,
+    nobility:{rank:2,privileges:['badge']}
+  });
+
+  assert.ok(html.includes('normal-frame.png'));
+  assert.ok(!html.includes('/count/frame.png'));
+});
+
+for(const role of ['SA','UA','FA','DA']){
+  test('Kont yonetim kimligini korur: '+role,()=>{
+    assert.equal(
+      context.authorized({...count,admin_role:role}),
+      null
+    );
+  });
+}
+
+test('Kont yonetim kilidini korur',()=>{
+  assert.equal(
+    context.authorized({...count,management_locked:true}),
+    null
+  );
 });

@@ -12,7 +12,7 @@ window.LidyaNobilityDetails=Object.freeze({
  gift_banner:'Hediye gönderimlerinde en yüksek aktif asalet seviyenize özel afiş gösterilir.',
  activation_banner:'Asalet etkinleştirme ve yenileme duyurusu. Şövalye ve Kont yerel odalarda, Dük ve Kral tüm bölgede gösterilir.',
  kick_protection:'Normal oda yöneticileri sizi odadan atamaz. Oda sahibi, süper yönetici ve Süper Atma yetkileri istisnadır.',
- gift_bonus:'Referans iade oranları: Kont %66, Dük %67, Kral %70. Uygulama koşulları henüz belirlenmemiştir.',
+ gift_bonus:'Normal oda ve özel mesaj hediyelerinde alıcının minimum kazanç oranı Kont için %66, Dük için %67, Kral için %70 olur. Kazanç en fazla %100 olabilir. 10 Lidya altındaki hediye işlemlerinde kazanç verilmez.',
  daily_banner:'Günün ilk sesli oda girişinde tüm bölgede özel karşılama afişi gösterilir.',
  room_welcome:'Odaya girişinizde özel karşılama mesajı yayınlanır. Aynı oda için 30 dakika bekleme süresi vardır.',
  animated_avatar:'Resmi ekip tarafından 15 günlük kişiye özel animasyonlu avatar tanımlanabilir.',

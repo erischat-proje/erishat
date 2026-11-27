@@ -92,7 +92,7 @@
   };
 
   function followKnightData(user){
-    if(!user||user.nobility?.rank!==1)return null;
+    if(!user||![1,2].includes(user.nobility?.rank))return null;
 
     if(
       user.management_locked===true ||

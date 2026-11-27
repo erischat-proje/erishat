@@ -77,22 +77,27 @@
     seen.clear();
   }
 
-  // Only a server-authorized Knight gift with known local artwork uses this layout.
+  // Only server-authorized premium gifts with known local artwork use this layout.
   function dynamicGift(data){
-    if(data.rank !== 1 || data.kind !== 'gift_banner') return null;
+    if(![1,2].includes(data.rank) || data.kind !== 'gift_banner') return null;
     const gift = data.gift;
     if(!gift || typeof gift.name !== 'string' || !gift.name.trim() ||
        !Number.isSafeInteger(gift.quantity) || gift.quantity < 1 ||
        typeof gift.image_url !== 'string') return null;
     const path = gift.image_url;
     if(!/^\/(?:hediyesistemi\/[0-9]+|relationship-assets\/[A-Za-z0-9_-]+)\.png$/.test(path)) return null;
-    return {name:gift.name.slice(0,120),quantity:gift.quantity,src:'.'+path};
+    const folder = data.rank === 2 ? 'count' : 'knight';
+    return {
+      name:gift.name.slice(0,120),quantity:gift.quantity,src:'.'+path,
+      template:`./assets/lidya-nobility/${folder}/gift-banner-dynamic.png`,
+      className:`lidya-${folder}-dynamic-gift`
+    };
   }
 
   function buildDynamic(card, image, data, gift){
-    card.className += ' lidya-knight-dynamic-gift';
+    card.className += ' '+gift.className;
     image.className = 'ln-dynamic-template';
-    image.src = './assets/lidya-nobility/knight/gift-banner-dynamic.png';
+    image.src = gift.template;
     const sender = document.createElement('div');
     sender.className = 'ln-dynamic-sender';
     sender.textContent = data.nickname.slice(0,80);
@@ -128,7 +133,7 @@
     const dynamic = dynamicGift(data);
 
     const asset = dynamic
-      ? './assets/lidya-nobility/knight/gift-banner-dynamic.png'
+      ? dynamic.template
       : window.LidyaNobilityAssets?.resolve?.(
           data.rank,data.kind
         );
@@ -167,7 +172,37 @@
     text.textContent = message(data);
 
     const gift = dynamicGift(data);
-    if(gift) buildDynamic(card,image,data,gift);
+    if(data.rank === 2 && data.kind === 'activation_banner'){
+      card.className += ' lidya-count-activation-banner';
+
+      const panel = document.createElement('div');
+      panel.className = 'ln-count-activation-panel';
+
+      const title = document.createElement('div');
+      title.className = 'ln-count-activation-title';
+      title.textContent = 'KONT';
+
+      const sender = document.createElement('div');
+      sender.className = 'ln-count-activation-name';
+      sender.textContent = data.nickname.slice(0,80);
+
+      const action = document.createElement('div');
+      action.className = 'ln-count-activation-action';
+      action.textContent = data.action === 'renew'
+        ? 'Kont asaletini yeniledi!'
+        : data.action === 'upgrade'
+          ? 'Kont seviyesine yükseldi!'
+          : 'Kont asaletine ulaştı!';
+
+      image.onerror = ()=>{
+        image.hidden = true;
+        card.className += ' ln-count-activation-fallback';
+      };
+
+      panel.append(title,sender,action);
+      card.append(image,panel);
+    }
+    else if(gift) buildDynamic(card,image,data,gift);
     else card.append(image,text);
     document.body.appendChild(card);
 
