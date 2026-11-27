@@ -194,3 +194,241 @@ test('DA V1 - repeated tap sends single removal',async()=>{
   assert.equal(h.d.querySelector('article'),null);
  }finally{h.close()}
 });
+
+test('Premium actions have icons and correct labels',async()=>{
+ const h=await setup();
+
+ try{
+  const buttons=[...h.d.querySelectorAll(
+   '.ec-feed-actions>button'
+  )];
+
+  assert.equal(buttons.length,3);
+
+  assert.deepEqual(
+   buttons.map(b=>b.dataset.feedAction),
+   ['save','hide','mute']
+  );
+
+  assert.deepEqual(
+   buttons.map(b=>b.textContent),
+   ['Kaydet','Daha az göster','Yazarı sessize al']
+  );
+
+  for(const button of buttons){
+   assert.ok(button.querySelector('svg'));
+   assert.ok(button.querySelector('span'));
+  }
+ }finally{h.close()}
+});
+
+test('Save and unsave preserve premium icon',async()=>{
+ const h=await setup();
+
+ try{
+  const b=h.d.querySelector('[data-feed-action="save"]');
+  const icon=b.querySelector('svg');
+
+  b.click();
+  await tick();
+
+  assert.equal(b.textContent,'Kaydedildi');
+  assert.equal(b.getAttribute('aria-pressed'),'true');
+  assert.equal(b.querySelector('svg'),icon);
+
+  b.click();
+  await tick();
+
+  assert.equal(b.textContent,'Kaydet');
+  assert.equal(b.getAttribute('aria-pressed'),'false');
+  assert.equal(b.querySelector('svg'),icon);
+
+  assert.ok(h.calls.some(c=>
+   c.path==='/explore/posts/1/saved'&&c.method==='PUT'
+  ));
+
+  assert.ok(h.calls.some(c=>
+   c.path==='/explore/posts/1/saved'&&c.method==='DELETE'
+  ));
+ }finally{h.close()}
+});
+
+test('Duplicate save request is prevented',async()=>{
+ const h=await setup();
+
+ try{
+  let finish;
+  let requests=0;
+
+  h.setHandler((path,opt)=>{
+   if(path.endsWith('/saved')){
+    requests++;
+
+    return new Promise(r=>finish=r);
+   }
+
+   return Promise.resolve({});
+  });
+
+  const b=h.d.querySelector('[data-feed-action="save"]');
+
+  b.click();
+  b.click();
+
+  assert.equal(requests,1);
+  assert.equal(b.disabled,true);
+
+  finish({});
+
+  await tick();
+
+  assert.equal(b.disabled,false);
+  assert.equal(b.getAttribute('aria-pressed'),'true');
+ }finally{h.close()}
+});
+
+test('Numeric author ID mute removes all author posts',async()=>{
+ const h=await setup();
+
+ try{
+  h.setPage({
+   items:[
+    post(1,{user_id:123}),
+    post(2,{user_id:123}),
+    post(3,{user_id:456})
+   ],
+   has_more:false,
+   next_cursor:null
+  });
+
+  await h.w.ErisSocialFeed.load();
+
+  h.d.querySelector('[data-feed-action="mute"]').click();
+
+  await tick();
+
+  assert.equal(
+   h.d.querySelectorAll('[data-feed] article').length,1
+  );
+
+  assert.equal(
+   h.d.querySelector('[data-feed] article').dataset.authorId,
+   '456'
+  );
+ }finally{h.close()}
+});
+
+test('Post video disables download and context menu',async()=>{
+ const h=await setup();
+
+ try{
+  h.w.fetch=async()=>({
+   ok:true,
+   blob:async()=>new h.w.Blob(
+    ['test-video'],{type:'video/mp4'}
+   )
+  });
+
+  h.setPage({
+   items:[
+    post(7,{
+     media_url:'/posts/7/media',
+     media_kind:'video',
+     mime_type:'video/mp4'
+    })
+   ],
+   has_more:false,
+   next_cursor:null
+  });
+
+  await h.w.ErisSocialFeed.load();
+  await tick();
+
+  const video=h.d.querySelector('.ec-social-video');
+
+  assert.ok(video);
+
+  assert.equal(
+   video.getAttribute('controlslist'),'nodownload'
+  );
+
+  assert.equal(video.controls,true);
+  assert.equal(video.playsInline,true);
+
+  const event=new h.w.MouseEvent('contextmenu',{
+   bubbles:true,
+   cancelable:true
+  });
+
+  video.dispatchEvent(event);
+
+  assert.equal(event.defaultPrevented,true);
+ }finally{h.close()}
+});
+
+test('Story video disables download and context menu',async()=>{
+ const h=await setup();
+
+ try{
+  h.w.HTMLMediaElement.prototype.play=async()=>{};
+
+  h.w.ErisPlatform.stories=async()=>[{
+   id:77,
+   user_id:'story-author',
+   nickname:'Video test',
+   media_kind:'video',
+   mime_type:'video/mp4',
+   media_url:'/stories/77/media'
+  }];
+
+  h.w.ErisPlatform.storyMediaUrl=p=>p;
+
+  h.w.fetch=async()=>({
+   ok:true,
+   blob:async()=>new h.w.Blob(
+    ['story-video'],{type:'video/mp4'}
+   )
+  });
+
+  h.w.eval(fs.readFileSync(
+   'frontend/stories-live.js','utf8'
+  ));
+
+  await tick();
+  await h.w.ErisChatStories.load();
+  await tick();
+
+  const story=h.d.querySelector(
+   '.eris-story:not(.eris-story-add)'
+  );
+
+  assert.ok(story);
+  story.click();
+
+  await tick();
+
+  const video=h.d.querySelector('.eris-story-viewer video');
+
+  assert.ok(video);
+
+  assert.equal(
+   video.getAttribute('controlslist'),'nodownload'
+  );
+
+  assert.equal(video.controls,true);
+  assert.equal(video.playsInline,true);
+
+  const event=new h.w.MouseEvent('contextmenu',{
+   bubbles:true,
+   cancelable:true
+  });
+
+  video.dispatchEvent(event);
+
+  assert.equal(event.defaultPrevented,true);
+
+ }finally{
+  h.w.ErisChatStories?.close();
+  h.close();
+ }
+});

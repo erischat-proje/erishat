@@ -110,7 +110,13 @@
       if(!response.ok){const error=await response.json().catch(()=>({}));throw Error(error.detail||'Hikâye açılamadı.');}
       const blob=await response.blob();if(!valid()){close();return;}objectUrl=URL.createObjectURL(blob);
       const video=String(item.media_kind||item.mime_type||'').startsWith('video');media=document.createElement(video?'video':'img');media.alt='Hikâye';
-      if(video){media.controls=true;media.playsInline=true;media.autoplay=true;media.addEventListener('loadedmetadata',()=>{ready=true;syncPause();});media.addEventListener('ended',()=>{if(valid())move(1);});}
+      if(video){
+        media.controls=true;
+        media.setAttribute('controlslist','nodownload');
+        media.addEventListener('contextmenu',event=>{
+          event.preventDefault();
+        });
+        media.playsInline=true;media.autoplay=true;media.addEventListener('loadedmetadata',()=>{ready=true;syncPause();});media.addEventListener('ended',()=>{if(valid())move(1);});}
       else{media.onload=()=>{ready=true;last=performance.now();};media.addEventListener('pointerdown',()=>{holding=true;syncPause();});for(const type of ['pointerup','pointercancel','pointerleave'])media.addEventListener(type,()=>{holding=false;syncPause();last=performance.now();});}
       media.onerror=()=>{say('Medya görüntülenemedi.');const b=document.createElement('button');b.type='button';b.textContent='Yeniden dene';b.onclick=()=>openStory(item,true);status.append(b);};
       media.src=objectUrl;viewer.insertBefore(media,status);status.textContent='';item.viewed=true;
