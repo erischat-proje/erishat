@@ -2584,7 +2584,7 @@ ROOM_REACTION_IDS = ROOM_REACTION_IDS | frozenset(room_emoji_access.VIP_EMOJI_LE
 
 @app.get("/v1/me/room-emojis")
 def my_room_emojis(db: Session = Depends(get_db), user: User = Depends(current_user)):
-    return room_emoji_access.entitlement(db.get(VipStatus, user.id))
+    return room_emoji_access.current_entitlement(db, user.id)
 
 def _room_socket_reaction(internal_room_id, room_id, user_id, reaction_id, target_user_id=None):
     def error(message):
@@ -2602,12 +2602,15 @@ def _room_socket_reaction(internal_room_id, room_id, user_id, reaction_id, targe
         member = db.query(RoomMember).filter(RoomMember.room_id == internal_room_id, RoomMember.user_id == user_id).first()
         if not user or not user.is_active or not room or not member:
             return error("Oda bağlantınız aktif değil.")
-        if reaction_id.startswith('lidya_sticker_') and vip_privileges.active(db,user_id).get('stickers')!='enabled':
-            return error('Lidya çıkartmalarını VIP → Ek ödüller → Sohbet bölümünden etkinleştir.')
         if reaction_id in room_emoji_access.VIP_EMOJI_LEVELS:
-            level = room_emoji_access.earned_level(db.get(VipStatus, user_id))
-            if not room_emoji_access.can_use(reaction_id, level):
-                return error(f"Bu emoji VIP {room_emoji_access.VIP_EMOJI_LEVELS[reaction_id]} seviyesinde açılır.")
+            access = room_emoji_access.current_entitlement(db, user_id)
+            if reaction_id not in access["unlocked_ids"]:
+                required = room_emoji_access.VIP_EMOJI_LEVELS[reaction_id]
+                if access["level"] < required:
+                    return error(f"Bu emoji VIP {required} seviyesinde açılır.")
+                return error(
+                    "Lidya çıkartmalarını VIP merkezinden etkinleştir."
+                )
         admin = db.get(AdminRole, user_id)
         if member.ghost or (admin and admin.ghost_mode):
             return error("Emoji göndermek için Ghost Mode’u kapatın.")

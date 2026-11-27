@@ -14,6 +14,33 @@ def can_use(reaction_id, level):
     return int(level) >= VIP_EMOJI_LEVELS.get(reaction_id, 0)
 
 
-def entitlement(row):
+def entitlement(row, stickers_enabled=False):
     level = earned_level(row)
-    return {"level": level, "unlocked_ids": [key for key, required in VIP_EMOJI_LEVELS.items() if level >= required]}
+    return {
+        "level": level,
+        "unlocked_ids": [
+            key for key, required in VIP_EMOJI_LEVELS.items()
+            if level >= required
+            and (
+                not key.startswith("lidya_sticker_")
+                or stickers_enabled
+            )
+        ],
+    }
+
+
+def current_entitlement(db, uid):
+    from . import vip_privileges
+
+    level = vip_privileges.level(db, uid)
+    enabled = (
+        vip_privileges.values(db, uid).get("stickers") == "enabled"
+    )
+    from types import SimpleNamespace
+
+    result = entitlement(
+        SimpleNamespace(level=level),
+        stickers_enabled=enabled,
+    )
+    db.commit()
+    return result

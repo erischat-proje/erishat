@@ -274,10 +274,10 @@ SPECS = [
     (
         "early_access",
         9,
-        "Koleksiyon önizlemesi",
+        "Koleksiyona erken erişim",
         "collection",
-        "Merkezdeki yeni Lidya tasarımlarını ve erken deneme seçeneklerini incele.",
-        (),
+        "VIP 9 ve üzeri Altın Gece Sarayı profil sahnesini ücretsiz önizleyebilir ve kullanabilir.",
+        ("golden-palace",),
     ),
     (
         "throne",
@@ -850,7 +850,7 @@ def select_benefit(
             ("cover", "cover_pack", "level_cover"),
             (
                 "scenes", "throne", "royal_scene",
-                "trial_scene", "point_cover", "level_scene",
+                "trial_scene", "point_cover", "level_scene", "early_access",
             ),
             (
                 "room_decor", "palace_room",

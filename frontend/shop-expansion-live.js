@@ -18,21 +18,75 @@
   const close=value=>{shade.remove();previous?.focus?.();resolve(value)};
   shade.querySelector('[data-close]').onclick=()=>close(null);shade.onclick=e=>{if(e.target===shade)close(null)};shade.onkeydown=e=>{if(e.key==='Escape')close(null)};
   for(const m of [1,3,6,12]){const original=Number(prices?.[m]);const price=Math.max(1,original-Math.floor(original*Number(coupon?.percent||0)/100));if(!Number.isFinite(price))continue;
-   const b=button(m+' ay · '+price.toLocaleString('tr-TR')+' 🪙 Lidya'+(coupon?.percent?' · VIP %'+coupon.percent:'')+' · Kirala',()=>close(m));b.disabled=Number(me.lidya||0)<price;shade.querySelector('.shop-rent-options').append(b)}
+   const b=button(m+' ay · '+price.toLocaleString('tr-TR')+' 🪙 Lidya'+(coupon?.percent?' · VIP %'+coupon.percent:'')+' · Kirala',()=>close({months:m,expected_price:price}));b.disabled=Number(me.lidya||0)<price;shade.querySelector('.shop-rent-options').append(b)}
   document.body.append(shade);shade.querySelector('[data-close]').focus();
  })}
  async function render(){
   const root=document.getElementById('shop');if(!root||!window.ErisPlatform)return;const ticket=++epoch;style();root.innerHTML='<h1>Lidya mağazası</h1><p class="shop-note">Tasarım koleksiyonu yükleniyor…</p>';
-  try{const [catalog,owned,me,walls,coupon]=await Promise.all([api('/cosmetics'),api('/me/cosmetics'),api('/me'),api('/wallpapers'),api('/me/vip/benefits/coupon')]);if(ticket!==epoch)return;const items=[...list(catalog).filter(x=>!x.vip),...list(walls).filter(x=>x.room_only).map(x=>({...x,type:'wallpaper',asset_key:x.key}))],keys=new Set(list(owned).map(x=>(x.cosmetic_type||x.type)+':'+x.asset_key));state.gender??=me.gender==='male'?'male':'female';
+  try{const [catalog,owned,me,walls,coupon]=await Promise.all([api('/cosmetics'),api('/me/cosmetics'),api('/me'),api('/wallpapers'),api('/me/vip/benefits/coupon')]);if(ticket!==epoch)return;const items=[...list(catalog).filter(x=>!x.vip),...list(walls).filter(x=>x.room_only).map(x=>({...x,type:'wallpaper',asset_key:x.key}))],keys=new Set(list(owned).map(x=>(x.cosmetic_type||x.type)+':'+x.asset_key));const rentals=new Map(list(owned)
+    .filter(x=>x.rental&&x.expires_at)
+    .map(x=>[(x.cosmetic_type||x.type)+':'+x.asset_key,x]));
+    state.gender??=me.gender==='male'?'male':'female';
    root.innerHTML='<header class="shop-hero"><div><span class="shop-kicker">SARDİS KOLEKSİYONU</span><h1>Lidya mağazası</h1><p class="shop-note">Aslan mühürleri, palmetler ve antik işçilik. Tarzını önizle, koleksiyonuna ekle.</p></div><div class="shop-balance"><small>Bakiyen</small><strong data-balance></strong><span>Lidya</span></div></header><div class="shop-nav" data-genders></div><div class="shop-nav" data-categories></div><div class="shop-tools"><input type="search" aria-label="Tasarım ara" placeholder="Tasarım ara…"></div><div class="shop-count" role="status"></div><div class="liveShopGrid"></div><div class="shop-pages"></div>';
    root.querySelector('[data-balance]').textContent=Number(me.lidya||0).toLocaleString('tr-TR');for(const [key,name] of [['female','Kadın koleksiyonu'],['male','Erkek koleksiyonu']]){const b=button(name,()=>{state.gender=key;state.page=0;draw()});b.dataset.gender=key;b.setAttribute('aria-pressed',String(key===state.gender));root.querySelector('[data-genders]').append(b)}for(const [key,name] of Object.entries(labels)){const b=button(name,()=>{state.kind=key;state.page=0;draw()});b.dataset.kind=key;root.querySelector('[data-categories]').append(b)}const search=root.querySelector('input');search.value=state.search;search.oninput=e=>{state.search=e.target.value;state.page=0;draw()};const ownedButton=button('Koleksiyonum',()=>{state.owned=!state.owned;state.page=0;draw()});root.querySelector('.shop-tools').append(ownedButton);
    function draw(){if(ticket!==epoch)return;root.querySelectorAll('[data-gender]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.gender===state.gender)));root.querySelectorAll('[data-categories] [data-kind]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.kind===state.kind)));ownedButton.setAttribute('aria-pressed',String(state.owned));const kind=state.kind.replace('vip-',''),isVip=state.kind.startsWith('vip-'),filtered=items.filter(x=>x.type===kind&&!!x.vip===isVip&&(!x.gender||x.gender===state.gender)&&(state.owned?keys.has(kind+':'+x.asset_key):!keys.has(kind+':'+x.asset_key))&&String(x.name||x.asset_key).toLocaleLowerCase('tr-TR').includes(state.search.toLocaleLowerCase('tr-TR'))).sort((a,b)=>Number(!!window.ErisLidyaPremium?.describe(b.asset_key))-Number(!!window.ErisLidyaPremium?.describe(a.asset_key)));const pages=Math.max(1,Math.ceil(filtered.length/18));state.page=Math.min(state.page,pages-1);root.querySelector('.shop-count').textContent=filtered.length+' tasarım · '+(state.page+1)+' / '+pages;const grid=root.querySelector('.liveShopGrid');grid.replaceChildren();
     for(const [i,item] of filtered.slice(state.page*18,state.page*18+18).entries()){
      const key=item.asset_key,owned=keys.has(kind+':'+key),rentable=!!catalog.rental_prices?.[kind]&&!item.free&&!item.vip&&!item.task_only&&!item.relationship,compatible=!item.gender||item.gender===me.gender,unlocked=true,card=document.createElement('article');card.className='liveShopCard';const art=button('',()=>preview(item));art.className='liveShopPreview';art.dataset.kind=kind;art.setAttribute('aria-label',(item.name||'Tasarım')+' önizle');const img=document.createElement('img');img.src=url(item.asset_url||item.asset||key);img.alt='';img.loading='lazy';img.decoding='async';art.append(img);const name=document.createElement('b');name.className='liveShopName';name.textContent=item.name||'Avatar '+(state.page*18+i+1);const meta=document.createElement('div');meta.className='liveShopMeta';meta.textContent=item.room_only?'1 gün: '+Number(item.price).toLocaleString('tr-TR')+' Lidya · 7 / 30 gün seçenekleri':item.task_only?'Görev ödülü':item.vip?'VIP '+item.vip_level:item.free?'Ücretsiz':rentable?'1 ay · '+Number(catalog.rental_prices[kind][1]).toLocaleString('tr-TR')+' 🪙 Lidya':Number(item.price).toLocaleString('tr-TR')+' Lidya';
+     const rental=rentals.get(kind+':'+key);
+     if(rental){
+       const expiry=new Date(rental.expires_at);
+       const days=Math.max(0,Math.ceil((expiry-Date.now())/86400000));
+       meta.textContent='Kalan süre: '+days+' gün · Bitiş: '+expiry.toLocaleDateString('tr-TR',{timeZone:'Europe/Istanbul'});
+     }
      const action=button(item.room_only?'Odada kirala':item.task_only?(owned?'Uygula':'Görevleri aç'):!compatible?'Diğer koleksiyon':item.vip&&!unlocked?'VIP '+item.vip_level+' gerekli':item.free||owned||item.vip?'Uygula':rentable?'Kirala':'Satın al',async()=>{
       if(item.room_only){window.showView?.('explore');window.toast?.('Kendi odanda Duvar bölümünden süre seçebilirsin.');return}if(item.task_only&&!owned){window.showView?.('profile');window.ErisProfileHub.show('tasks');return}const lock=kind+':'+key;if(busy.has(lock))return;busy.add(lock);action.disabled=true;
-      try{if(rentable&&!owned){const months=await chooseRental(item,catalog.rental_prices[kind],me,coupon);if(!months){action.disabled=false;return}await api('/me/cosmetics/rent',{method:'POST',body:JSON.stringify({cosmetic_type:kind,asset_key:key,months})});busy.delete(lock);await window.ErisChatCosmetics.load();await render();window.toast?.('Kiralama tamamlandı.');return}if(!owned&&!item.free&&!item.vip&&!await confirmPurchase(item,me)){action.disabled=false;return}await api(kind==='entrance'&&(owned||item.free)?'/me/vip/entrance/equip':owned||item.free||item.vip?'/me/cosmetics/apply':'/me/cosmetics/purchase',{method:'POST',body:JSON.stringify({cosmetic_type:kind,asset_key:key})});busy.delete(lock);await window.ErisChatCosmetics.load();await render();window.toast?.(owned||item.free||item.vip?'Görünüm uygulandı.':'Koleksiyonuna eklendi.')}catch(e){action.disabled=false;window.toast?.(e.message)}finally{busy.delete(lock)}
-     });action.className='liveShopAction';action.disabled=!compatible||item.vip&&!unlocked||busy.has(kind+':'+key);card.append(art,name,meta,action);grid.append(card);
+      try{if(rentable&&!owned){const quote=await chooseRental(item,catalog.rental_prices[kind],me,coupon);if(!quote){action.disabled=false;return}await api('/me/cosmetics/rent',{method:'POST',body:JSON.stringify({cosmetic_type:kind,asset_key:key,months:quote.months,expected_price:quote.expected_price})});busy.delete(lock);await window.ErisChatCosmetics.load();await render();window.toast?.('Kiralama tamamlandı.');return}if(!owned&&!item.free&&!item.vip&&!await confirmPurchase(item,me)){action.disabled=false;return}await api(kind==='entrance'&&(owned||item.free)?'/me/vip/entrance/equip':owned||item.free||item.vip?'/me/cosmetics/apply':'/me/cosmetics/purchase',{method:'POST',body:JSON.stringify({cosmetic_type:kind,asset_key:key})});busy.delete(lock);await window.ErisChatCosmetics.load();await render();window.toast?.(owned||item.free||item.vip?'Görünüm uygulandı.':'Koleksiyonuna eklendi.')}catch(e){action.disabled=false;window.toast?.(e.message);if(e.message?.includes('Kiralama fiyatı değişti')){busy.delete(lock);await render()}}finally{busy.delete(lock)}
+     });action.className='liveShopAction';action.disabled=!compatible||item.vip&&!unlocked||busy.has(kind+':'+key);card.append(art,name,meta,action);
+     if(rental&&rentable&&compatible){
+       const renew=button('Süreyi uzat',async()=>{
+         const lock=kind+':'+key;
+         if(busy.has(lock))return;
+         busy.add(lock);
+         renew.disabled=true;
+         action.disabled=true;
+         try{
+           const [freshMe,freshCoupon]=await Promise.all([
+             api('/me'),
+             api('/me/vip/benefits/coupon')
+           ]);
+           const quote=await chooseRental(
+             item,catalog.rental_prices[kind],freshMe,freshCoupon
+           );
+           if(!quote)return;
+           await api('/me/cosmetics/rent',{
+             method:'POST',
+             body:JSON.stringify({
+               cosmetic_type:kind,
+               asset_key:key,
+               months:quote.months,
+               expected_price:quote.expected_price
+             })
+           });
+           window.toast?.('Kiralama süresi uzatıldı.');
+           busy.delete(lock);
+           await render();
+         }catch(e){
+           window.toast?.(e.message);
+           if(e.message?.includes('Kiralama fiyatı değişti')){
+             busy.delete(lock);
+             await render();
+           }
+         }finally{
+           busy.delete(lock);
+           renew.disabled=false;
+           action.disabled=false;
+         }
+       });
+       renew.className='liveShopAction';
+       renew.dataset.renewRental='true';
+       card.append(renew);
+     }
+     grid.append(card);
     }if(!filtered.length)grid.innerHTML='<div class="shop-empty">Bu seçimde ürün bulunamadı. Kategori veya aramayı değiştir.</div>';const pager=root.querySelector('.shop-pages');pager.replaceChildren();for(const [name,step] of [['Önceki',-1],['Sonraki',1]]){const b=button(name,()=>{state.page+=step;draw()});b.disabled=step<0?state.page===0:state.page>=pages-1;pager.append(b)}
    }draw();
   }catch(e){if(ticket===epoch){root.querySelector('.shop-note').textContent=e.message||'Mağaza yüklenemedi.';root.append(button('Tekrar dene',render))}}

@@ -1,3 +1,4 @@
+from tempfile import TemporaryDirectory
 """API and persistence tests for real VIP benefits (SQLite isolated database)."""
 
 import os, sys, unittest
@@ -41,11 +42,15 @@ def sqlite_bigint(type_, compiler, **kw):
 
 
 # Register the real gift and ledger models before creating test tables.
-from app import room_routes, system_data
+from app import room_routes, system_data, system_logs
 
 
 class Benefits(unittest.TestCase):
     def setUp(self):
+        log_dir = self.enterContext(TemporaryDirectory())
+        self.enterContext(
+            patch.object(system_logs, "ROOT", Path(log_dir))
+        )
         self.engine = create_engine(
             "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
         )
@@ -614,6 +619,368 @@ class Benefits(unittest.TestCase):
             403
         )
         self.db.rollback()
+        self.assertEqual(self.user.lidya, 12345)
+
+    def test_stale_discount_price_rejected_v111(self):
+        self.select("coupon", "enabled")
+
+        payload = {
+            "cosmetic_type": "avatar",
+            "asset_key": "shop-expansion/avatar-male-01.png",
+            "months": 1,
+            "expected_price": 2295,
+        }
+
+        first = self.client.post(
+            "/v1/me/cosmetics/rent", json=payload
+        )
+        self.assertEqual(first.status_code, 200, first.text)
+        self.assertEqual(first.json()["spent"], 2295)
+
+        before = self.user.lidya
+
+        second = self.client.post(
+            "/v1/me/cosmetics/rent", json=payload
+        )
+        self.assertEqual(second.status_code, 409)
+        self.db.rollback()
+
+        self.assertEqual(self.user.lidya, before)
+
+        payload["expected_price"] = 2700
+
+        third = self.client.post(
+            "/v1/me/cosmetics/rent", json=payload
+        )
+        self.assertEqual(third.status_code, 200, third.text)
+        self.assertEqual(third.json()["spent"], 2700)
+        self.assertEqual(self.user.lidya, 7350)
+
+    def test_manipulated_rental_price_rejected_v111(self):
+        self.select("coupon", "enabled")
+
+        response = self.client.post(
+            "/v1/me/cosmetics/rent",
+            json={
+                "cosmetic_type": "avatar",
+                "asset_key": "shop-expansion/avatar-male-01.png",
+                "months": 1,
+                "expected_price": 1,
+            },
+        )
+
+        self.assertEqual(response.status_code, 409)
+        self.db.rollback()
+        self.assertEqual(self.user.lidya, 12345)
+        self.assertFalse(v.claimed(self.db, "u", "coupon"))
+
+    def test_rental_renewal_preserves_remaining_time_v112(self):
+        from app.cosmetic_leases import add_months, CosmeticLease
+
+        self.select("coupon", "enabled")
+
+        payload = {
+            "cosmetic_type": "avatar",
+            "asset_key": "shop-expansion/avatar-male-01.png",
+            "months": 1,
+            "expected_price": 2295,
+        }
+
+        first = self.client.post(
+            "/v1/me/cosmetics/rent", json=payload
+        )
+        self.assertEqual(first.status_code, 200, first.text)
+
+        expiry = datetime.fromisoformat(
+            first.json()["expires_at"]
+        )
+
+        payload["expected_price"] = 2700
+
+        second = self.client.post(
+            "/v1/me/cosmetics/rent", json=payload
+        )
+        self.assertEqual(second.status_code, 200, second.text)
+
+        renewed = datetime.fromisoformat(
+            second.json()["expires_at"]
+        )
+
+        self.assertEqual(
+            renewed, add_months(expiry, 1)
+        )
+
+        leases = list(self.db.scalars(
+            select(CosmeticLease).where(
+                CosmeticLease.user_id == "u"
+            )
+        ))
+
+        self.assertEqual(len(leases), 1)
+        self.assertEqual(self.user.lidya, 7350)
+
+        inventory = self.client.get("/v1/me/cosmetics")
+        self.assertEqual(inventory.status_code, 200)
+
+        rental = next(
+            x for x in inventory.json()["items"]
+            if x["asset_key"] == payload["asset_key"]
+        )
+
+        self.assertTrue(rental["rental"])
+        self.assertTrue(rental["expires_at"])
+
+    def test_failed_renewal_preserves_lease_v112(self):
+        from app.cosmetic_leases import CosmeticLease
+
+        payload = {
+            "cosmetic_type": "avatar",
+            "asset_key": "shop-expansion/avatar-male-01.png",
+            "months": 1,
+            "expected_price": 2700,
+        }
+
+        first = self.client.post(
+            "/v1/me/cosmetics/rent", json=payload
+        )
+        self.assertEqual(first.status_code, 200, first.text)
+
+        lease = self.db.scalar(
+            select(CosmeticLease).where(
+                CosmeticLease.user_id == "u"
+            )
+        )
+        expiry = lease.expires_at
+
+        self.user.lidya = 0
+        self.db.commit()
+        self.select("coupon", "enabled")
+        payload["expected_price"] = 2295
+
+        second = self.client.post(
+            "/v1/me/cosmetics/rent", json=payload
+        )
+        self.assertEqual(second.status_code, 400)
+        self.db.rollback()
+        self.db.refresh(lease)
+
+        self.assertEqual(lease.expires_at, expiry)
+        self.assertEqual(self.user.lidya, 0)
+        self.assertFalse(v.claimed(self.db, "u", "coupon"))
+
+    def test_vip_center_automatic_rewards_v113(self):
+        from app.platform_models import VipRewardClaim
+
+        for _ in range(3):
+            response = self.client.get("/v1/me/vip/rewards")
+            self.assertEqual(response.status_code, 200, response.text)
+
+            rewards = response.json()
+            self.assertEqual(len(rewards), 12)
+            self.assertTrue(all(
+                r["unlocked"] and r["claimed"] and r["complete"]
+                for r in rewards
+            ))
+
+        claims = list(self.db.scalars(
+            select(VipRewardClaim).where(
+                VipRewardClaim.user_id == "u"
+            )
+        ))
+
+        self.assertEqual(len(claims), 12)
+
+        owned = [
+            (r.cosmetic_type, r.asset_key)
+            for r in self.db.scalars(
+                select(v.UserCosmetic).where(
+                    v.UserCosmetic.user_id == "u"
+                )
+            )
+        ]
+
+        self.assertEqual(len(owned), len(set(owned)))
+        self.assertEqual(self.user.lidya, 12345)
+
+    def test_vip_center_locked_rewards_v113(self):
+        self.db.get(v.VipStatus, "u").level = 3
+        self.db.commit()
+
+        response = self.client.get("/v1/me/vip/rewards")
+        self.assertEqual(response.status_code, 200, response.text)
+
+        for row in response.json():
+            if row["level"] <= 3:
+                self.assertTrue(row["unlocked"])
+                self.assertTrue(row["claimed"])
+                self.assertTrue(row["complete"])
+            else:
+                self.assertFalse(row["unlocked"])
+                self.assertFalse(row["claimed"])
+
+        self.assertEqual(self.user.lidya, 12345)
+
+    def test_sticker_activation_and_levels_v114(self):
+        from app.room_emoji_access import current_entitlement
+
+        self.db.get(v.VipStatus, "u").level = 1
+        self.db.commit()
+
+        result = current_entitlement(self.db, "u")
+        self.assertEqual(result["unlocked_ids"], ["vip_1"])
+
+        self.assertEqual(
+            self.select("stickers", "enabled").status_code,
+            200
+        )
+
+        result = current_entitlement(self.db, "u")
+        self.assertEqual(len(result["unlocked_ids"]), 7)
+        self.assertIn("lidya_sticker_6", result["unlocked_ids"])
+        self.assertNotIn("lidya_sticker_7", result["unlocked_ids"])
+
+        self.db.get(v.VipStatus, "u").level = 2
+        self.db.commit()
+
+        result = current_entitlement(self.db, "u")
+        self.assertEqual(len(result["unlocked_ids"]), 14)
+
+        self.select("stickers", None)
+        result = current_entitlement(self.db, "u")
+        self.assertEqual(result["unlocked_ids"], ["vip_1", "vip_2"])
+        self.assertEqual(self.user.lidya, 12345)
+
+    def test_expired_vip_emoji_entitlement_v114(self):
+        from app.room_emoji_access import current_entitlement
+        from app.vip_membership_models import VipMembership
+
+        self.db.get(v.VipStatus, "u").level = 1
+        self.db.commit()
+        self.select("stickers", "enabled")
+
+        member = self.db.get(VipMembership, "u")
+        member.cycle_ends_at = datetime.now(timezone.utc) - timedelta(seconds=1)
+        member.cycle_purchased = 0
+        self.db.commit()
+
+        result = current_entitlement(self.db, "u")
+
+        self.assertEqual(result["level"], 0)
+        self.assertEqual(result["unlocked_ids"], [])
+        self.assertEqual(self.user.lidya, 12345)
+
+    def test_early_collection_level_security_v115(self):
+        self.db.get(v.VipStatus, "u").level = 8
+        self.db.commit()
+
+        response = self.select(
+            "early_access", "golden-palace"
+        )
+        self.assertEqual(response.status_code, 403)
+        self.db.rollback()
+
+        self.db.get(v.VipStatus, "u").level = 9
+        self.db.commit()
+
+        response = self.select(
+            "early_access", "golden-palace"
+        )
+        self.assertEqual(response.status_code, 200, response.text)
+
+        self.assertEqual(
+            v.profile(self.db, self.user)["early_access"],
+            "golden-palace"
+        )
+
+        self.db.get(v.VipStatus, "u").level = 8
+        self.db.commit()
+
+        self.assertNotIn(
+            "early_access", v.profile(self.db, self.user)
+        )
+        self.assertEqual(self.user.lidya, 12345)
+
+    def test_early_collection_scene_conflict_v115(self):
+        self.assertEqual(
+            self.select("scenes", "palace").status_code,
+            200
+        )
+
+        response = self.select(
+            "early_access", "golden-palace"
+        )
+        self.assertEqual(response.status_code, 200)
+
+        active = v.active(self.db, "u")
+        self.assertIn("early_access", active)
+        self.assertNotIn("scenes", active)
+
+        response = self.select("scenes", "lion")
+        self.assertEqual(response.status_code, 200)
+
+        active = v.active(self.db, "u")
+        self.assertNotIn("early_access", active)
+        self.assertEqual(active["scenes"], "lion")
+
+        response = self.select(
+            "early_access", "invalid-scene"
+        )
+        self.assertEqual(response.status_code, 422)
+        self.db.rollback()
+
+        self.assertEqual(
+            v.active(self.db, "u")["scenes"], "lion"
+        )
+        self.assertEqual(self.user.lidya, 12345)
+
+    def test_gift_effect_level_protection_v116(self):
+        self.select("gift_seal", "lion")
+        self.select("gift_motion", "rain")
+        self.select("gift_scene", "enabled")
+
+        style = v.gift_style(self.db, "u")
+
+        self.assertEqual(style["gift_seal"], "lion")
+        self.assertEqual(style["gift_motion"], "rain")
+        self.assertEqual(style["gift_scene"], "enabled")
+
+        self.db.get(v.VipStatus, "u").level = 5
+        self.db.commit()
+
+        style = v.gift_style(self.db, "u")
+        self.assertNotIn("gift_scene", style)
+        self.assertIn("gift_motion", style)
+        self.assertIn("gift_seal", style)
+
+        self.db.get(v.VipStatus, "u").level = 3
+        self.db.commit()
+
+        self.assertEqual(v.gift_style(self.db, "u"), {})
+        self.assertEqual(self.user.lidya, 12345)
+
+    def test_gift_effect_privacy_and_validation_v116(self):
+        self.select("gift_seal", "laurel")
+        self.select("gift_motion", "palace")
+        self.select("gift_scene", "enabled")
+
+        response = self.select(
+            "gift_motion", "unauthorized-animation"
+        )
+        self.assertEqual(response.status_code, 422)
+        self.db.rollback()
+
+        self.assertEqual(
+            v.gift_style(self.db, "u")["gift_motion"],
+            "palace"
+        )
+
+        self.db.add(v.UserPrivacy(
+            user_id="u",
+            hide_vip=True
+        ))
+        self.db.commit()
+
+        self.assertEqual(v.gift_style(self.db, "u"), {})
         self.assertEqual(self.user.lidya, 12345)
 
     def test_missing_auth_is_rejected(self):

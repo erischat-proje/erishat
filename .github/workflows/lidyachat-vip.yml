@@ -11,7 +11,7 @@ permissions:
 jobs:
   vip-security:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
 
     services:
       postgres:
@@ -46,6 +46,18 @@ jobs:
             /frontend/vip-privileges.js
             /frontend/shop-expansion-live.js
             /frontend/room-gift-ui-live.js
+            /frontend/gift-live.js
+            /frontend/vip-privileges.css
+            /frontend/assets/vip-level-rewards-v2/
+            /frontend/vip-designs/lydia/
+            /tests/vip-privileges.browser.cjs
+            /tests/vip_privileges_ui_server.py
+            /tests/test_vip_gift_integration_v116.cjs
+            /frontend/room-emojis.js
+            /frontend/vip-rewards-live.js
+            /frontend/assets/room-emojis-lidya-v1/
+            /frontend/assets/vip-privileges-v1/
+            /tests/room-emojis-vip.test.py
 
       - uses: actions/setup-python@v5
         with:
@@ -65,6 +77,15 @@ jobs:
           node --check frontend/vip-privileges.js
           node --check frontend/shop-expansion-live.js
           node --check frontend/room-gift-ui-live.js
+          node --check frontend/gift-live.js
+          node --check frontend/room-emojis.js
+          node --check frontend/vip-rewards-live.js
+
+      - name: VIP WebSocket emoji security
+        run: python tests/room-emojis-vip.test.py -v
+
+      - name: VIP and Nobility gift integration
+        run: node --test tests/test_vip_gift_integration_v116.cjs
 
       - name: VIP SQLite functional regression
         run: python -m pytest -v tests/test_vip_privileges.py
@@ -74,3 +95,36 @@ jobs:
 
       - name: VIP membership lifecycle
         run: python -m pytest -v tests/test_vip_membership.py
+
+
+      - name: Install Chromium browser tests
+        run: |
+          npm install --no-save --package-lock=false playwright
+          npx playwright install --with-deps chromium
+
+      - name: VIP real browser and theme verification
+        run: |
+          set -euo pipefail
+
+          python -m uvicorn vip_privileges_ui_server:app --app-dir tests --host 127.0.0.1 --port 8767 > vip-browser-server.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8767/ >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+
+          curl -fsS http://127.0.0.1:8767/ >/dev/null
+          timeout 180s node tests/vip-privileges.browser.cjs
+
+      - name: Upload VIP browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lidyachat-vip-browser-evidence
+          path: |
+            vip-browser-results/
+            vip-browser-server.log
