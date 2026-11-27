@@ -47,6 +47,7 @@ function resolve(rank,id){
 
  if(!owner)return null;
 
+ if(rank===4 && id==='daily_banner')return base+'king/king-daily-banner-v5.png';
  return base+owner.key+'/'+files[id];
 }
 
