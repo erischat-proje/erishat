@@ -2489,196 +2489,368 @@ body:has(.lidya-king-notice:is(
 }
 
 
-/* KING PREMIUM V3 CARD CLEANUP */
+/* KING PREMIUM V4 EXACT CARD LAYOUT */
 
-/* =========================
-   HOME - LIVE ROOM CARD
-   ========================= */
+/* =========================================
+   HOME LIVE ROOM CARD
+   Base size from existing component:
+   ~104 x 129 px
+   ========================================= */
 
-#lidyaHomeRoomsV1 .lidya-nobility-room-card{
+#lidyaHomeRoomsV1 .lhr-card.lidya-nobility-room-card{
   position:relative!important;
+  width:104px!important;
+  min-width:104px!important;
+  max-width:104px!important;
+  min-height:129px!important;
+  height:129px!important;
+  padding:0!important;
   overflow:hidden!important;
   border:1px solid #d8b56a!important;
   border-radius:18px!important;
-  background:linear-gradient(180deg,#f2e8d2,#e9dcc0)!important;
-  box-shadow:0 6px 18px rgba(0,0,0,.10)!important;
+  background:linear-gradient(180deg,#f5ead2,#ebdfc4)!important;
+  box-shadow:0 6px 16px rgba(0,0,0,.08)!important;
 }
 
-#lidyaHomeRoomsV1 .lidya-nobility-room-card::before{
+#lidyaHomeRoomsV1 .lhr-card.lidya-nobility-room-card::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:18px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,.04) 0%,
+      rgba(255,255,255,0) 18%
+    );
+  pointer-events:none;
+  z-index:1;
+}
+
+#lidyaHomeRoomsV1 .lhr-card.lidya-nobility-room-card::after{
   content:"";
   position:absolute;
   left:8px;
   right:8px;
   bottom:8px;
-  height:44%;
-  border-radius:14px;
+  height:40px;
+  border-radius:12px;
   background:
     linear-gradient(
       180deg,
-      rgba(18,5,8,0) 0%,
-      rgba(40,8,12,.68) 38%,
-      rgba(29,5,9,.86) 100%
+      rgba(33,7,10,.35) 0%,
+      rgba(41,8,12,.74) 45%,
+      rgba(26,4,7,.88) 100%
     );
-  z-index:1;
+  box-shadow:
+    inset 0 1px 0 rgba(255,223,172,.10),
+    0 2px 8px rgba(0,0,0,.10);
+  z-index:2;
   pointer-events:none;
 }
 
-#lidyaHomeRoomsV1 .lidya-nobility-room-card .lhr-avatar,
-#lidyaHomeRoomsV1 .lidya-nobility-room-card .lhr-frame,
-#lidyaHomeRoomsV1 .lidya-nobility-room-card .lhr-live-dot,
-#lidyaHomeRoomsV1 .lidya-nobility-room-card .lhr-follow-mark,
-#lidyaHomeRoomsV1 .lidya-nobility-room-card .lhr-lock{
-  position:relative;
-  z-index:3;
+#lidyaHomeRoomsV1 .lhr-card.lidya-nobility-room-card .lhr-avatar{
+  position:absolute!important;
+  top:10px!important;
+  left:10px!important;
+  width:58px!important;
+  height:58px!important;
+  z-index:4!important;
+  border:2px solid #d8b56a!important;
+  box-shadow:0 2px 8px rgba(0,0,0,.16)!important;
 }
 
-#lidyaHomeRoomsV1 .lidya-nobility-room-card .lhr-name{
-  position:relative;
-  z-index:3;
-  margin-top:auto;
-  width:100%;
-  padding:0 8px;
-  background:none!important;
-  color:#fff8ee!important;
-  font-size:12px!important;
-  font-weight:900!important;
-  text-align:center!important;
-  text-shadow:0 1px 3px rgba(0,0,0,.85)!important;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
+#lidyaHomeRoomsV1 .lhr-card.lidya-nobility-room-card .lhr-avatar img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:cover!important;
+  border-radius:50%!important;
 }
 
-#lidyaHomeRoomsV1 .lidya-nobility-room-card .lhr-count{
-  position:relative;
-  z-index:3;
-  margin-top:1px;
+#lidyaHomeRoomsV1 .lhr-card.lidya-nobility-room-card .lhr-frame{
+  position:absolute!important;
+  inset:-7px!important;
+  background-position:center!important;
+  background-repeat:no-repeat!important;
+  background-size:100% 100%!important;
+  z-index:5!important;
+  pointer-events:none!important;
+}
+
+#lidyaHomeRoomsV1 .lhr-card.lidya-nobility-room-card .lhr-live-dot{
+  position:absolute!important;
+  right:-1px!important;
+  bottom:2px!important;
+  width:13px!important;
+  height:13px!important;
+  border:2px solid #f5ead2!important;
+  z-index:6!important;
+}
+
+#lidyaHomeRoomsV1 .lhr-card.lidya-nobility-room-card .lhr-name{
+  position:absolute!important;
+  left:14px!important;
+  right:12px!important;
+  bottom:24px!important;
+  z-index:6!important;
+  margin:0!important;
   padding:0!important;
   background:none!important;
-  color:#ffe1a8!important;
+  color:#fff8ef!important;
   font-size:11px!important;
-  font-weight:800!important;
-  text-align:center!important;
+  line-height:1.1!important;
+  font-weight:900!important;
+  text-align:left!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
   text-shadow:0 1px 3px rgba(0,0,0,.85)!important;
-  white-space:nowrap;
 }
 
-/* =========================
-   EXPLORE / ROOM LIST CARD
-   ========================= */
+#lidyaHomeRoomsV1 .lhr-card.lidya-nobility-room-card .lhr-count{
+  position:absolute!important;
+  left:14px!important;
+  right:12px!important;
+  bottom:10px!important;
+  z-index:6!important;
+  margin:0!important;
+  padding:0!important;
+  background:none!important;
+  color:#ffe0a5!important;
+  font-size:10px!important;
+  line-height:1!important;
+  font-weight:800!important;
+  text-align:left!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  text-shadow:0 1px 3px rgba(0,0,0,.85)!important;
+}
 
-.room.lidya-nobility-room-card,
-.eris-room-list-card.lidya-nobility-room-card{
+#lidyaHomeRoomsV1 .lhr-card.lidya-nobility-room-card .lhr-follow-mark{
+  position:absolute!important;
+  top:8px!important;
+  left:8px!important;
+  z-index:7!important;
+}
+
+#lidyaHomeRoomsV1 .lhr-card.lidya-nobility-room-card .lhr-lock{
+  position:absolute!important;
+  top:8px!important;
+  right:8px!important;
+  z-index:7!important;
+}
+
+/* =========================================
+   EXPLORE SOCIAL ROOM CARD
+   Real layout: left icon / center text / right live badge
+   ========================================= */
+
+#explore .room.lidya-nobility-room-card{
   position:relative!important;
+  display:grid!important;
+  grid-template-columns:64px minmax(0,1fr) 88px!important;
+  align-items:center!important;
+  column-gap:12px!important;
+  min-height:102px!important;
+  padding:10px 12px!important;
+  border-radius:18px!important;
   overflow:hidden!important;
 }
 
-.room.lidya-nobility-room-card .roomText,
-.eris-room-list-card.lidya-nobility-room-card .roomText{
-  position:relative;
-  z-index:2;
-  display:flex!important;
-  flex-direction:column!important;
-  justify-content:center!important;
+#explore .room.lidya-nobility-room-card .ec-room-art{
+  position:relative!important;
+  z-index:3!important;
+  width:58px!important;
+  height:58px!important;
+  min-width:58px!important;
+  border-radius:50%!important;
+  display:grid!important;
+  place-items:center!important;
+  background:linear-gradient(180deg,#f3e6c7,#e6d8b5)!important;
+  border:1px solid #d6b878!important;
+  box-shadow:0 2px 8px rgba(0,0,0,.08)!important;
+}
+
+#explore .room.lidya-nobility-room-card .roomText{
+  position:relative!important;
+  z-index:3!important;
   min-width:0!important;
+  margin:0!important;
   padding:10px 12px!important;
-  margin:6px 0!important;
   border-radius:14px!important;
   background:
     linear-gradient(
       90deg,
-      rgba(36,6,10,.78) 0%,
-      rgba(56,9,14,.72) 48%,
-      rgba(33,5,9,.52) 100%
+      rgba(32,6,9,.82) 0%,
+      rgba(58,10,15,.78) 55%,
+      rgba(42,7,11,.64) 100%
     )!important;
   box-shadow:
-    inset 0 1px 0 rgba(255,231,181,.12),
-    0 2px 8px rgba(0,0,0,.10)!important;
+    inset 0 1px 0 rgba(255,232,185,.10),
+    0 2px 8px rgba(0,0,0,.08)!important;
 }
 
-.room.lidya-nobility-room-card .roomText b,
-.eris-room-list-card.lidya-nobility-room-card .roomText b{
-  margin:0 0 3px 0!important;
-  color:#fff7eb!important;
-  font-size:15px!important;
-  font-weight:900!important;
-  line-height:1.15!important;
-  text-shadow:0 1px 3px rgba(0,0,0,.85)!important;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
-.room.lidya-nobility-room-card .roomText small,
-.eris-room-list-card.lidya-nobility-room-card .roomText small{
+#explore .room.lidya-nobility-room-card .roomText b{
   display:block!important;
-  margin-top:2px!important;
-  color:#ffe2ae!important;
-  font-size:11px!important;
-  line-height:1.2!important;
+  margin:0 0 4px 0!important;
+  color:#fff8ef!important;
+  font-size:15px!important;
+  line-height:1.12!important;
+  font-weight:900!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
   text-shadow:0 1px 3px rgba(0,0,0,.85)!important;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  opacity:1!important;
-  background:none!important;
 }
 
-.room.lidya-nobility-room-card .ec-room-live,
-.eris-room-list-card.lidya-nobility-room-card .ec-room-live{
-  position:relative;
-  z-index:2;
-  background:#fffaf0!important;
-  color:#3f2a10!important;
-  border:1px solid #e6cf9c!important;
-  border-radius:12px!important;
-  padding:7px 12px!important;
+#explore .room.lidya-nobility-room-card .roomText small{
+  display:block!important;
+  margin:2px 0 0 0!important;
+  color:#ffe0a5!important;
+  font-size:10.5px!important;
+  line-height:1.18!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  opacity:1!important;
+  text-shadow:0 1px 3px rgba(0,0,0,.85)!important;
+}
+
+#explore .room.lidya-nobility-room-card .ec-room-live{
+  position:relative!important;
+  z-index:3!important;
+  width:84px!important;
+  min-width:84px!important;
+  height:42px!important;
+  display:grid!important;
+  place-items:center!important;
+  padding:0!important;
+  border-radius:14px!important;
+  background:#fff8ef!important;
+  color:#3d2910!important;
+  border:1px solid #e2ca94!important;
   font-size:12px!important;
   font-weight:900!important;
+  letter-spacing:.04em!important;
   box-shadow:0 2px 8px rgba(0,0,0,.08)!important;
 }
 
-.eris-room-list-card.lidya-nobility-room-card .eris-room-list-open{
-  position:relative;
-  z-index:2;
+/* =========================================
+   ROOMS / FOLLOWED ROOM LIST CARD
+   Same design language as Explore
+   ========================================= */
+
+.eris-room-list-card.lidya-nobility-room-card{
+  position:relative!important;
+  overflow:hidden!important;
+  border-radius:18px!important;
 }
 
-/* Followed room / rooms page meta clarity */
+.eris-room-list-card.lidya-nobility-room-card .eris-room-list-open{
+  position:relative!important;
+  z-index:3!important;
+  display:grid!important;
+  grid-template-columns:64px minmax(0,1fr) auto!important;
+  align-items:center!important;
+  column-gap:12px!important;
+  min-height:102px!important;
+  padding:10px 12px!important;
+}
+
+.eris-room-list-card.lidya-nobility-room-card .ava{
+  width:58px!important;
+  height:58px!important;
+  min-width:58px!important;
+  border-radius:50%!important;
+  display:grid!important;
+  place-items:center!important;
+  background:linear-gradient(180deg,#f3e6c7,#e6d8b5)!important;
+  border:1px solid #d6b878!important;
+  box-shadow:0 2px 8px rgba(0,0,0,.08)!important;
+}
+
+.eris-room-list-card.lidya-nobility-room-card .roomText{
+  min-width:0!important;
+  margin:0!important;
+  padding:10px 12px!important;
+  border-radius:14px!important;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(32,6,9,.82) 0%,
+      rgba(58,10,15,.78) 55%,
+      rgba(42,7,11,.64) 100%
+    )!important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,232,185,.10),
+    0 2px 8px rgba(0,0,0,.08)!important;
+}
+
+.eris-room-list-card.lidya-nobility-room-card .roomText b{
+  display:block!important;
+  margin:0 0 4px 0!important;
+  color:#fff8ef!important;
+  font-size:15px!important;
+  line-height:1.12!important;
+  font-weight:900!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  text-shadow:0 1px 3px rgba(0,0,0,.85)!important;
+}
+
+.eris-room-list-card.lidya-nobility-room-card .roomText small,
 .eris-room-list-card.lidya-nobility-room-card .room-meta,
 .eris-room-list-card.lidya-nobility-room-card .room-id{
-  color:#ffe2ae!important;
+  display:block!important;
+  color:#ffe0a5!important;
+  font-size:10.5px!important;
+  line-height:1.18!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  opacity:1!important;
+  text-shadow:0 1px 3px rgba(0,0,0,.85)!important;
 }
 
-/* Keep icon visible and balanced */
-.room.lidya-nobility-room-card .ec-room-art,
-.eris-room-list-card.lidya-nobility-room-card .ava{
-  position:relative;
-  z-index:2;
-}
-
-/* =========================
-   SMALL SCREEN TUNING
-   ========================= */
-@media (max-width: 420px){
-  .room.lidya-nobility-room-card .roomText,
-  .eris-room-list-card.lidya-nobility-room-card .roomText{
-    padding:8px 10px!important;
-    border-radius:12px!important;
+/* Small devices */
+@media (max-width:420px){
+  #explore .room.lidya-nobility-room-card{
+    grid-template-columns:58px minmax(0,1fr) 82px!important;
+    column-gap:10px!important;
+    padding:9px 10px!important;
   }
 
-  .room.lidya-nobility-room-card .roomText b,
+  #explore .room.lidya-nobility-room-card .ec-room-art,
+  .eris-room-list-card.lidya-nobility-room-card .ava{
+    width:54px!important;
+    height:54px!important;
+    min-width:54px!important;
+  }
+
+  #explore .room.lidya-nobility-room-card .ec-room-live{
+    width:78px!important;
+    min-width:78px!important;
+    height:40px!important;
+    font-size:11.5px!important;
+  }
+
+  #explore .room.lidya-nobility-room-card .roomText b,
   .eris-room-list-card.lidya-nobility-room-card .roomText b{
     font-size:14px!important;
   }
 
-  .room.lidya-nobility-room-card .roomText small,
-  .eris-room-list-card.lidya-nobility-room-card .roomText small{
-    font-size:10.5px!important;
+  #explore .room.lidya-nobility-room-card .roomText small,
+  .eris-room-list-card.lidya-nobility-room-card .roomText small,
+  .eris-room-list-card.lidya-nobility-room-card .room-meta,
+  .eris-room-list-card.lidya-nobility-room-card .room-id{
+    font-size:10px!important;
   }
 }
 
 
-/* King room local palette */
+/* /* King room local palette */
 html body #erisRoomSurface.lidya-king-room-theme {
   --ui-panel:#24100e;
   --ui-raised:#3d1d16;
