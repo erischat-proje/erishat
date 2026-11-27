@@ -169,7 +169,7 @@ def test_other_rank_preserved(
     payload = publish.call_args.args[0]
 
     assert payload["rank"] == rank
-    assert "gift" not in payload
+    assert payload["gift"] == DETAILS
 
 
 def test_expired_rank_denied(banner_db, monkeypatch):

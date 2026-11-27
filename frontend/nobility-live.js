@@ -987,7 +987,9 @@ function renderAsset(target,rank,id,fallback){
 
  target.textContent=fallback||'';
 
- const src=window.LidyaNobilityAssets?.resolve(rank,id);
+ const src=
+   window.LidyaNobilityAssets?.resolvePreview?.(rank,id) ||
+   window.LidyaNobilityAssets?.resolve(rank,id);
  if(!src)return;
 
  const img=document.createElement('img');

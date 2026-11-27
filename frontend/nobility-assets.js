@@ -50,8 +50,27 @@ function resolve(rank,id){
  return base+owner.key+'/'+files[id];
 }
 
+const kingPreviews=Object.freeze({
+ online_priority:'online-priority.png',
+ gift_banner:'gift-banner-preview.png',
+ activation_banner:'activation-banner-preview.png',
+ kick_protection:'kick-protection.png',
+ room_welcome:'room-welcome-preview.png',
+ animated_avatar:'animated-avatar.png',
+ couple_repair:'couple-repair.png',
+ super_kick:'super-kick.png',
+});
+
+function resolvePreview(rank,id){
+ if(rank===4 && Object.hasOwn(kingPreviews,id)){
+  return base+'king/previews/'+kingPreviews[id];
+ }
+ return resolve(rank,id);
+}
+
 window.LidyaNobilityAssets=Object.freeze({
  resolve,
+ resolvePreview,
  files
 });
 })();

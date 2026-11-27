@@ -99,7 +99,10 @@
           user.nobility,'frame'
         );
 
-    const frame = nobilityFrame || assetUrl(frameKey);
+    const frame = window.LidyaNobilityAppearance
+      ?.hasEmbeddedFrame?.(user.nobility,superAvatar)
+      ? ''
+      : nobilityFrame || assetUrl(frameKey);
     const wallpaper = assetUrl(state.wallpapers.find(item => item.key === wallpaperKey)?.asset);
     if (wallpaper) { document.documentElement.style.setProperty('--eris-wallpaper', `url("${wallpaper}")`); document.body.style.backgroundImage = `linear-gradient(#05030aa8,#05030ad9), url("${wallpaper}")`; document.body.style.backgroundSize = 'cover'; document.body.style.backgroundAttachment = 'fixed'; } else { document.documentElement.style.removeProperty('--eris-wallpaper'); document.body.style.backgroundImage = ''; }
     root.querySelectorAll('[data-user-avatar], .profile .face, .user-avatar').forEach(el => {

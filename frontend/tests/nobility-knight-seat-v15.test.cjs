@@ -116,7 +116,7 @@ test('Yonetim kimligi korunur',()=>{
 });
 
 for(const rank of [4]){
-  test('Diger rutbe korunur: '+rank,()=>{
+  test('Kral premium koltuk rozeti: '+rank,()=>{
     const h=setup();
 
     h.render({
@@ -124,8 +124,8 @@ for(const rank of [4]){
       nobility:{rank,privileges:['badge']}
     });
 
-    assert.equal(h.calls[0].target,'b');
-    assert.equal(h.classes.size,0);
+    assert.equal(h.calls[0].target,'.seat-pod');
+    assert.ok(h.classes.has('lidya-knight-seat'));
   });
 }
 
@@ -213,6 +213,53 @@ test('Duke management seat protected',()=>{
   h.render({
     user_id:'duke-user',
     nobility:{rank:3,privileges:['badge']}
+  },true);
+
+  assert.equal(h.classes.size,0);
+  assert.equal(h.calls[0].target,'b');
+});
+
+
+// KING SEAT V2.6.1
+
+
+test('King seat badge authorized',()=>{
+  const h=setup();
+
+  h.render({
+    user_id:'king-user',
+    nobility:{rank:4,privileges:['badge']}
+  });
+
+  assert.equal(h.calls.length,1);
+  assert.equal(h.calls[0].target,'.seat-pod');
+  assert.equal(h.calls[0].data.rank,4);
+  assert.ok(h.classes.has('lidya-knight-seat'));
+});
+
+test('King badge unequipped',()=>{
+  const h=setup();
+
+  h.render({
+    user_id:'king-user',
+    nobility:{rank:4,privileges:['badge']}
+  });
+
+  h.render({
+    user_id:'king-user',
+    nobility:{rank:4,privileges:['frame']}
+  });
+
+  assert.equal(h.classes.size,0);
+  assert.equal(h.calls.at(-1).target,'b');
+});
+
+test('King management seat protected',()=>{
+  const h=setup();
+
+  h.render({
+    user_id:'king-user',
+    nobility:{rank:4,privileges:['badge']}
   },true);
 
   assert.equal(h.classes.size,0);

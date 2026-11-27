@@ -231,7 +231,7 @@
 
     if(!api)return;
 
-    const knight=[1,2,3].includes(seat.nobility?.rank) &&
+    const knight=[1,2,3,4].includes(seat.nobility?.rank) &&
       !staff &&
       Boolean(api.resolve(seat.nobility,'badge'));
 
@@ -284,7 +284,10 @@
           )
         : null;
 
-      const frameUrl=nobilityFrame||
+      const frameUrl=window.LidyaNobilityAppearance
+         ?.hasEmbeddedFrame?.(seat.nobility,superAvatar)
+         ? ''
+         : nobilityFrame||
         (frameRaw&&window.ErisChatCosmetics?.assetUrl
           ?window.ErisChatCosmetics.assetUrl(frameRaw)
           :frameRaw);
