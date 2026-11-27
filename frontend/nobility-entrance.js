@@ -27,7 +27,8 @@ function close(){
 function play(rank,nickname,onDone,options={}){
  const knight=rank===1;
  const count=rank===2;
- const timed=knight||count;
+ const duke=rank===3;
+ const timed=knight||count||duke;
  const live=timed&&options.live===true;
 
  if(timed&&document.hidden)return false;
@@ -47,12 +48,17 @@ function play(rank,nickname,onDone,options={}){
  if(count){
   overlay.className+=' lidya-count-timed-entrance';
  }
+ if(duke){
+  overlay.className+=' lidya-duke-timed-entrance';
+ }
  if(live){
   overlay.className+=knight
    ? ' lidya-knight-live-entrance'
-   : ' lidya-count-live-entrance';
+   : count
+    ? ' lidya-count-live-entrance'
+    : ' lidya-duke-live-entrance';
   overlay.setAttribute('role','region');
-  overlay.setAttribute('aria-label',knight?'Şövalye oda girişi':'Kont oda girişi');
+  overlay.setAttribute('aria-label',knight?'Şövalye oda girişi':count?'Kont oda girişi':'Dük oda girişi');
  }else{
   overlay.setAttribute('role','dialog');
   overlay.setAttribute('aria-modal','true');
@@ -70,7 +76,7 @@ function play(rank,nickname,onDone,options={}){
  video.playsInline=true;
  video.preload='metadata';
  video.poster=assets.resolve(rank,'entrance');
- video.src=src;
+ video.src=duke?src+'?v=duke-v1213':src;
 
  const name=document.createElement('div');
  name.className='ln-entrance-name';
@@ -99,8 +105,11 @@ function play(rank,nickname,onDone,options={}){
   video.ontimeupdate=()=>{
    const visible=knight
     ? video.currentTime>=8
-    : video.currentTime>=7 &&
-      video.currentTime<9.8;
+    : count
+     ? video.currentTime>=7 &&
+       video.currentTime<9.8
+     : video.currentTime>=6.4 &&
+       video.currentTime<9.6;
 
    if(name.hidden===visible){
     name.hidden=!visible;

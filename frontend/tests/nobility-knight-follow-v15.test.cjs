@@ -17,10 +17,10 @@ assert.ok(start>=0&&end>start);
 const window={
   LidyaNobilityAppearance:{
     resolve:(data,id)=>{
-      return [1,2].includes(data?.rank) &&
+      return [1,2,3].includes(data?.rank) &&
         data.privileges?.includes(id)
         ? './assets/lidya-nobility/'+
-          (data.rank===1?'knight':'count')+'/'+id+'.png'
+          ({1:'knight',2:'count',3:'duke'}[data.rank])+'/'+id+'.png'
         : null;
     }
   }
@@ -92,7 +92,7 @@ for(const role of ['SA','UA','FA','DA']){
   });
 }
 
-for(const rank of [0,3,4]){
+for(const rank of [0,4]){
   test('Diger rutbe korunur: '+rank,()=>{
     const user={
       ...knight,
@@ -175,6 +175,63 @@ for(const role of ['SA','UA','FA','DA']){
 test('Kont yonetim kilidini korur',()=>{
   assert.equal(
     context.authorized({...count,management_locked:true}),
+    null
+  );
+});
+
+
+// DUKE PROFILE V1.21.5.1
+
+const duke={
+  ...knight,
+  nobility:{
+    rank:3,
+    privileges:['badge','frame']
+  }
+};
+
+test('Duke own profile frame',()=>{
+  const html=context.render(duke);
+
+  assert.ok(html.includes('/duke/frame.png'));
+  assert.ok(!html.includes('/knight/frame.png'));
+  assert.ok(!html.includes('/count/frame.png'));
+  assert.ok(!html.includes('normal-frame.png'));
+
+  assert.equal(
+    (html.match(/class="eris-follow-frame"/g)||[]).length,
+    1
+  );
+});
+
+test('Duke frame unequipped',()=>{
+  const html=context.render({
+    ...duke,
+    nobility:{rank:3,privileges:['badge']}
+  });
+
+  assert.ok(html.includes('normal-frame.png'));
+  assert.ok(!html.includes('/duke/frame.png'));
+});
+
+for(const role of ['SA','UA','FA','DA']){
+  test('Duke staff protection: '+role,()=>{
+    const user={...duke,admin_role:role};
+
+    assert.equal(context.authorized(user),null);
+
+    assert.ok(
+      context.render(user).includes('normal-frame.png')
+    );
+  });
+}
+
+test('Duke management lock',()=>{
+  assert.equal(
+    context.authorized({
+      ...duke,
+      management_locked:true
+    }),
     null
   );
 });

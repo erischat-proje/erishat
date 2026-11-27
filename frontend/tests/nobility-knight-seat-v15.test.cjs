@@ -115,7 +115,7 @@ test('Yonetim kimligi korunur',()=>{
   assert.equal(h.classes.size,0);
 });
 
-for(const rank of [3,4]){
+for(const rank of [4]){
   test('Diger rutbe korunur: '+rank,()=>{
     const h=setup();
 
@@ -167,6 +167,52 @@ test('Kont yonetim koltuk yerlesimini korur',()=>{
   h.render({
     user_id:'count-user',
     nobility:{rank:2,privileges:['badge']}
+  },true);
+
+  assert.equal(h.classes.size,0);
+  assert.equal(h.calls[0].target,'b');
+});
+
+
+// DUKE SEAT V1.21.5.1
+
+test('Duke seat badge authorized',()=>{
+  const h=setup();
+
+  h.render({
+    user_id:'duke-user',
+    nobility:{rank:3,privileges:['badge']}
+  });
+
+  assert.equal(h.calls.length,1);
+  assert.equal(h.calls[0].target,'.seat-pod');
+  assert.equal(h.calls[0].data.rank,3);
+  assert.ok(h.classes.has('lidya-knight-seat'));
+});
+
+test('Duke badge unequipped',()=>{
+  const h=setup();
+
+  h.render({
+    user_id:'duke-user',
+    nobility:{rank:3,privileges:['badge']}
+  });
+
+  h.render({
+    user_id:'duke-user',
+    nobility:{rank:3,privileges:['frame']}
+  });
+
+  assert.equal(h.classes.size,0);
+  assert.equal(h.calls.at(-1).target,'b');
+});
+
+test('Duke management seat protected',()=>{
+  const h=setup();
+
+  h.render({
+    user_id:'duke-user',
+    nobility:{rank:3,privileges:['badge']}
   },true);
 
   assert.equal(h.classes.size,0);

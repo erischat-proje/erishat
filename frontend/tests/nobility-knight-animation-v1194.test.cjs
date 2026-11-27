@@ -174,7 +174,7 @@ test('Unrelated gift animation is not suppressed',()=>{
 });
 
 test('Other ranks preserve legacy animations',()=>{
-  for(const rank of [3,4]){
+  for(const rank of [4]){
     const s=setup();
 
     s.receive(banner(['101'],rank));

@@ -162,7 +162,7 @@
       )||asset(u.frame_asset);
       const knightFrame = Boolean(
         frame &&
-        [1,2].includes(u.nobility?.rank) &&
+        [1,2,3].includes(u.nobility?.rank) &&
         !window.ErisStaffIdentity?.isStaff(u) &&
         frame === window.LidyaNobilityAppearance?.resolve(
           u.nobility, 'frame'

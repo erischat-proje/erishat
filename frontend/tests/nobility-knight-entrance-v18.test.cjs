@@ -193,7 +193,7 @@ test('Magaza onizlemesi tam ekran',()=>{
   );
 });
 
-for(const rank of [3,4]){
+for(const rank of [4]){
   test('Diger rutbe korunur: '+rank,()=>{
     const h=setup();
     h.start(rank);
@@ -480,7 +480,7 @@ test('Kapanista isim zamanlayicisi temizlenir',()=>{
 });
 
 test('Diger rutbelerin ses ayarlari korunur',()=>{
-  for(const rank of [3,4]){
+  for(const rank of [4]){
     const h=setup();
     h.start(rank);
 
@@ -666,4 +666,154 @@ test('Kont 12 saniye zaman asimi',()=>{
   h.tick();
 
   assert.equal(h.overlays.length,0);
+});
+
+
+// DUKE ENTRANCE V1.21.3.2
+
+test('Duke live entrance',()=>{
+  const h=setup();
+  assert.equal(h.start(3),true);
+
+  assert.match(
+    h.overlays[0].className,
+    /lidya-duke-timed-entrance/
+  );
+
+  assert.match(
+    h.overlays[0].className,
+    /lidya-duke-live-entrance/
+  );
+
+  assert.equal(
+    h.overlays[0].attributes.role,'region'
+  );
+});
+
+test('Duke original audio enabled',()=>{
+  const h=setup();
+  h.start(3);
+
+  const video=h.videos[0];
+
+  assert.equal(
+    video.src,
+    '3/entrance_video?v=duke-v1213'
+  );
+  assert.equal(video.muted,false);
+  assert.equal(video.volume,1);
+});
+
+test('Duke nickname timing',()=>{
+  const h=setup();
+  h.start(3);
+
+  const video=h.videos[0];
+  const name=h.overlays[0].children[0].children[1];
+
+  assert.equal(name.hidden,true);
+
+  for(const [time,hidden] of [
+    [0,true],
+    [6.39,true],
+    [6.4,false],
+    [8,false],
+    [9.59,false],
+    [9.6,true],
+    [10,true],
+    [8,false],
+    [3,true]
+  ]){
+    video.currentTime=time;
+    video.ontimeupdate();
+    assert.equal(name.hidden,hidden);
+  }
+});
+
+test('Duke preview modal',()=>{
+  const h=setup();
+  h.start(3,false);
+
+  assert.equal(
+    h.overlays[0].attributes['aria-modal'],
+    'true'
+  );
+});
+
+test('Duke video cleanup',()=>{
+  const h=setup();
+  h.start(3);
+  h.videos[0].onended();
+
+  assert.equal(h.overlays.length,0);
+  assert.equal(h.timers.size,0);
+  assert.equal(h.done,1);
+});
+
+test('Duke room exit cleanup',()=>{
+  const h=setup();
+  h.start(3);
+  h.event('erischat:room-closed');
+
+  assert.equal(h.overlays.length,0);
+});
+
+test('Duke background cleanup',()=>{
+  const h=setup();
+  h.start(3);
+  h.hidden();
+
+  assert.equal(h.overlays.length,0);
+});
+
+test('Duke session cleanup',()=>{
+  const h=setup();
+  h.start(3);
+  h.event('erischat:auth');
+
+  assert.equal(h.overlays.length,0);
+});
+
+test('Duke blocked user cleanup',()=>{
+  const h=setup();
+  h.start(3);
+  h.event('erischat:user-block-changed',{
+    blocked:true,userId:'knight'
+  });
+
+  assert.equal(h.overlays.length,0);
+});
+
+test('Duke video fallback',()=>{
+  const h=setup();
+  h.start(3);
+  h.videos[0].onerror();
+
+  assert.equal(h.videos[0].hidden,true);
+  assert.equal(
+    h.overlays[0].children[0].children[1].hidden,
+    false
+  );
+
+  h.tick();
+
+  assert.equal(h.overlays.length,0);
+});
+
+test('Duke reduced motion',()=>{
+  const h=setup({reduced:true});
+  h.start(3);
+
+  assert.equal(h.videos[0].plays,0);
+  assert.equal(h.videos[0].hidden,true);
+});
+
+test('Duke timeout',()=>{
+  const h=setup();
+  h.start(3);
+
+  assert.equal(
+    [...h.timers.values()][0].delay,
+    12000
+  );
 });

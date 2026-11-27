@@ -312,3 +312,135 @@ def test_balances_unchanged(env):
     assert membership_state(
         db,uid
     )["points"] == "400000"
+
+
+def test_duke_final_activation(env):
+    db,uid = env
+
+    result = perform(db,uid,"activate",3)
+    state = result["membership"]
+
+    assert result["applied"] is True
+    assert state["rank"] == 3
+    assert state["points"] == "1400000"
+
+    member = db.get(models.NobilityMembership,uid)
+
+    assert member.expires_at-member.started_at == timedelta(days=30)
+
+    assert len(policy.privileges_for_rank(3)) == 11
+
+    for privilege in policy.privileges_for_rank(3):
+        assert policy.has_privilege(db,uid,privilege)
+
+    assert not policy.has_privilege(db,uid,"super_kick")
+
+
+def test_duke_final_renewal(env):
+    db,uid = env
+
+    perform(db,uid,"activate",3)
+
+    member = db.get(models.NobilityMembership,uid)
+    old_expiry = member.expires_at
+
+    payload = request(db,uid,"renew",3)
+
+    result = execute_action(db,uid,"renew",payload)
+
+    assert result["applied"] is True
+    assert result["membership"]["points"] == "1000000"
+
+    db.refresh(member)
+
+    assert member.expires_at == old_expiry+timedelta(days=30)
+
+    duplicate = execute_action(db,uid,"renew",payload)
+
+    assert duplicate["duplicate"] is True
+
+    db.refresh(member)
+
+    assert member.points == 1000000
+    assert member.expires_at == old_expiry+timedelta(days=30)
+
+    account = db.get(User,uid)
+
+    assert account.lidya == 500
+    assert account.lidya_gem == 100
+
+
+def test_duke_final_background(env):
+    from backend.app.nobility_appearance import public_appearance
+
+    db,uid = env
+
+    perform(db,uid,"activate",3)
+
+    user = db.get(User,uid)
+
+    items = collection.inventory(db,user)
+
+    current = [
+        x for x in items
+        if x["nobility_rank"] == 3
+    ]
+
+    assert len(current) == 5
+
+    assert "region_background" in public_appearance(
+        db,uid
+    )["privileges"]
+
+    collection.set_preference(
+        db,user,3,"region_background",False
+    )
+
+    assert "region_background" not in public_appearance(
+        db,uid
+    )["privileges"]
+
+    collection.set_preference(
+        db,user,3,"region_background",True
+    )
+
+    assert "region_background" in public_appearance(
+        db,uid
+    )["privileges"]
+
+
+def test_duke_final_bonus(env,monkeypatch):
+    from backend.app import gift_payout
+
+    db,uid = env
+
+    perform(db,uid,"activate",3)
+
+    monkeypatch.setattr(
+        gift_payout.secrets,"randbelow",lambda n:0
+    )
+
+    assert gift_payout.recipient_gift_payout(
+        db,uid,1000
+    ) == 670
+
+    assert gift_payout.recipient_gift_payout(
+        db,uid,9
+    ) == 0
+
+    member = db.get(models.NobilityMembership,uid)
+
+    now = datetime.now(timezone.utc)
+
+    member.started_at = now-timedelta(days=32)
+    member.expires_at = now-timedelta(days=2)
+
+    db.commit()
+
+    assert gift_payout.recipient_gift_payout(
+        db,uid,1000
+    ) == 0
+
+    assert not policy.has_privilege(
+        db,uid,"kick_protection"
+    )
