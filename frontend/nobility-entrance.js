@@ -28,7 +28,8 @@ function play(rank,nickname,onDone,options={}){
  const knight=rank===1;
  const count=rank===2;
  const duke=rank===3;
- const timed=knight||count||duke;
+ const king=rank===4;
+ const timed=knight||count||duke||king;
  const live=timed&&options.live===true;
 
  if(timed&&document.hidden)return false;
@@ -51,14 +52,19 @@ function play(rank,nickname,onDone,options={}){
  if(duke){
   overlay.className+=' lidya-duke-timed-entrance';
  }
+ if(king){
+  overlay.className+=' lidya-king-timed-entrance';
+ }
  if(live){
   overlay.className+=knight
    ? ' lidya-knight-live-entrance'
    : count
     ? ' lidya-count-live-entrance'
-    : ' lidya-duke-live-entrance';
+    : duke
+     ? ' lidya-duke-live-entrance'
+     : ' lidya-king-live-entrance';
   overlay.setAttribute('role','region');
-  overlay.setAttribute('aria-label',knight?'Şövalye oda girişi':count?'Kont oda girişi':'Dük oda girişi');
+  overlay.setAttribute('aria-label',knight?'Şövalye oda girişi':count?'Kont oda girişi':duke?'Dük oda girişi':'Kral oda girişi');
  }else{
   overlay.setAttribute('role','dialog');
   overlay.setAttribute('aria-modal','true');
@@ -108,8 +114,11 @@ function play(rank,nickname,onDone,options={}){
     : count
      ? video.currentTime>=7 &&
        video.currentTime<9.8
-     : video.currentTime>=6.4 &&
-       video.currentTime<9.6;
+     : duke
+      ? video.currentTime>=6.4 &&
+        video.currentTime<9.6
+      : video.currentTime>=8.5 &&
+        video.currentTime<9.5;
 
    if(name.hidden===visible){
     name.hidden=!visible;

@@ -194,18 +194,18 @@ test('Magaza onizlemesi tam ekran',()=>{
 });
 
 for(const rank of [4]){
-  test('Diger rutbe korunur: '+rank,()=>{
+  test('Kral tam ekran girisi: '+rank,()=>{
     const h=setup();
     h.start(rank);
 
     assert.equal(
       h.overlays[0].className,
-      'ln-entrance-overlay'
+      'ln-entrance-overlay lidya-king-timed-entrance lidya-king-live-entrance'
     );
 
     assert.equal(
       [...h.timers.values()][0].delay,
-      15000
+      12000
     );
   });
 }
@@ -479,13 +479,13 @@ test('Kapanista isim zamanlayicisi temizlenir',()=>{
   assert.equal(h.timers.size,0);
 });
 
-test('Diger rutbelerin ses ayarlari korunur',()=>{
+test('Kral orijinal ses ayarlari',()=>{
   for(const rank of [4]){
     const h=setup();
     h.start(rank);
 
-    assert.equal(h.videos[0].muted,true);
-    assert.equal(h.videos[0].defaultMuted,true);
+    assert.equal(h.videos[0].muted,false);
+    assert.equal(h.videos[0].defaultMuted,false);
   }
 });
 
@@ -811,6 +811,157 @@ test('Duke reduced motion',()=>{
 test('Duke timeout',()=>{
   const h=setup();
   h.start(3);
+
+  assert.equal(
+    [...h.timers.values()][0].delay,
+    12000
+  );
+});
+
+
+// KING ENTRANCE V2.5.4
+
+
+test('King live entrance',()=>{
+  const h=setup();
+  assert.equal(h.start(4),true);
+
+  assert.match(
+    h.overlays[0].className,
+    /lidya-king-timed-entrance/
+  );
+
+  assert.match(
+    h.overlays[0].className,
+    /lidya-king-live-entrance/
+  );
+
+  assert.equal(
+    h.overlays[0].attributes.role,'region'
+  );
+});
+
+test('King original audio enabled',()=>{
+  const h=setup();
+  h.start(4);
+
+  const video=h.videos[0];
+
+  assert.equal(
+    video.src,
+    '4/entrance_video'
+  );
+  assert.equal(video.muted,false);
+  assert.equal(video.volume,1);
+});
+
+test('King nickname timing',()=>{
+  const h=setup();
+  h.start(4);
+
+  const video=h.videos[0];
+  const name=h.overlays[0].children[0].children[1];
+
+  assert.equal(name.hidden,true);
+
+  for(const [time,hidden] of [
+    [0,true],
+    [8.49,true],
+    [8.5,false],
+    [9,false],
+    [9.49,false],
+    [9.5,true],
+    [10,true],
+    [9,false],
+    [3,true]
+  ]){
+    video.currentTime=time;
+    video.ontimeupdate();
+    assert.equal(name.hidden,hidden);
+  }
+});
+
+test('King preview modal',()=>{
+  const h=setup();
+  h.start(4,false);
+
+  assert.equal(
+    h.overlays[0].attributes['aria-modal'],
+    'true'
+  );
+});
+
+test('King video cleanup',()=>{
+  const h=setup();
+  h.start(4);
+  h.videos[0].onended();
+
+  assert.equal(h.overlays.length,0);
+  assert.equal(h.timers.size,0);
+  assert.equal(h.done,1);
+});
+
+test('King room exit cleanup',()=>{
+  const h=setup();
+  h.start(4);
+  h.event('erischat:room-closed');
+
+  assert.equal(h.overlays.length,0);
+});
+
+test('King background cleanup',()=>{
+  const h=setup();
+  h.start(4);
+  h.hidden();
+
+  assert.equal(h.overlays.length,0);
+});
+
+test('King session cleanup',()=>{
+  const h=setup();
+  h.start(4);
+  h.event('erischat:auth');
+
+  assert.equal(h.overlays.length,0);
+});
+
+test('King blocked user cleanup',()=>{
+  const h=setup();
+  h.start(4);
+  h.event('erischat:user-block-changed',{
+    blocked:true,userId:'knight'
+  });
+
+  assert.equal(h.overlays.length,0);
+});
+
+test('King video fallback',()=>{
+  const h=setup();
+  h.start(4);
+  h.videos[0].onerror();
+
+  assert.equal(h.videos[0].hidden,true);
+  assert.equal(
+    h.overlays[0].children[0].children[1].hidden,
+    false
+  );
+
+  h.tick();
+
+  assert.equal(h.overlays.length,0);
+});
+
+test('King reduced motion',()=>{
+  const h=setup({reduced:true});
+  h.start(4);
+
+  assert.equal(h.videos[0].plays,0);
+  assert.equal(h.videos[0].hidden,true);
+});
+
+test('King timeout',()=>{
+  const h=setup();
+  h.start(4);
 
   assert.equal(
     [...h.timers.values()][0].delay,

@@ -74,7 +74,10 @@ def test_original_policy_equivalence(follow_api):
 
     assert actual["knight"] == KNIGHT
     assert actual["expired"] == EMPTY
-    assert actual["count"] == EMPTY
+    assert actual["count"] == {
+        "rank": 2,
+        "privileges": ["badge", "frame"],
+    }
     assert actual["missing"] == EMPTY
 
 

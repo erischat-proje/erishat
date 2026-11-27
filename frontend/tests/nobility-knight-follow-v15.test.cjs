@@ -17,10 +17,10 @@ assert.ok(start>=0&&end>start);
 const window={
   LidyaNobilityAppearance:{
     resolve:(data,id)=>{
-      return [1,2,3].includes(data?.rank) &&
+      return [1,2,3,4].includes(data?.rank) &&
         data.privileges?.includes(id)
         ? './assets/lidya-nobility/'+
-          ({1:'knight',2:'count',3:'duke'}[data.rank])+'/'+id+'.png'
+          ({1:'knight',2:'count',3:'duke',4:'king'}[data.rank])+'/'+id+'.png'
         : null;
     }
   }
@@ -92,7 +92,7 @@ for(const role of ['SA','UA','FA','DA']){
   });
 }
 
-for(const rank of [0,4]){
+for(const rank of [0]){
   test('Diger rutbe korunur: '+rank,()=>{
     const user={
       ...knight,
@@ -230,6 +230,64 @@ test('Duke management lock',()=>{
   assert.equal(
     context.authorized({
       ...duke,
+      management_locked:true
+    }),
+    null
+  );
+});
+
+
+// KING PROFILE V2.7.2
+
+
+const king={
+  ...knight,
+  nobility:{
+    rank:4,
+    privileges:['badge','frame']
+  }
+};
+
+test('King own profile frame',()=>{
+  const html=context.render(king);
+
+  assert.ok(html.includes('/king/frame.png'));
+  assert.ok(!html.includes('/knight/frame.png'));
+  assert.ok(!html.includes('/count/frame.png'));
+  assert.ok(!html.includes('normal-frame.png'));
+
+  assert.equal(
+    (html.match(/class="eris-follow-frame"/g)||[]).length,
+    1
+  );
+});
+
+test('King frame unequipped',()=>{
+  const html=context.render({
+    ...king,
+    nobility:{rank:4,privileges:['badge']}
+  });
+
+  assert.ok(html.includes('normal-frame.png'));
+  assert.ok(!html.includes('/king/frame.png'));
+});
+
+for(const role of ['SA','UA','FA','DA']){
+  test('King staff protection: '+role,()=>{
+    const user={...king,admin_role:role};
+
+    assert.equal(context.authorized(user),null);
+
+    assert.ok(
+      context.render(user).includes('normal-frame.png')
+    );
+  });
+}
+
+test('King management lock',()=>{
+  assert.equal(
+    context.authorized({
+      ...king,
       management_locked:true
     }),
     null

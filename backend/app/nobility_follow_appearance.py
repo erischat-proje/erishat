@@ -1,4 +1,4 @@
-"""Authorized Knight appearance in social follow lists."""
+"""Authorized nobility appearance in social follow lists."""
 
 from sqlalchemy import select, or_, and_
 
@@ -16,7 +16,9 @@ def knight_follow_appearance(db, viewer_id, target_id, at):
     if not viewer_id or not target_id:
         return empty
 
-    if active_rank(db, target_id, at) != 1:
+    rank = active_rank(db, target_id, at)
+
+    if rank not in (1, 2, 3, 4):
         return empty
 
     admin = db.get(AdminRole, target_id)
@@ -61,10 +63,10 @@ def knight_follow_appearance(db, viewer_id, target_id, at):
 
     from .nobility_collection import disabled_privileges
 
-    disabled = disabled_privileges(db, target_id, 1)
+    disabled = disabled_privileges(db, target_id, rank)
 
     return {
-        "rank": 1,
+        "rank": rank,
         "privileges": [
             key for key in ("badge", "frame")
             if key not in disabled
@@ -75,7 +77,7 @@ def knight_follow_appearance(db, viewer_id, target_id, at):
 def knight_follow_appearances(
     db, viewer_id, target_ids, at
 ):
-    """Batch authorization for Knight social appearances."""
+    """Batch authorization for all nobility ranks."""
 
     from datetime import datetime, timezone
     from sqlalchemy.orm import aliased
@@ -101,7 +103,6 @@ def knight_follow_appearances(
     if not viewer_id or not ids or not enabled():
         return result
 
-    rule = get_rank_rule(1)
     member = NobilityMembership
     config = NobilityRankConfig
     uid = member.user_id
@@ -178,6 +179,7 @@ def knight_follow_appearances(
     query = (
         select(
             member,
+            config,
             visual_disabled_expression(
                 member, "badge"
             ).label("badge_disabled"),
@@ -188,11 +190,8 @@ def knight_follow_appearances(
         .join(config, config.rank == member.rank)
         .where(
             uid.in_(ids),
-            member.rank == 1,
+            member.rank.in_((1, 2, 3, 4)),
             config.enabled.is_(True),
-            config.required_points == rule.required_points,
-            config.renewal_points == rule.renewal_points,
-            config.duration_days == rule.duration_days,
             ~staff,
             ~blocked,
             ~direct_ban,
@@ -206,10 +205,24 @@ def knight_follow_appearances(
         .execution_options(populate_existing=True)
     )
 
-    for row, badge_off, frame_off in db.execute(query):
-        if effective_rank(row, at) == 1:
+    for row, cfg, badge_off, frame_off in db.execute(query):
+        rank = effective_rank(row, at)
+
+        if rank not in (1, 2, 3, 4):
+            continue
+
+        rule = get_rank_rule(rank)
+
+        if (
+            cfg.required_points != rule.required_points
+            or cfg.renewal_points != rule.renewal_points
+            or cfg.duration_days != rule.duration_days
+        ):
+            continue
+
+        if rank in (1, 2, 3, 4):
             result[row.user_id] = {
-                "rank": 1,
+                "rank": rank,
                 "privileges": [
                     key for key, disabled in (
                         ("badge", badge_off),

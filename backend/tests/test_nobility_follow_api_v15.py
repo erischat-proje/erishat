@@ -132,10 +132,13 @@ def test_expired_membership(follow_api, kind):
 @pytest.mark.parametrize(
     "kind", ["followers", "following"]
 )
-def test_other_rank_unchanged(follow_api, kind):
+def test_count_appearance(follow_api, kind):
     rows = fetch(follow_api, kind)
 
-    assert rows["count"]["nobility"] == EMPTY
+    assert rows["count"]["nobility"] == {
+        "rank": 2,
+        "privileges": ["badge", "frame"],
+    }
 
 
 def test_private_unapproved(follow_api):
@@ -271,3 +274,55 @@ def test_authentication_required(follow_api):
     assert client.get(
         "/v1/users/owner/followers"
     ).status_code == 401
+
+
+@pytest.mark.parametrize("rank", [1, 2, 3, 4])
+@pytest.mark.parametrize("kind", ["followers", "following"])
+def test_all_nobility_ranks(follow_api, rank, kind):
+    _, engine = follow_api
+
+    with Session(engine) as db:
+        member = db.get(NobilityMembership, "knight")
+        member.rank = rank
+        db.commit()
+
+    assert fetch(follow_api, kind)["knight"]["nobility"] == {
+        "rank": rank,
+        "privileges": ["badge", "frame"],
+    }
+
+
+@pytest.mark.parametrize("rank", [2, 3, 4])
+def test_higher_rank_block_protection(follow_api, rank):
+    _, engine = follow_api
+
+    with Session(engine) as db:
+        member = db.get(NobilityMembership, "knight")
+        member.rank = rank
+
+        db.add(UserBlock(
+            blocker_id="owner",
+            blocked_id="knight",
+        ))
+
+        db.commit()
+
+    assert fetch(follow_api)["knight"]["nobility"] == EMPTY
+
+
+@pytest.mark.parametrize("rank", [2, 3, 4])
+def test_higher_rank_staff_protection(follow_api, rank):
+    _, engine = follow_api
+
+    with Session(engine) as db:
+        member = db.get(NobilityMembership, "knight")
+        member.rank = rank
+
+        db.add(AdminRole(
+            user_id="knight",
+            role="DA",
+        ))
+
+        db.commit()
+
+    assert fetch(follow_api)["knight"]["nobility"] == EMPTY

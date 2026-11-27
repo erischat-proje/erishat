@@ -90,6 +90,16 @@ function superAvatar(data){
  }
 }
 
+function hasEmbeddedFrame(data,src){
+ const embedded=resolve(data,'super_avatar');
+ return Boolean(
+  data?.rank===4 &&
+  src &&
+  embedded &&
+  src===embedded
+ );
+}
+
 function decorateRoomCard(element,data){
  if(!element)return;
 
@@ -138,7 +148,7 @@ function decorateProfile(element,user){
 }
 
 window.LidyaNobilityAppearance=Object.freeze({
- resolve,badge,roomVisuals,superAvatar,
+ resolve,badge,roomVisuals,superAvatar,hasEmbeddedFrame,
  decorateRoomCard,decorateProfile
 });
 

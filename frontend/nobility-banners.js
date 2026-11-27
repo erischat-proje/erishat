@@ -79,17 +79,19 @@
 
   // Only server-authorized premium gifts with known local artwork use this layout.
   function dynamicGift(data){
-    if(![1,2,3].includes(data.rank) || data.kind !== 'gift_banner') return null;
+    if(![1,2,3,4].includes(data.rank) || data.kind !== 'gift_banner') return null;
     const gift = data.gift;
     if(!gift || typeof gift.name !== 'string' || !gift.name.trim() ||
        !Number.isSafeInteger(gift.quantity) || gift.quantity < 1 ||
        typeof gift.image_url !== 'string') return null;
     const path = gift.image_url;
     if(!/^\/(?:hediyesistemi\/[0-9]+|relationship-assets\/[A-Za-z0-9_-]+)\.png$/.test(path)) return null;
-    const folder = ({1:'knight',2:'count',3:'duke'})[data.rank];
+    const folder = ({1:'knight',2:'count',3:'duke',4:'king'})[data.rank];
     return {
       name:gift.name.slice(0,120),quantity:gift.quantity,src:'.'+path,
-      template:`./assets/lidya-nobility/${folder}/gift-banner-dynamic.png`,
+      template:data.rank === 4
+        ? './assets/lidya-nobility/king/gift-banner.png'
+        : `./assets/lidya-nobility/${folder}/gift-banner-dynamic.png`,
       className:`lidya-${folder}-dynamic-gift`
     };
   }
@@ -172,7 +174,49 @@
     text.textContent = message(data);
 
     const gift = dynamicGift(data);
-    if(data.rank === 3 && [
+    if(data.rank === 4 && [
+      'activation_banner',
+      'daily_banner',
+      'room_welcome'
+    ].includes(data.kind)){
+      card.className += ' lidya-king-notice';
+      card.className += ' lidya-king-'+
+        data.kind.replace('_','-');
+
+      const panel = document.createElement('div');
+      panel.className = 'ln-king-activation-panel';
+
+      const title = document.createElement('div');
+      title.className = 'ln-king-activation-title';
+      title.textContent = 'KRAL';
+
+      const sender = document.createElement('div');
+      sender.className = 'ln-king-activation-name';
+      sender.textContent = data.nickname.slice(0,80);
+
+      const action = document.createElement('div');
+      action.className = 'ln-king-activation-action';
+      if(data.kind === 'daily_banner'){
+        action.textContent = 'Bugün aramızda!';
+      }else if(data.kind === 'room_welcome'){
+        action.textContent = 'Odaya hoş geldin!';
+      }else{
+        action.textContent = data.action === 'renew'
+          ? 'Kral asaletini yeniledi!'
+          : data.action === 'upgrade'
+            ? 'Kral seviyesine yükseldi!'
+            : 'Kral asaletine ulaştı!';
+      }
+
+      image.onerror = ()=>{
+        image.hidden = true;
+        card.className += ' ln-king-activation-fallback';
+      };
+
+      panel.append(title,sender,action);
+      card.append(image,panel);
+    }
+    else if(data.rank === 3 && [
       'activation_banner',
       'daily_banner',
       'room_welcome'

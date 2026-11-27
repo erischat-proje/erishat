@@ -177,7 +177,9 @@ test('Other ranks preserve legacy animations',()=>{
   for(const rank of [4]){
     const s=setup();
 
-    s.receive(banner(['101'],rank));
+    const legacy=banner(['101'],rank);
+    delete legacy.gift;
+    s.receive(legacy);
     s.receive(gift());
 
     assert.equal(s.animations.length,1);
