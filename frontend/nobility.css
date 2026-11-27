@@ -2676,3 +2676,112 @@ body:has(.lidya-king-notice:is(
     font-size:10.5px!important;
   }
 }
+
+
+/* King room local palette */
+html body #erisRoomSurface.lidya-king-room-theme {
+  --ui-panel:#24100e;
+  --ui-raised:#3d1d16;
+  --ui-button:#79451f;
+  --ui-ink:#fff9ed;
+  --ui-muted:#e6d0aa;
+  --ui-line:#c59b50;
+  --ui-gold:#e6bd70;
+}
+
+/* Empty seats only */
+#erisRoomSurface.lidya-king-room-theme
+#erisLiveSeats > .eris-seat.empty {
+  border:1.5px solid #e7bd65!important;
+  background:#240e15a6!important;
+  box-shadow:0 2px 9px #0008!important;
+}
+
+#erisRoomSurface.lidya-king-room-theme
+#erisLiveSeats > .eris-seat.empty:not(.locked):not(.permission-waiting)
+.seat-ava {
+  color:#ffe6ac!important;
+  font-size:24px!important;
+  text-shadow:0 1px 4px #000!important;
+}
+
+/* King room controls */
+html body #erisRoomSurface.lidya-king-room-theme
+:is(.eris-room-top button,
+    .eris-room-quick-actions button,
+    #erisRoomContributionButton,
+    .eris-room-compose button:not(#erisLiveSend),
+    #erisLiveInput) {
+  color:#fff4d6!important;
+  background-color:#351713!important;
+  border-color:#d6ad62!important;
+}
+
+html body #erisRoomSurface.lidya-king-room-theme
+#erisLiveInput::placeholder {
+  color:#e8d6b9!important;
+  opacity:1!important;
+}
+
+/* VIP sound preference */
+html body #erisRoomSurface.lidya-king-room-theme
+.vp-sound-toggle {
+  color:#fff0cc!important;
+  background:#301310!important;
+  border:1px solid #bd9147!important;
+  opacity:1!important;
+}
+
+html body #erisRoomSurface.lidya-king-room-theme
+.vp-sound-toggle[aria-pressed="true"] {
+  color:#fff4d5!important;
+  background:#72501d!important;
+  border-color:#edc978!important;
+}
+
+/* Compact King daily and welcome banners */
+.lidya-nobility-live-banner:is(
+  .lidya-king-daily-banner,
+  .lidya-king-room-welcome
+):not(.ln-king-activation-fallback) {
+  width:min(76vw,340px,66dvh);
+}
+
+body:has(.lidya-king-notice:is(
+  .lidya-king-daily-banner,
+  .lidya-king-room-welcome
+):not(.ln-king-activation-fallback))
+#eris-notice-stack {
+  top:calc(env(safe-area-inset-top,0px)
+    + 86px + min(53.6vw,240px,46.5dvh))!important;
+}
+
+@media(max-height:500px) {
+  .lidya-nobility-live-banner:is(
+    .lidya-king-daily-banner,
+    .lidya-king-room-welcome
+  ):not(.ln-king-activation-fallback) {
+    width:min(65vw,320px,60dvh);
+  }
+
+  body:has(.lidya-king-notice:is(
+    .lidya-king-daily-banner,
+    .lidya-king-room-welcome
+  ):not(.ln-king-activation-fallback))
+  #eris-notice-stack {
+    top:calc(env(safe-area-inset-top,0px)
+      + 52px + min(45.8vw,226px,42.3dvh))!important;
+  }
+}
+
+/* Preserve original avatar positioning */
+#lidyaHomeRoomsV1 .lidya-nobility-room-card
+.lhr-frame,
+#lidyaHomeRoomsV1 .lidya-nobility-room-card
+.lhr-live-dot,
+#lidyaHomeRoomsV1 .lidya-nobility-room-card
+.lhr-follow-mark,
+#lidyaHomeRoomsV1 .lidya-nobility-room-card
+.lhr-lock {
+  position:absolute!important;
+}
