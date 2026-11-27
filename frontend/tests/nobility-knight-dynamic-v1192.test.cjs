@@ -26,6 +26,6 @@ test('Different gifts and sender remain dynamic and literal',()=>{
 for(const value of ['https://evil.example/x.png','/hediyesistemi/../x.png','javascript:alert(1)','/hediyesistemi/1.png?x=1']){
  test('Reject non-catalog image '+value,()=>{const {cards,api}=setup();const d=data();d.gift.image_url=value;api.show(d);assert.doesNotMatch(cards[0].className,/dynamic-gift/);});
 }
-test('Old events and other ranks keep legacy rendering',()=>{for(const rank of [1,2,3,4]){const {cards,api}=setup();const d=data();d.rank=rank;if(rank===1)delete d.gift;api.show(d);assert.equal(cards[0].children.length,2);}});
+test('Old events and other ranks keep legacy rendering',()=>{for(const rank of [1,2,3,4]){const {cards,api}=setup();const d=data();d.rank=rank;if(rank===1||rank===2)delete d.gift;api.show(d);assert.equal(cards[0].children.length,2);}});
 test('Template load failure retains readable text',()=>{const {cards,api}=setup();api.show(data());cards[0].children[0].onerror();assert.match(cards[0].className,/ln-dynamic-template-failed/);assert.match(cards[0].children[4].textContent,/Toprak Bardak ×3/);});
 test('Template PNG exists',()=>{const p='frontend/assets/lidya-nobility/knight/gift-banner-dynamic.png';assert.equal(fs.readFileSync(p).subarray(0,8).toString('hex'),'89504e470d0a1a0a');});

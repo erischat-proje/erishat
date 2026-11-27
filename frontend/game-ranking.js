@@ -20,7 +20,7 @@ const format=value=>Number(value||0).toLocaleString('tr-TR');
 const searchKey=value=>String(value).toLocaleLowerCase('tr-TR').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ı/g,'i');
 const theme=()=>document.documentElement.dataset.erisTheme==='dark'?'dark':'light';
 function rankingKnight(row){
- if(row?.nobility?.rank!==1)return null;
+ if(![1,2].includes(row?.nobility?.rank))return null;
 
  if(
   row.management_locked===true ||

@@ -149,7 +149,7 @@ def test_duplicate_event(banner_db, monkeypatch):
     publish.assert_awaited_once()
 
 
-@pytest.mark.parametrize("rank", [2, 3, 4])
+@pytest.mark.parametrize("rank", [3, 4])
 def test_other_rank_preserved(
     banner_db, monkeypatch, rank
 ):

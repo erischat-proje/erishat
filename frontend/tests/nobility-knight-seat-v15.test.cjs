@@ -115,7 +115,7 @@ test('Yonetim kimligi korunur',()=>{
   assert.equal(h.classes.size,0);
 });
 
-for(const rank of [2,3,4]){
+for(const rank of [3,4]){
   test('Diger rutbe korunur: '+rank,()=>{
     const h=setup();
 
@@ -128,3 +128,47 @@ for(const rank of [2,3,4]){
     assert.equal(h.classes.size,0);
   });
 }
+
+
+test('Kont rozeti koltuk alaninda gorunur',()=>{
+  const h=setup();
+
+  h.render({
+    user_id:'count-user',
+    nobility:{rank:2,privileges:['badge']}
+  });
+
+  assert.equal(h.calls.length,1);
+  assert.equal(h.calls[0].target,'.seat-pod');
+  assert.equal(h.calls[0].data.rank,2);
+  assert.ok(h.classes.has('lidya-knight-seat'));
+});
+
+test('Kont rozeti cikarilinca premium alan kapanir',()=>{
+  const h=setup();
+
+  h.render({
+    user_id:'count-user',
+    nobility:{rank:2,privileges:['badge']}
+  });
+
+  h.render({
+    user_id:'count-user',
+    nobility:{rank:2,privileges:['frame']}
+  });
+
+  assert.equal(h.classes.size,0);
+  assert.equal(h.calls.at(-1).target,'b');
+});
+
+test('Kont yonetim koltuk yerlesimini korur',()=>{
+  const h=setup();
+
+  h.render({
+    user_id:'count-user',
+    nobility:{rank:2,privileges:['badge']}
+  },true);
+
+  assert.equal(h.classes.size,0);
+  assert.equal(h.calls[0].target,'b');
+});

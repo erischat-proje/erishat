@@ -193,7 +193,7 @@ test('Magaza onizlemesi tam ekran',()=>{
   );
 });
 
-for(const rank of [2,3,4]){
+for(const rank of [3,4]){
   test('Diger rutbe korunur: '+rank,()=>{
     const h=setup();
     h.start(rank);
@@ -480,11 +480,190 @@ test('Kapanista isim zamanlayicisi temizlenir',()=>{
 });
 
 test('Diger rutbelerin ses ayarlari korunur',()=>{
-  for(const rank of [2,3,4]){
+  for(const rank of [3,4]){
     const h=setup();
     h.start(rank);
 
     assert.equal(h.videos[0].muted,true);
     assert.equal(h.videos[0].defaultMuted,true);
   }
+});
+
+
+// COUNT ENTRANCE V1.20.5.1
+
+test('Kont canli girisi tam ekran',()=>{
+  const h=setup();
+
+  assert.equal(h.start(2),true);
+
+  assert.match(
+    h.overlays[0].className,
+    /lidya-count-timed-entrance/
+  );
+
+  assert.match(
+    h.overlays[0].className,
+    /lidya-count-live-entrance/
+  );
+
+  assert.equal(h.overlays[0].attributes.role,'region');
+});
+
+test('Kont orijinal video ve ses',()=>{
+  const h=setup();
+
+  h.start(2);
+
+  const video=h.videos[0];
+
+  assert.equal(video.src,'2/entrance_video');
+  assert.equal(video.muted,false);
+  assert.equal(video.defaultMuted,false);
+  assert.equal(video.volume,1);
+  assert.equal(video.playsInline,true);
+});
+
+test('Kont ismi dogru zamanda gorunur',()=>{
+  const h=setup();
+
+  h.start(2);
+
+  const video=h.videos[0];
+  const name=h.overlays[0].children[0].children[1];
+
+  assert.equal(name.hidden,true);
+
+  for(const [time,hidden] of [
+    [0,true],
+    [6.99,true],
+    [7,false],
+    [8.2,false],
+    [9.79,false],
+    [9.8,true],
+    [10,true],
+    [8,false],
+    [3,true]
+  ]){
+    video.currentTime=time;
+    video.ontimeupdate();
+
+    assert.equal(name.hidden,hidden,'Time: '+time);
+  }
+});
+
+test('Kont onizlemesi tam ekran',()=>{
+  const h=setup();
+
+  h.start(2,false);
+
+  assert.match(
+    h.overlays[0].className,
+    /lidya-count-timed-entrance/
+  );
+
+  assert.equal(
+    h.overlays[0].attributes['aria-modal'],
+    'true'
+  );
+});
+
+test('Kont video sonunda kaynaklar temizlenir',()=>{
+  const h=setup();
+
+  h.start(2);
+
+  h.videos[0].onended();
+
+  assert.equal(h.overlays.length,0);
+  assert.equal(h.timers.size,0);
+  assert.equal(h.videos[0].ontimeupdate,null);
+  assert.equal(h.videos[0].src,undefined);
+  assert.equal(h.done,1);
+});
+
+test('Kont oda cikisinda temizlenir',()=>{
+  const h=setup();
+
+  h.start(2);
+  h.event('erischat:room-closed');
+
+  assert.equal(h.overlays.length,0);
+  assert.equal(h.timers.size,0);
+});
+
+test('Kont oturum degisiminde temizlenir',()=>{
+  const h=setup();
+
+  h.start(2);
+  h.event('erischat:auth');
+
+  assert.equal(h.overlays.length,0);
+});
+
+test('Kont arka planda temizlenir',()=>{
+  const h=setup();
+
+  h.start(2);
+  h.hidden();
+
+  assert.equal(h.overlays.length,0);
+});
+
+test('Kont engellenen kullanici animasyonu kapanir',()=>{
+  const h=setup();
+
+  h.start(2);
+
+  h.event('erischat:user-block-changed',{
+    blocked:true,
+    userId:'knight'
+  });
+
+  assert.equal(h.overlays.length,0);
+});
+
+test('Kont video hatasinda poster',()=>{
+  const h=setup();
+
+  h.start(2);
+  h.videos[0].onerror();
+
+  assert.equal(h.videos[0].hidden,true);
+
+  const children=h.overlays[0].children[0].children;
+
+  assert.equal(children[1].hidden,false);
+
+  assert.ok(children.some(
+    n=>n.src==='2/entrance'
+  ));
+
+  h.tick();
+
+  assert.equal(h.overlays.length,0);
+});
+
+test('Kont hareket azaltma ayarina uyar',()=>{
+  const h=setup({reduced:true});
+
+  h.start(2);
+
+  assert.equal(h.videos[0].plays,0);
+  assert.equal(h.videos[0].hidden,true);
+});
+
+test('Kont 12 saniye zaman asimi',()=>{
+  const h=setup();
+
+  h.start(2);
+
+  assert.equal(
+    [...h.timers.values()][0].delay,
+    12000
+  );
+
+  h.tick();
+
+  assert.equal(h.overlays.length,0);
 });

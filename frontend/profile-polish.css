@@ -278,7 +278,7 @@ html.lb-v4-cosmetic-locked [data-profile-frame-change]{pointer-events:none!impor
 /* LIDYA KNIGHT PREMIUM PROFILE V1.5.2 */
 
 #profile .profile.card.profile:has(
-  .stage .frameImg[src*="/knight/frame.png"]:not([hidden])
+  .stage .frameImg:is([src*="/knight/frame.png"],[src*="/count/frame.png"]):not([hidden])
 ):not(.lbr-v3-dealer,.lbr-v3-support,.lbr-v2-coin,.lbr-v2-support){
   --knight-frame-size:96px;
   --knight-avatar-size:60px;
@@ -289,7 +289,7 @@ html.lb-v4-cosmetic-locked [data-profile-frame-change]{pointer-events:none!impor
 }
 
 #profile .profile.card.profile:has(
-  .stage .frameImg[src*="/knight/frame.png"]:not([hidden])
+  .stage .frameImg:is([src*="/knight/frame.png"],[src*="/count/frame.png"]):not([hidden])
 ):not(.lbr-v3-dealer,.lbr-v3-support,.lbr-v2-coin,.lbr-v2-support):not(
   :has(.eris-profile-badges>:not([hidden]))
 ){
@@ -299,7 +299,7 @@ html.lb-v4-cosmetic-locked [data-profile-frame-change]{pointer-events:none!impor
 }
 
 #profile .profile.card.profile:has(
-  .stage .frameImg[src*="/knight/frame.png"]:not([hidden])
+  .stage .frameImg:is([src*="/knight/frame.png"],[src*="/count/frame.png"]):not([hidden])
 ):not(.lbr-v3-dealer,.lbr-v3-support,.lbr-v2-coin,.lbr-v2-support) .stage{
   width:var(--knight-frame-size)!important;
   height:var(--knight-frame-size)!important;
@@ -312,7 +312,7 @@ html.lb-v4-cosmetic-locked [data-profile-frame-change]{pointer-events:none!impor
 }
 
 #profile .profile.card.profile:has(
-  .stage .frameImg[src*="/knight/frame.png"]:not([hidden])
+  .stage .frameImg:is([src*="/knight/frame.png"],[src*="/count/frame.png"]):not([hidden])
 ):not(.lbr-v3-dealer,.lbr-v3-support,.lbr-v2-coin,.lbr-v2-support) .stage .face{
   width:var(--knight-avatar-size)!important;
   height:var(--knight-avatar-size)!important;
@@ -322,7 +322,7 @@ html.lb-v4-cosmetic-locked [data-profile-frame-change]{pointer-events:none!impor
 
 #profile .profile.card.profile:not(
   .lbr-v3-dealer,.lbr-v3-support,.lbr-v2-coin,.lbr-v2-support
-) .stage .frameImg[src*="/knight/frame.png"]:not([hidden]){
+) .stage .frameImg:is([src*="/knight/frame.png"],[src*="/count/frame.png"]):not([hidden]){
   position:absolute!important;
   inset:auto!important;
   top:50%!important;
@@ -370,7 +370,7 @@ html.lb-v4-cosmetic-locked [data-profile-frame-change]{pointer-events:none!impor
 @media(max-width:360px){
 
   #profile .profile.card.profile:has(
-    .stage .frameImg[src*="/knight/frame.png"]:not([hidden])
+    .stage .frameImg:is([src*="/knight/frame.png"],[src*="/count/frame.png"]):not([hidden])
   ):not(.lbr-v3-dealer,.lbr-v3-support,.lbr-v2-coin,.lbr-v2-support){
     --knight-frame-size:80px;
     --knight-avatar-size:50px;
