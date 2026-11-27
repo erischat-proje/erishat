@@ -6,6 +6,13 @@ on:
     paths:
       - 'backend/**'
       - 'frontend/social-feed-live.js'
+      - 'frontend/user-profile-navigation.js'
+      - 'frontend/device-layout.js'
+      - 'frontend/erischat-main.html'
+      - 'frontend/**/*.css'
+      - 'tests/profile-age.dom.cjs'
+      - 'tests/public-profile-premium.dom.cjs'
+      - 'tests/public-profile-premium.browser.cjs'
       - 'frontend/room-fan-ranking.js'
       - 'tests/fan-window-layer.dom.cjs'
       - 'tests/fan-center.dom.cjs'
@@ -31,7 +38,7 @@ permissions:
   contents: read
 jobs:
   api-security:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     services:
       postgres:
@@ -58,6 +65,14 @@ jobs:
 
             /tests/explore-workspace.dom.cjs
             /frontend/social-feed-live.js
+            /frontend/user-profile-navigation.js
+            /frontend/device-layout.js
+            /frontend/erischat-main.html
+            /frontend/*.css
+            /frontend/**/*.css
+            /tests/profile-age.dom.cjs
+            /tests/public-profile-premium.dom.cjs
+            /tests/public-profile-premium.browser.cjs
             /frontend/room-fan-ranking.js
             /tests/fan-window-layer.dom.cjs
             /tests/fan-center.dom.cjs
@@ -109,6 +124,30 @@ jobs:
           node --test tests/fan-window-layer.dom.cjs
           node tests/fan-center.dom.cjs
           node frontend/tests/test_android_back_v1.cjs
+
+      - name: Public Profile Premium functional regression
+        run: |
+          export NODE_PATH="$RUNNER_TEMP/lidya-da-tests/node_modules"
+          node --test tests/public-profile-premium.dom.cjs
+          node tests/profile-age.dom.cjs
+
+      - name: Install Public Profile Chromium
+        run: |
+          npm install --prefix "$RUNNER_TEMP/lidya-profile-browser" --no-save --package-lock=false playwright@1.55.0
+          "$RUNNER_TEMP/lidya-profile-browser/node_modules/.bin/playwright" install --with-deps chromium
+
+      - name: Public Profile Premium browser verification
+        run: |
+          export NODE_PATH="$RUNNER_TEMP/lidya-profile-browser/node_modules"
+          timeout 180s node tests/public-profile-premium.browser.cjs
+
+      - name: Upload Public Profile browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lidyachat-public-profile-browser-evidence
+          path: public-profile-browser-results/
+          if-no-files-found: ignore
 
       - name: Run Family V4 privacy and API tests
         env:

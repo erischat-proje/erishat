@@ -434,7 +434,7 @@
   async function renderPosts(container,rows,owner,append=false){
     const familyMode=container.matches('[data-family-feed]');
     if(!append){releaseMedia(container);container.replaceChildren();}
-    if(!rows.length&&!append){const empty=document.createElement('div');empty.className='ec-social-empty ec-discovery-empty';empty.innerHTML='<span class="ec-empty-art">'+window.ErisSocialMedia.icon('image')+'</span><b>İlk anı sen paylaş</b><p>'+(owner?'Henüz gönderin yok. İlk paylaşımını yap.':'Yeni paylaşımlar burada görünecek.')+'</p>';container.append(empty);return}
+    if(!rows.length&&!append){const empty=document.createElement('div');empty.className='ec-social-empty ec-discovery-empty';empty.innerHTML='<span class="ec-empty-art">'+window.ErisSocialMedia.icon('image')+'</span><b>'+(container.matches('[data-profile-posts]')&&!owner?'Henüz gönderi yok':'İlk anı sen paylaş')+'</b><p>'+(owner?'Henüz gönderin yok. İlk paylaşımını yap.':'Yeni paylaşımlar burada görünecek.')+'</p>';container.append(empty);return}
     for(const post of rows){
       const card=document.createElement('article');card.className='ec-social-post';
       const fallbackAvatar=String(post.gender||post.avatar||'').toLowerCase().includes('kad')
