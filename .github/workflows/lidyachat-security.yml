@@ -6,6 +6,9 @@ on:
     paths:
       - 'backend/**'
       - 'frontend/social-feed-live.js'
+      - 'frontend/room-fan-ranking.js'
+      - 'tests/fan-window-layer.dom.cjs'
+      - 'tests/fan-center.dom.cjs'
       - 'frontend/explore-comments.js'
       - 'tests/explore-workspace.dom.cjs'
       - 'frontend/screen-awake.js'
@@ -55,6 +58,9 @@ jobs:
 
             /tests/explore-workspace.dom.cjs
             /frontend/social-feed-live.js
+            /frontend/room-fan-ranking.js
+            /tests/fan-window-layer.dom.cjs
+            /tests/fan-center.dom.cjs
             /frontend/explore-comments.js
             /tests/test_security_center.py
             /tests/test_security_center_dm_id.py
@@ -96,6 +102,13 @@ jobs:
         run: |
           npm install --prefix "$RUNNER_TEMP/lidya-da-tests" --no-save --package-lock=false jsdom@26.1.0
           ERIS_JSDOM_MODULE="$RUNNER_TEMP/lidya-da-tests/node_modules/jsdom" node --test tests/explore-workspace.dom.cjs
+
+      - name: Fan Window Layer regression
+        run: |
+          export NODE_PATH="$RUNNER_TEMP/lidya-da-tests/node_modules"
+          node --test tests/fan-window-layer.dom.cjs
+          node tests/fan-center.dom.cjs
+          node frontend/tests/test_android_back_v1.cjs
 
       - name: Run Family V4 privacy and API tests
         env:

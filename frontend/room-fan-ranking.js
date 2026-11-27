@@ -6,7 +6,7 @@
   for(const event of ['erischat:auth','erischat:auth-state','erischat:auth-ready','erischat:auth-state-changed'])window.addEventListener(event,()=>{if(dismiss&&openedAccount!==token())dismiss()});
   const style=document.createElement('style');
   style.textContent=`
-.personal-fan-overlay{position:fixed;inset:0;z-index:21030;background:var(--ui-overlay);color:var(--ui-ink);display:flex;justify-content:center;box-sizing:border-box;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.personal-fan-overlay{position:fixed;inset:0;z-index:100110!important;background:var(--ui-overlay);color:var(--ui-ink);display:flex;justify-content:center;box-sizing:border-box;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
 .personal-fan-panel{width:100%;max-width:720px;min-width:0;display:flex;flex-direction:column;overflow:hidden;background:radial-gradient(ellipse at top right,color-mix(in srgb, var(--ui-panel) 33%, transparent),transparent 55%),var(--ui-panel)}
 .personal-fan-panel header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:24px 20px 18px;border-bottom:1px solid var(--ui-line)}
 .personal-fan-panel header small{font-size:10px;letter-spacing:2px;color:var(--ui-gold);font-weight:700}.personal-fan-panel h2{margin:6px 0 0;font-size:26px;letter-spacing:-.6px}
