@@ -215,6 +215,15 @@
         'region_background'
       );
 
+
+    wall.closest('#erisRoomSurface')?.classList.toggle(
+      'lidya-king-room-theme',
+      Boolean(
+        nobilityBackground &&
+        window.__lidyaRoomOwnerNobility?.rank === 4
+      )
+    );
+
     const url=nobilityBackground||
       (raw&&window.ErisChatCosmetics?.assetUrl
         ?window.ErisChatCosmetics.assetUrl(raw):raw);
@@ -523,7 +532,9 @@
     }catch(e){
       if(request!==roomOpenRequest)return;
       console.error('[LidyaChat] openRoom failed:',e);ensureRoomSurface().classList.add('show');window.ErisScreenProtection?.set?.('room',false);window.toast?.(e.message||'Odaya bağlanılamadı.');
-      if(String(window.ErisCurrentRoomId)===String(id)){window.ErisCurrentRoomId=null;window.currentRoomId=null;window.__erisRoomPermissions={};window.__erisActiveRoomWallpaper=null;window.__lidyaRoomOwnerNobility=null;}
+      if(String(window.ErisCurrentRoomId)===String(id)){window.ErisCurrentRoomId=null;window.currentRoomId=null;window.__erisRoomPermissions={};window.__erisActiveRoomWallpaper=null;window.__lidyaRoomOwnerNobility=null;
+    document.getElementById('erisRoomSurface')
+      ?.classList.remove('lidya-king-room-theme');}
     }
   }
 
@@ -553,6 +564,8 @@
     window.dispatchEvent(new CustomEvent('erischat:room-closed'));
     window.disconnectRoomGiftSocket?.();
     window.ErisCurrentRoomId=null; window.currentRoomId=null; window.__erisActiveRoomWallpaper=null;window.__lidyaRoomOwnerNobility=null;
+    document.getElementById('erisRoomSurface')
+      ?.classList.remove('lidya-king-room-theme');
     if(id&&!options.banned&&!options.switching&&document.visibilityState==='visible')setTimeout(offerReturnToRoom,400);
   }
   window.openLiveRoomChat=()=>{
