@@ -102,10 +102,114 @@
       return fallback.toDataURL('image/jpeg',.72);
     }
   }
+
+  async function attachDAModeration(modal,post,card){
+    const session=token();
+
+    if(!session || post.is_mine)return;
+
+    let access;
+
+    try{
+      access=await api().api('/admin/explore/moderation');
+    }catch(_){
+      return;
+    }
+
+    if(token()!==session || !modal.isConnected ||
+       access?.can_remove_post!==true)return;
+
+    const section=modal.querySelector('section');
+    const panel=document.createElement('div');
+
+    panel.style.cssText=
+      'margin-top:18px;padding-top:14px;'+
+      'border-top:1px solid var(--ui-line)';
+
+    const title=document.createElement('b');
+    title.textContent='DA yönetim işlemleri';
+
+    const remove=document.createElement('button');
+    remove.type='button';
+    remove.dataset.daRemovePost='';
+    remove.textContent='Gönderiyi doğrudan sil';
+
+    remove.style.cssText=
+      'display:block;width:100%;margin-top:10px;'+
+      'padding:14px;background:#a52525;color:#fff;'+
+      'border:1px solid #d05757;font-weight:800;'+
+      'border-radius:12px';
+
+    panel.append(title,remove);
+    section.append(panel);
+
+    remove.onclick=async()=>{
+      if(remove.disabled || token()!==session)return;
+
+      const submit=modal.querySelector('[data-submit]');
+      const error=modal.querySelector('[data-error]');
+
+      if(submit.disabled)return;
+
+      remove.disabled=true;
+      submit.disabled=true;
+      error.textContent='';
+
+      try{
+        if(!await confirmDelete('gönderi'))return;
+
+        if(token()!==session || !modal.isConnected)return;
+
+        const reason=modal.querySelector('[data-reason]')
+          .value.trim() || 'Uygunsuz içerik';
+
+        const result=await api().api(
+          '/admin/explore/posts/'+
+          encodeURIComponent(post.id)+'/remove',
+          {
+            method:'POST',
+            body:JSON.stringify({reason})
+          }
+        );
+
+        if(result?.deleted!==true){
+          throw Error('Silme işlemi doğrulanamadı.');
+        }
+
+        if(token()!==session)return;
+
+        document.querySelectorAll(
+          '.ec-social-post[data-post-id]'
+        ).forEach(item=>{
+          if(item.dataset.postId===String(post.id)){
+            releaseMedia(item);
+            item.remove();
+          }
+        });
+
+        modal.remove();
+        window.toast?.('Gönderi DA tarafından kaldırıldı.');
+
+      }catch(err){
+        if(token()===session){
+          error.textContent=
+            err.message||'Gönderi silinemedi.';
+        }
+      }finally{
+        remove.disabled=false;
+        submit.disabled=false;
+      }
+    };
+  }
+
   function reportPost(post,card,comment=null){
     const modal=document.createElement('div');modal.className='ec-social-modal';
     modal.innerHTML='<section role="dialog" aria-modal="true" aria-label="'+(comment?'Yorumu':'Gönderiyi')+' bildir"><header style="display:flex;justify-content:space-between;align-items:center"><b>'+(comment?'Yorumu':'Gönderiyi')+" bildir</b><button type=\"button\" data-close aria-label=\"Kapat\">×</button></header><div class=\"ec-report-preview\"></div><p style=\"font-size:12px;color:var(--ui-ink)\">Şikâyet nedenini ve ek kanıtlarını ilet.</p><textarea data-reason minlength=\"3\" maxlength=\"2000\" placeholder=\"Şikâyet nedenini yaz\"></textarea><label>Ek kanıt (en fazla 3 fotoğraf veya 1 video)<input type=\"file\" data-evidence accept=\"image/jpeg,image/png,image/webp,video/mp4,video/webm\" multiple></label><p data-error role=\"alert\" style=\"color:var(--ui-danger)\"></p><button type=\"button\" class=\"ec-primary\" data-submit>Desteğe gönder</button></section>";
     document.body.append(modal);const preview=modal.querySelector('.ec-report-preview');
+    if(!comment && card.closest('[data-feed]')){
+      attachDAModeration(modal,post,card);
+    }
+
     let screenshot='';try{screenshot=captureSnapshot(post,card,comment)}catch(error){modal.querySelector('[data-error]').textContent=error.message}
 
     const meta=document.createElement('p');meta.textContent=formatDate(comment?.created_at||post.created_at)+' · '+(comment?.body||post.caption||'Medya gönderisi').slice(0,110);preview.append(meta);
