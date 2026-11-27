@@ -1,5 +1,6 @@
 """Isolated browser-test server, real rewards API and SQLite persistence."""
 
+import asyncio
 import runpy
 from pathlib import Path
 from fastapi.responses import HTMLResponse
@@ -11,6 +12,29 @@ case.setUp()
 from app import cosmetic_routes
 
 app = case.client.app
+
+# The isolated SQLite fixture shares one SQLAlchemy session.
+# Serialize API requests to prevent concurrent session access.
+# Production PostgreSQL concurrency is tested independently.
+request_lock = asyncio.Lock()
+
+
+@app.middleware("http")
+async def serialize_test_api(request, call_next):
+    if not request.url.path.startswith(("/v1/", "/test/")):
+        return await call_next(request)
+
+    async with request_lock:
+        try:
+            response = await call_next(request)
+            if response.status_code >= 500:
+                case.db.rollback()
+            return response
+        except Exception:
+            case.db.rollback()
+            raise
+
+
 app.include_router(cosmetic_routes.router)
 
 
