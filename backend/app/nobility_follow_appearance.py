@@ -65,6 +65,16 @@ def knight_follow_appearance(db, viewer_id, target_id, at):
 
     disabled = disabled_privileges(db, target_id, rank)
 
+    if rank == 4:
+        from .nobility_appearance import public_appearance
+
+        appearance = public_appearance(db, target_id, at)
+        appearance["privileges"] = [
+            key for key in appearance["privileges"]
+            if key in ("badge", "frame", "super_avatar")
+        ]
+        return appearance
+
     return {
         "rank": rank,
         "privileges": [
@@ -89,6 +99,9 @@ def knight_follow_appearances(
         NobilityRankConfig,
     )
     from .admin_models import UserBan
+    from .models import User
+    from .nobility_avatar_models import NobilityAnimatedAvatar
+    from .nobility_policy import utc
     from .ban_workflow_models import UserBrowserDevice
 
     ids = list(dict.fromkeys(
@@ -176,10 +189,18 @@ def knight_follow_appearances(
         visual_disabled_expression,
     )
 
+    avatar = NobilityAnimatedAvatar
+
     query = (
         select(
             member,
             config,
+            User.gender,
+            avatar.asset_id,
+            avatar.expires_at,
+            visual_disabled_expression(
+                member, "super_avatar"
+            ).label("super_avatar_disabled"),
             visual_disabled_expression(
                 member, "badge"
             ).label("badge_disabled"),
@@ -188,8 +209,18 @@ def knight_follow_appearances(
             ).label("frame_disabled"),
         )
         .join(config, config.rank == member.rank)
+        .join(User, User.id == member.user_id)
+        .outerjoin(
+            avatar,
+            and_(
+                avatar.user_id == member.user_id,
+                avatar.granted_at <= at,
+                avatar.expires_at > at,
+            ),
+        )
         .where(
             uid.in_(ids),
+            User.is_active.is_(True),
             member.rank.in_((1, 2, 3, 4)),
             config.enabled.is_(True),
             ~staff,
@@ -205,7 +236,10 @@ def knight_follow_appearances(
         .execution_options(populate_existing=True)
     )
 
-    for row, cfg, badge_off, frame_off in db.execute(query):
+    for (
+        row, cfg, gender, asset_id, avatar_expiry,
+        super_off, badge_off, frame_off,
+    ) in db.execute(query):
         rank = effective_rank(row, at)
 
         if rank not in (1, 2, 3, 4):
@@ -232,4 +266,93 @@ def knight_follow_appearances(
                 ],
             }
 
+        if rank == 4:
+            entry = result[row.user_id]
+            expiry = utc(row.expires_at)
+
+            entry["king_expires_at"] = (
+                expiry.isoformat() if expiry else None
+            )
+
+            if not super_off:
+                entry["privileges"].append("super_avatar")
+                entry["king_avatar_variant"] = (
+                    gender if gender in ("male", "female")
+                    else None
+                )
+
+                if asset_id and avatar_expiry:
+                    entry["animated_avatar"] = {
+                        "asset_id": asset_id,
+                        "expires_at": utc(avatar_expiry).isoformat(),
+                    }
+
     return result
+
+
+def royal_appearance_map(db, viewer_id, user_ids):
+    from datetime import datetime, timezone
+
+    appearances = knight_follow_appearances(
+        db, viewer_id, user_ids,
+        datetime.now(timezone.utc),
+    )
+
+    return {
+        uid: data
+        for uid, data in appearances.items()
+        if data.get("rank") == 4
+    }
+
+
+def royal_room_audience(db, sender_id, viewer_ids):
+    """Resolve one King portrait for authorized room viewers."""
+
+    viewers = {uid for uid in viewer_ids if uid}
+
+    if not sender_id or not viewers:
+        return None, set()
+
+    data = royal_appearance_map(
+        db, sender_id, [sender_id]
+    ).get(sender_id)
+
+    if not data:
+        return None, set()
+
+    blocked = db.execute(
+        select(
+            UserBlock.blocker_id,
+            UserBlock.blocked_id,
+        ).where(or_(
+            and_(
+                UserBlock.blocker_id == sender_id,
+                UserBlock.blocked_id.in_(viewers),
+            ),
+            and_(
+                UserBlock.blocked_id == sender_id,
+                UserBlock.blocker_id.in_(viewers),
+            ),
+        ))
+    )
+
+    for blocker, blocked_id in blocked:
+        viewers.discard(
+            blocked_id if blocker == sender_id
+            else blocker
+        )
+
+    privacy = db.get(
+        PrivateProfileSetting, sender_id
+    )
+
+    if privacy and privacy.is_private:
+        followers = set(db.scalars(
+            select(UserFollow.follower_id).where(
+                UserFollow.following_id == sender_id,
+                UserFollow.follower_id.in_(viewers),
+            )
+        ))
+        viewers &= followers | {sender_id}
+
+    return data, viewers

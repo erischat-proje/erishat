@@ -81,6 +81,11 @@ def decode_cursor(value, mode, media, q):
     except (ValueError,TypeError,KeyError,OverflowError):raise HTTPException(422,'Sayfa anahtarı geçersiz; akışı yenileyin.')
 
 def serialize(db,rows,user):
+    from .nobility_follow_appearance import royal_appearance_map
+
+    royal = royal_appearance_map(
+        db, user.id, [u.id for _, u, _ in rows]
+    )
     ids=[p.id for p,_,_ in rows]
     likes=dict(db.execute(select(SocialPostLike.post_id,func.count()).where(SocialPostLike.post_id.in_(ids)).group_by(SocialPostLike.post_id)).all())
     comments=dict(db.execute(select(SocialPostComment.post_id,func.count()).where(SocialPostComment.post_id.in_(ids)).group_by(SocialPostComment.post_id)).all())
@@ -89,6 +94,7 @@ def serialize(db,rows,user):
     result=[]
     for p,u,has_media in rows:
         result.append(dict(id=p.id,user_id=u.id,nickname=u.nickname,avatar=u.avatar,avatar_asset=u.avatar_asset,
+            frame_asset=u.frame_asset,nobility=royal.get(u.id),
             caption=p.caption,created_at=p.created_at,updated_at=p.updated_at,has_image=has_media,mime_type=p.mime_type,
             media_kind='video' if (p.mime_type or '').startswith('video/') else 'image',media_url=f'/posts/{p.id}/media' if has_media else None,
             audience=p.audience,is_hidden=False,is_mine=u.id==user.id,is_pinned=bool(p.is_pinned),

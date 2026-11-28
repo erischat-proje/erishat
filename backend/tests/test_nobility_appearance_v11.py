@@ -40,10 +40,18 @@ def test_public_visual_privileges(monkeypatch, rank, expected):
 
     result = appearance.public_appearance(db, "u1")
 
-    assert result == {
+    expected_payload = {
         "rank": rank,
         "privileges": expected,
     }
+
+    if rank == 4:
+        expected_payload.update({
+            "king_avatar_variant": None,
+            "king_expires_at": None,
+        })
+
+    assert result == expected_payload
 
 
 @pytest.mark.parametrize("rank", [-1, 5, 99, None])

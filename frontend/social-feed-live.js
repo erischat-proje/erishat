@@ -320,11 +320,39 @@
       finally{like.disabled=false}
     };
 
+    function addRoyalFrame(element,row){
+      const royal=window.LidyaNobilityAppearance
+        ?.royalPortrait?.(row);
+
+      if(!royal?.frame||royal.embedded)return;
+
+      element.classList.add('lidya-social-royal-portrait');
+
+      const frame=document.createElement('img');
+      frame.className='lidya-social-royal-frame';
+      frame.src=royal.frame;
+      frame.alt='';
+      frame.draggable=false;
+      frame.onerror=()=>{
+        frame.remove();
+        element.classList.remove(
+          'lidya-social-royal-portrait'
+        );
+      };
+
+      element.append(frame);
+    }
+
     function avatarFor(row){
       const fallback=String(row.gender||row.avatar||'').toLowerCase().includes('kad')
         ? 'avatarveduvarkağıdı/BİTMİŞ AVATAR/STANDART KADIN AVATAR/1.png'
         : 'avatarveduvarkağıdı/BİTMİŞ AVATAR/STANDART ERKEK AVATAR/1.png';
-      return window.ErisChatCosmetics?.assetUrl?.(row.avatar_asset||fallback)||row.avatar_asset||fallback;
+      const royal=window.LidyaNobilityAppearance
+        ?.royalPortrait?.(row);
+
+      const source=royal?.avatar||row.avatar_asset||fallback;
+
+      return window.ErisChatCosmetics?.assetUrl?.(source)||source;
     }
     function renderComment(row,children=[]){
       const item=document.createElement('div');
@@ -337,6 +365,21 @@
       const img=document.createElement('img');img.src=avatarFor(row);img.alt='';
       img.onerror=()=>{img.remove();avatar.textContent='👤'};
       avatar.append(img);
+      addRoyalFrame(avatar,row);
+
+      window.LidyaNobilityAppearance
+        ?.watchKingExpiryFor?.(avatar,row.nobility,row.user_id,()=>{
+            avatar.classList.remove(
+              'lidya-social-royal-portrait'
+            );
+
+            const image=document.createElement('img');
+            image.src=avatarFor(row);
+            image.alt='';
+
+            avatar.replaceChildren(image);
+          }
+        );
       const content=document.createElement('div');content.className='ec-comment-content';
       const name=document.createElement('button');
       name.type='button';name.className='ec-social-profile-link ec-comment-name';
@@ -440,7 +483,10 @@
       const fallbackAvatar=String(post.gender||post.avatar||'').toLowerCase().includes('kad')
         ? 'avatarveduvarkağıdı/BİTMİŞ AVATAR/STANDART KADIN AVATAR/1.png'
         : 'avatarveduvarkağıdı/BİTMİŞ AVATAR/STANDART ERKEK AVATAR/1.png';
-      const avatar=post.avatar_asset||fallbackAvatar;
+      const royal=window.LidyaNobilityAppearance
+        ?.royalPortrait?.(post);
+
+      const avatar=royal?.avatar||post.avatar_asset||fallbackAvatar;
       card.innerHTML='<div class="ec-social-author"><button type="button" class="ec-social-profile-link ec-social-avatar" data-avatar data-user-id></button><span style="min-width:0"><button type="button" class="ec-social-profile-link" data-author-name data-user-id><b></b></button><small class="ec-social-date"></small></span>'+(owner?'<span class="ec-social-menu"><span data-post-options hidden><button type="button" data-visibility aria-label="Profilden gizle" title="Profilden gizle"></button><button type="button" data-pin aria-label="Gönderiyi sabitle" title="Gönderiyi sabitle">📌</button><button type="button" data-edit aria-label="Gönderiyi düzenle" title="Düzenle">✎</button><button type="button" data-delete aria-label="Gönderiyi sil" title="Sil">−</button></span><button type="button" data-options-toggle aria-label="Gönderi işlemlerini aç" aria-expanded="false">⋯</button></span>':(post.is_mine?'':"<button type=\"button\" data-report aria-label=\"Gönderiyi bildir\" style=\"margin-left:auto;border:0;background:transparent;color:var(--ui-ink);font-size:20px\">!</button>"))+"</div><div class=\"ec-social-caption\"></div><small data-visibility style=\"display:block;color:var(--ui-ink);font-size:10px\"></small><div data-photo></div>";
       card.querySelectorAll('[data-user-id]').forEach(el => {
         el.dataset.userId=String(post.user_id||'');
@@ -452,6 +498,24 @@
       avatarImg.alt='';
       avatarImg.onerror=()=>{avatarImg.remove();avatarEl.innerHTML=window.ErisSocialMedia.icon('people')};
       avatarEl.append(avatarImg);
+      addRoyalFrame(avatarEl,post);
+
+      window.LidyaNobilityAppearance
+        ?.watchKingExpiryFor?.(avatarEl,post.nobility,post.user_id,()=>{
+            avatarEl.classList.remove(
+              'lidya-social-royal-portrait'
+            );
+
+            const normal=post.avatar_asset||fallbackAvatar;
+
+            const image=document.createElement('img');
+            image.src=window.ErisChatCosmetics
+              ?.assetUrl?.(normal)||normal;
+            image.alt='';
+
+            avatarEl.replaceChildren(image);
+          }
+        );
       card.querySelector('.ec-social-author b').textContent=post.nickname||'LidyaChat kullanıcısı';window.ErisRoleBadges?.bind(card.querySelector('.ec-social-author b'),post);card.querySelector('.ec-social-date').textContent=formatDate(post.created_at)+(post.updated_at&&post.created_at!==post.updated_at?' · düzenlendi':'');card.querySelector('.ec-social-caption').textContent=post.caption||'';card.querySelector('small[data-visibility]').textContent=owner?(post.is_hidden?'Profilden gizli · yalnızca sen görebilirsin':(post.audience==='followers'?'Takipçilerim':'Herkese açık')):'';
       card.dataset.postId=String(post.id);card.dataset.authorId=post.user_id;
       if(post.media_url)hydrateMedia(card,post);

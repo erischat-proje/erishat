@@ -2833,3 +2833,51 @@ body:has(.lidya-nobility-live-banner.lidya-king-notice.lidya-king-daily-banner:n
     top:calc(env(safe-area-inset-top,0px) + 52px + min(40.56vw,191.6px,33.8dvh))!important;
   }
 }
+
+
+/* KING V5.1 SOCIAL PORTRAITS */
+
+.lidya-social-royal-portrait {
+ position:relative!important;
+ isolation:isolate;
+ overflow:visible!important;
+ flex-shrink:0;
+ background:transparent!important;
+}
+
+.lidya-social-royal-portrait>img:not(.lidya-social-royal-frame) {
+ position:absolute!important;
+ top:50%!important;
+ left:50%!important;
+ transform:translate(-50%,-50%);
+ width:78%!important;
+ height:78%!important;
+ border-radius:50%!important;
+ object-fit:cover!important;
+ z-index:1;
+}
+
+.lidya-social-royal-portrait>img.lidya-social-royal-frame {
+ position:absolute!important;
+ inset:0!important;
+ width:100%!important;
+ height:100%!important;
+ max-width:none!important;
+ object-fit:contain!important;
+ pointer-events:none;
+ z-index:2;
+}
+
+
+/* KING V5.1D PORTRAITS */
+
+.lidya-social-royal-portrait>img.lidya-social-royal-frame {
+ border-radius:0!important;
+ margin:0!important;
+ padding:0!important;
+}
+
+.eris-story-face.lidya-social-royal-portrait {
+ border-color:transparent!important;
+ background:transparent!important;
+}

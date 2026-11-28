@@ -153,7 +153,10 @@
       )||asset(u.avatar_asset);
       portrait.textContent='';
       if(avatar){const img=document.createElement('img');img.src=avatar;img.alt='';portrait.append(img)}else portrait.textContent=u.avatar||'👤';
-      const frame=(
+      const frame=window.LidyaNobilityAppearance
+        ?.hasEmbeddedFrame?.(u.nobility,avatar)
+        ? ''
+        : (
         !window.ErisStaffIdentity?.isStaff(u)
         ? window.LidyaNobilityAppearance?.resolve(
             u.nobility,'frame'
@@ -162,7 +165,7 @@
       )||asset(u.frame_asset);
       const knightFrame = Boolean(
         frame &&
-        [1,2,3].includes(u.nobility?.rank) &&
+        [1,2,3,4].includes(u.nobility?.rank) &&
         !window.ErisStaffIdentity?.isStaff(u) &&
         frame === window.LidyaNobilityAppearance?.resolve(
           u.nobility, 'frame'
@@ -190,6 +193,36 @@
 
         portrait.append(img);
       }
+      window.LidyaNobilityAppearance
+        ?.watchKingExpiryFor?.(portrait,u.nobility,u.id||u.user_id,()=>{
+            portrait.replaceChildren();
+
+            portrait.classList.remove(
+              'lidya-knight-portrait'
+            );
+
+            const normalAvatar=asset(u.avatar_asset);
+            const normalFrame=asset(u.frame_asset);
+
+            if(normalAvatar){
+              const image=document.createElement('img');
+              image.src=normalAvatar;
+              image.alt='';
+              portrait.append(image);
+            }else{
+              portrait.textContent=u.avatar||'👤';
+            }
+
+            if(normalFrame){
+              const image=document.createElement('img');
+              image.className='eris-mini-frame';
+              image.src=normalFrame;
+              image.alt='';
+              portrait.append(image);
+            }
+          }
+        );
+
       portrait.onclick=()=>{closeProfile();document.getElementById('chat')?.classList.remove('show','eris-floating-dm');window.openUserProfile?.(u.id)};
       const level=Math.max(0,Math.min(40,Number(u.fan_level)||0));
       const fanButton=shade.querySelector('[data-fans]');

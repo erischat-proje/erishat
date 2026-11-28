@@ -46,7 +46,39 @@
     let list=root.querySelector('[data-discovery-people]');if(!list){list=document.createElement('div');list.dataset.discoveryPeople='';list.className='list';Array.from(root.children).filter(x=>x!==box).forEach(x=>x.remove());root.append(list);}
     const filters=box.querySelector('.ec-directory-tools'),text=fold(filters.querySelector('input').value),selects=filters.querySelectorAll('select'),radius=Number(selects[0].value);let people=(data.people||[]).filter(u=>(!text||fold(u.nickname).includes(text))&&(!radius||(u.distance_km!=null&&Number(u.distance_km)<=radius)));people=[...people].sort(selects[1].value==='name'?(a,b)=>a.nickname.localeCompare(b.nickname,'tr'):(a,b)=>(a.distance_km??Infinity)-(b.distance_km??Infinity));filters.querySelector('[data-people-result]').textContent=people.length+' çevrim içi kişi';
     const hash=JSON.stringify([people,data.location_required]);if(fingerprints.get(list)===hash)return;fingerprints.set(list,hash);list.replaceChildren();
-    for(const user of people){const button=document.createElement('button');button.type='button';button.className='item card ec-person-card';const avatar=document.createElement('span');avatar.className='ec-person-avatar';avatar.textContent=String(user.nickname||'?').slice(0,1).toUpperCase();button.append(avatar);const name=document.createElement('b');name.textContent=user.nickname;window.ErisRoleBadges?.bind(name,user);const detail=document.createElement('small');detail.textContent=Number.isFinite(Number(user.distance_km))&&user.distance_km!=null?`Çevrim içi • ${Number(user.distance_km).toFixed(1)} km`:'Çevrim içi';const info=document.createElement('span');info.append(name,detail);button.append(info);button.onclick=()=>window.openUserProfile?.(user.user_id);list.append(button);}
+    for(const user of people){const button=document.createElement('button');button.type='button';button.className='item card ec-person-card';const avatar=document.createElement('span');avatar.className='ec-person-avatar';avatar.textContent=String(user.nickname||'?').slice(0,1).toUpperCase();
+
+    const paintPortrait=()=>{
+      avatar.classList.remove(
+        'lidya-social-royal-portrait'
+      );
+
+      avatar.textContent=String(
+        user.nickname||'?'
+      ).slice(0,1).toUpperCase();
+
+    const royal=window.LidyaNobilityAppearance?.royalPortrait?.(user);
+
+    if(royal?.avatar){
+      const image=document.createElement('img');
+      image.src=royal.avatar;
+      image.alt='';
+      image.style.cssText='width:100%;height:100%;border-radius:50%;object-fit:cover';
+      avatar.replaceChildren(image);
+    }
+
+    window.LidyaNobilityAppearance
+      ?.appendRoyalFrame?.(avatar,royal);
+
+    };
+
+    paintPortrait();
+
+    window.LidyaNobilityAppearance
+      ?.watchKingExpiryFor?.(avatar,user.nobility,user.user_id,paintPortrait
+      );
+
+    button.append(avatar);const name=document.createElement('b');name.textContent=user.nickname;window.ErisRoleBadges?.bind(name,user);const detail=document.createElement('small');detail.textContent=Number.isFinite(Number(user.distance_km))&&user.distance_km!=null?`Çevrim içi • ${Number(user.distance_km).toFixed(1)} km`:'Çevrim içi';const info=document.createElement('span');info.append(name,detail);button.append(info);button.onclick=()=>window.openUserProfile?.(user.user_id);list.append(button);}
     if(!list.children.length)message(list,data.location_required?'Yakındaki kişileri görmek için konum izni ver.':'Tercihine uygun çevrim içi kullanıcı yok.');
   }
   async function presence(active){await api('/discover/presence',{method:'POST',body:JSON.stringify({connection_id:key,active})});fallback=active;lastBeat=Date.now();}

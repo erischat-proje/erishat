@@ -18,6 +18,11 @@ function resolve(data,privilege){
  if(!Number.isInteger(rank)||rank<1||rank>4)return null;
  if(rank<required[privilege])return null;
 
+ if(rank===4 && Object.hasOwn(data,'king_expires_at')){
+  const end=Date.parse(data.king_expires_at);
+  if(!Number.isFinite(end)||end<=Date.now())return null;
+ }
+
  if(!Array.isArray(data.privileges)||
     !data.privileges.includes(privilege))return null;
 
@@ -56,9 +61,20 @@ function roomVisuals(data){
 }
 
 function superAvatar(data){
- const fallback=resolve(data,'super_avatar');
+ const entitlement=resolve(data,'super_avatar');
 
- if(data?.rank!==4||!fallback)return fallback;
+ if(data?.rank!==4||!entitlement)return entitlement;
+
+ let fallback=entitlement;
+
+ if(Object.hasOwn(data,'king_avatar_variant')){
+  const variant=data.king_avatar_variant;
+
+  fallback=['male','female'].includes(variant)
+   ? './assets/lidya-nobility/king/king-avatar-'+
+     variant+'.webp'
+   : null;
+ }
 
  const avatar=data.animated_avatar;
  const id=avatar?.asset_id;
@@ -98,6 +114,299 @@ function hasEmbeddedFrame(data,src){
   embedded &&
   src===embedded
  );
+}
+
+function royalPortrait(user,data=user?.nobility){
+ if(!user||data?.rank!==4)return null;
+
+ if(
+  user.management_locked===true ||
+  ['SA','UA','FA','DA'].includes(user.admin_role) ||
+  window.ErisStaffIdentity?.isStaff(user) ||
+  [user.avatar_asset,user.frame_asset].some(value=>
+   String(value||'').includes('/role-icons/management-v1/')
+  )
+ )return null;
+
+ const avatar=superAvatar(data);
+ const embedded=hasEmbeddedFrame(data,avatar);
+ const frame=embedded?'':resolve(data,'frame');
+
+ if(!avatar&&!frame)return null;
+
+ return Object.freeze({avatar,frame,embedded});
+}
+
+const kingExpiryJobs=new Map();
+const kingRefreshInFlight=new Set();
+
+function kingSession(){
+ const token=window.ErisAuth?.getToken?.();
+ const viewer=window.ErisAuth?.user?.id;
+
+ return token&&viewer
+  ? {token,viewer:String(viewer)}
+  : null;
+}
+
+function sameKingSession(session){
+ const current=kingSession();
+
+ return Boolean(
+  session&&current&&
+  session.token===current.token&&
+  session.viewer===current.viewer
+ );
+}
+
+function sameRoyalVisual(before,after){
+ const privileges=data=>['frame','super_avatar']
+  .filter(key=>data?.privileges?.includes(key))
+  .join(',');
+
+ return (
+  before?.rank===4&&after?.rank===4&&
+  before.king_avatar_variant===after.king_avatar_variant&&
+  privileges(before)===privileges(after)&&
+  (before.animated_avatar?.asset_id||'')===
+   (after.animated_avatar?.asset_id||'')&&
+  (before.animated_avatar?.expires_at||'')===
+   (after.animated_avatar?.expires_at||'')
+ );
+}
+
+function verifyKingDeadline(userId,jobs){
+ const now=Date.now();
+
+ if(
+  kingRefreshInFlight.has(userId)||
+  kingRefreshInFlight.size>=4
+ ){
+  for(const [,job] of jobs){
+   job.checkAt=Math.min(job.expires,now+1000);
+  }
+  return;
+ }
+
+ const session=kingSession();
+
+ if(!session||typeof window.ErisPlatform?.api!=='function'){
+  for(const [,job] of jobs)job.checkAt=Infinity;
+  return;
+ }
+
+ jobs=jobs.filter(([,job])=>
+  sameKingSession(job.session)
+ );
+
+ if(!jobs.length)return;
+
+ for(const [,job] of jobs){
+  job.checkAt=job.expires-now>5000
+   ? job.expires-5000
+   : Infinity;
+ }
+
+ kingRefreshInFlight.add(userId);
+
+ Promise.resolve()
+  .then(()=>window.ErisPlatform.api(
+   '/users/'+encodeURIComponent(userId)
+  ))
+  .then(profile=>{
+   if(!sameKingSession(session))return;
+
+   if(String(profile?.id||'')!==userId)return;
+
+   const data=profile.nobility;
+   const deadline=Date.parse(data?.king_expires_at);
+
+   const authorized=Boolean(
+    !profile.banned&&
+    !profile.you_blocked&&
+    !profile.blocked_by_them&&
+    !profile.management_locked&&
+    !['SA','UA','FA','DA'].includes(profile.admin_role)&&
+    data?.rank===4&&
+    Number.isFinite(deadline)&&
+    deadline>Date.now()
+   );
+
+   for(const [node,job] of jobs){
+    if(
+     kingExpiryJobs.get(node)!==job||
+     !node.isConnected||
+     !sameKingSession(job.session)
+    )continue;
+
+    if(!authorized){
+     job.data.king_expires_at=
+      new Date(Date.now()).toISOString();
+
+     kingExpiryJobs.delete(node);
+     job.restore();
+     continue;
+    }
+
+    if(
+     deadline>job.expires&&
+     sameRoyalVisual(job.data,data)
+    ){
+     job.data.king_expires_at=data.king_expires_at;
+     job.expires=deadline;
+     job.checkAt=Math.max(
+      Date.now(),deadline-30000
+     );
+    }
+   }
+  })
+  .catch(()=>{
+   // Network failure never extends membership.
+  })
+  .finally(()=>{
+   kingRefreshInFlight.delete(userId);
+   scheduleKingExpiry();
+  });
+}
+let kingExpiryTimer=null;
+let kingExpiryListening=false;
+
+function scheduleKingExpiry(){
+ if(kingExpiryTimer!==null){
+  window.clearTimeout(kingExpiryTimer);
+  kingExpiryTimer=null;
+ }
+
+ if(!kingExpiryJobs.size)return;
+
+ let earliest=Infinity;
+
+ for(const job of kingExpiryJobs.values()){
+  earliest=Math.min(
+   earliest,job.expires,job.checkAt??Infinity
+  );
+ }
+
+ kingExpiryTimer=window.setTimeout(
+  sweepKingExpiry,
+  Math.max(0,Math.min(30000,earliest-Date.now()))
+ );
+}
+
+function sweepKingExpiry(){
+ const now=Date.now();
+ const pending=new Map();
+
+ for(const [node,job] of kingExpiryJobs){
+  if(!node.isConnected){
+   kingExpiryJobs.delete(node);
+   continue;
+  }
+
+  if(job.expires<=now){
+   kingExpiryJobs.delete(node);
+
+   try{
+    job.restore();
+   }catch(error){
+    console.warn('[LidyaChat] Royal expiry',error);
+   }
+   continue;
+  }
+
+  if(job.userId&&!sameKingSession(job.session)){
+   job.checkAt=Infinity;
+   continue;
+  }
+
+  if(job.userId&&job.checkAt<=now){
+   if(!pending.has(job.userId)){
+    pending.set(job.userId,[]);
+   }
+
+   pending.get(job.userId).push([node,job]);
+  }
+ }
+
+ for(const [userId,jobs] of pending){
+  verifyKingDeadline(userId,jobs);
+ }
+
+ scheduleKingExpiry();
+}
+
+function watchKingExpiry(node,data,restore,userId=null){
+ if(!node||typeof window.setTimeout!=='function'){
+  return false;
+ }
+
+ kingExpiryJobs.delete(node);
+
+ const expires=Date.parse(data?.king_expires_at);
+
+ if(
+  data?.rank!==4 ||
+  !Number.isFinite(expires) ||
+  expires<=Date.now() ||
+  typeof restore!=='function'
+ ){
+  scheduleKingExpiry();
+  return false;
+ }
+
+ const session=kingSession();
+
+ kingExpiryJobs.set(node,{
+  expires,
+  restore,
+  data,
+  session,
+  userId:userId&&session?String(userId):null,
+  checkAt:userId&&session
+   ? Math.max(Date.now(),expires-30000)
+   : Infinity
+ });
+
+ if(!kingExpiryListening){
+  kingExpiryListening=true;
+
+  if(typeof document!=='undefined'){
+   document.addEventListener(
+    'visibilitychange',sweepKingExpiry
+   );
+  }
+
+  window.addEventListener?.(
+   'pageshow',sweepKingExpiry
+  );
+ }
+
+ scheduleKingExpiry();
+
+ return true;
+}
+
+function watchKingExpiryFor(node,data,userId,restore){
+ return watchKingExpiry(node,data,restore,userId);
+}
+
+function appendRoyalFrame(element,royal){
+ if(!element||!royal?.frame||royal.embedded)return;
+
+ element.classList.add('lidya-social-royal-portrait');
+
+ const frame=document.createElement('img');
+ frame.className='lidya-social-royal-frame';
+ frame.src=royal.frame;
+ frame.alt='';
+ frame.draggable=false;
+
+ frame.onerror=()=>{
+  frame.remove();
+  element.classList.remove('lidya-social-royal-portrait');
+ };
+
+ element.append(frame);
 }
 
 function decorateRoomCard(element,data){
@@ -149,7 +458,7 @@ function decorateProfile(element,user){
 
 window.LidyaNobilityAppearance=Object.freeze({
  resolve,badge,roomVisuals,superAvatar,hasEmbeddedFrame,
- decorateRoomCard,decorateProfile
+ royalPortrait,watchKingExpiry,watchKingExpiryFor,appendRoyalFrame,decorateRoomCard,decorateProfile
 });
 
 })();

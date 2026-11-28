@@ -332,6 +332,58 @@
         renderSeatNobilityBadge(b,seat,staff);
       }
 
+      if(occupied){
+        window.LidyaNobilityAppearance
+          ?.watchKingExpiryFor?.(b,seat.nobility,seat.user_id,()=>{
+            const ava=b.querySelector('.seat-ava');
+            const frame=b.querySelector('.seat-frame');
+
+            const asset=value=>value&&(
+              window.ErisChatCosmetics?.assetUrl?.(value)
+              ||value
+            );
+
+            const normalAvatar=asset(avatarRaw);
+            const normalFrame=asset(frameRaw);
+
+            if(ava){
+              ava.classList.toggle(
+                'avatar',Boolean(normalAvatar)
+              );
+
+              ava.style.backgroundImage=normalAvatar
+                ? 'url("'+String(normalAvatar).replace(/"/g,'%22')+'")'
+                : '';
+
+              for(const child of [...ava.childNodes]){
+                if(child.nodeType===3)child.remove();
+              }
+
+              if(!normalAvatar){
+                ava.insertBefore(
+                  document.createTextNode(
+                    seat.avatar||'👤'
+                  ),
+                  ava.firstChild
+                );
+              }
+            }
+
+            if(frame){
+              frame.classList.toggle(
+                'has-frame',Boolean(normalFrame)
+              );
+
+              frame.style.backgroundImage=normalFrame
+                ? 'url("'+String(normalFrame).replace(/"/g,'%22')+'")'
+                : '';
+            }
+
+            b.querySelectorAll('[data-nobility-badge]')
+              .forEach(node=>node.remove());
+          });
+      }
+
       b.title=occupied?(seat.nickname||seat.user_name||(isMe?'Sen':'Kullanıcı')):b.getAttribute('aria-label');
       b.querySelector('small').textContent=locked?'Kilitli':occupied?(isMe?'Sen':'Konuşmacı'):'Boş • otur';
       /* Koltuk davranışının tek kaynağı room-reference-ui.js / seatMenu(). */
@@ -365,11 +417,39 @@
       const identity=document.createElement('div');identity.className='eris-chat-identity';
       const portrait=document.createElement('span');portrait.className='eris-chat-portrait';if(d.system){portrait.textContent='📢';portrait.style.cssText='width:20px;height:20px;min-width:20px;font-size:13px;background:none';}
       const cosmetics=window.ErisChatCosmetics;
-      const asset=d.avatar_asset&&cosmetics?.assetUrl?.(d.avatar_asset);
+      const paintPortrait=()=>{
+        if(d.system)return;
+
+        portrait.replaceChildren();
+
+      const royal=d.system?null:
+        window.LidyaNobilityAppearance?.royalPortrait?.(d);
+
+      const avatarSource=royal?.avatar||d.avatar_asset;
+
+      const asset=avatarSource&&(
+        cosmetics?.assetUrl?.(avatarSource)||avatarSource
+      );
       if(asset&&!d.system){const img=document.createElement('img');img.className='eris-chat-avatar';img.src=asset;img.alt='';portrait.appendChild(img)}
       else if(!d.system)portrait.textContent=d.avatar||'◈';
-      const frame=d.frame_asset&&cosmetics?.assetUrl?.(d.frame_asset);
+      const frameSource=royal?.embedded?'':(
+        royal?.frame||d.frame_asset
+      );
+
+      const frame=frameSource&&(
+        cosmetics?.assetUrl?.(frameSource)||frameSource
+      );
       if(frame&&!d.system){const img=document.createElement('img');img.className='eris-chat-frame';img.src=frame;img.alt='';portrait.appendChild(img)}
+      };
+
+      paintPortrait();
+
+      if(!d.system){
+        window.LidyaNobilityAppearance
+          ?.watchKingExpiryFor?.(portrait,d.nobility,d.user_id,paintPortrait
+          );
+      }
+
       const author=document.createElement('b');author.textContent=d.system?'LidyaChat':d.nickname||d.user_id||'Kullanıcı';if(!d.system)window.ErisRoleBadges?.bind(author,d);
       if(d.vip_benefits?.name_gold)author.classList.add('vp-gold-name');if(d.vip_benefits?.crown_name)author.classList.add('vp-crown-name');
       const fanLevel=Math.max(0,Math.min(40,Number(d.fan_level)||0));

@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
 import pytest
-from fastapi import FastAPI, Depends, Header, HTTPException
+from fastapi import FastAPI, APIRouter, Depends, Header, HTTPException
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, Integer
 from sqlalchemy.orm import Session
@@ -50,6 +50,11 @@ def setup(monkeypatch):
 
     for model in (LidyaLedger, LidyaGemLedger):
         column = model.__table__.c.id
+
+        if "sqlite" in getattr(
+            column.type, "_variant_mapping", {}
+        ):
+            continue
 
         monkeypatch.setattr(
             column,
@@ -227,13 +232,15 @@ def setup(monkeypatch):
         rooms, "get_room_or_404", resolve_room
     )
 
+    # Never copy routes registered by the production app.
+    # Each test must receive its own isolated router.
     monkeypatch.setattr(
-        rooms.router, "routes", list(rooms.router.routes)
-    )
-
-    monkeypatch.setattr(
-        rooms.router, "dependencies",
-        list(rooms.router.dependencies)
+        rooms,
+        "router",
+        APIRouter(
+            prefix="/v1/rooms",
+            tags=["rooms"],
+        ),
     )
 
     for field in (

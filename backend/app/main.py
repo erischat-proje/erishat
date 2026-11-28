@@ -1199,6 +1199,13 @@ def get_conversation(conversation_id: str, x_eris_dm_vault: str | None = Header(
             avatar_url = f'/message-groups/{conversation_id}/image'
     else:
         group = None
+    from .nobility_follow_appearance import royal_appearance_map
+
+    royal = royal_appearance_map(
+        db, user.id,
+        [m.user_id for m in conversation.members]
+    )
+
     member_details = []
     for member in conversation.members:
         member_user = db.get(User, member.user_id)
@@ -1206,7 +1213,8 @@ def get_conversation(conversation_id: str, x_eris_dm_vault: str | None = Header(
             "nickname": member_user.nickname if member_user else None,
             "avatar": member_user.avatar if member_user else None,
             "avatar_asset": member_user.avatar_asset if member_user else None,
-            "frame_asset": member_user.frame_asset if member_user else None})
+            "frame_asset": member_user.frame_asset if member_user else None,
+            "nobility": royal.get(member.user_id)})
     return {"id": conversation.id, "type": "family" if family_name else conversation.type,
         "created_at": conversation.created_at, "members": member_details, "avatar_url": avatar_url,
         "name": (family_name + " aile sohbeti") if family_name else (group.name if group else "LidyaChat" if conversation.type == "welcome" else None)}
@@ -1379,6 +1387,7 @@ def _message_out(db: Session, message: Message, viewer_id: str, context=None) ->
     media = context['media'].get(message.id)
     attachment=context.get('attachments',{}).get(message.id)
     return {"id": message.id, "conversation_id": message.conversation_id, "sender_id": message.sender_id,
+        "sender_nobility":None if is_system else context.get("royal",{}).get(message.sender_id),
         "sender_nickname":"LidyaChat" if is_system else (sender.nickname if sender else "Silinmiş kullanıcı"),
         "sender_avatar":None if is_system else (sender.avatar if sender else None), "sender_avatar_asset":"/assets/lidyachat-system-avatar.png?v=welcome-v3" if is_system else (sender.avatar_asset if sender else None),
         "sender_frame_asset":None if is_system else (sender.frame_asset if sender else None), "bubble_asset":None if is_system else context.get("bubbles",{}).get(message.sender_id),
@@ -2101,6 +2110,12 @@ def list_stories(limit: int = Query(default=100, ge=1, le=200), db: Session = De
         SocialStory.expires_at > now, SocialStory.user_id.in_(explore_interactions.allowed_authors(user))).order_by(SocialStory.created_at.desc()).limit(limit)))
     ids = [r.id for r in rows]
     authors = {r.id:r for r in db.scalars(select(User).where(User.id.in_({r.user_id for r in rows})))}
+
+    from .nobility_follow_appearance import royal_appearance_map
+
+    royal = royal_appearance_map(
+        db, user.id, authors.keys()
+    )
     viewed_ids = set(db.scalars(select(SocialStoryView.story_id).where(SocialStoryView.story_id.in_(ids), SocialStoryView.viewer_id == user.id)))
     views = dict(db.execute(select(SocialStoryView.story_id, func.count()).where(SocialStoryView.story_id.in_(ids)).group_by(SocialStoryView.story_id)).all())
     likes = dict(db.execute(select(SocialStoryLike.story_id, func.count()).where(SocialStoryLike.story_id.in_(ids)).group_by(SocialStoryLike.story_id)).all())
@@ -2112,7 +2127,11 @@ def list_stories(limit: int = Query(default=100, ge=1, le=200), db: Session = De
         viewed = story.user_id != user.id and story.id in viewed_ids
         count = int(views.get(story.id,0))
         result.append({"id": story.id, "user_id": author.id, "nickname": author.nickname,
-            "avatar": author.avatar, "avatar_asset": author.avatar_asset, "caption": story.caption,
+            "avatar": author.avatar,
+            "avatar_asset": author.avatar_asset,
+            "frame_asset": author.frame_asset,
+            "nobility": royal.get(author.id),
+            "caption": story.caption,
             "created_at": story.created_at, "expires_at": story.expires_at, "viewed": viewed,
             "view_count": count, "like_count": int(likes.get(story.id,0)),
             "liked": story.id in liked_ids, "mime_type": story.mime_type,
@@ -2488,7 +2507,19 @@ async def _send_dm_event(db: Session, user_id: str, event: dict) -> None:
     else:
         if event.get('type')=='dm_message' and event.get('sender_id'):
             sender=db.get(User,event['sender_id'])
-            event={**event,'sender_avatar':sender.avatar if sender else None,
+
+            from .nobility_follow_appearance import royal_appearance_map
+
+            royal = (
+                {}
+                if str(event.get("conversation_id", "")).startswith("welcome:")
+                else royal_appearance_map(
+                    db, user_id, [event['sender_id']]
+                )
+            )
+
+            event={**event,
+                'sender_nobility':royal.get(event['sender_id']),'sender_avatar':sender.avatar if sender else None,
                 'sender_avatar_asset':sender.avatar_asset if sender else None,
                 'sender_frame_asset':sender.frame_asset if sender else None,
                 'bubble_asset':(sender.bubble_asset if sender else None) or relationship_routes.rewards.selected(db,event['sender_id'],'bubble')}
@@ -3073,9 +3104,73 @@ async def _broadcast_global_nobility_banner(payload: dict) -> None:
     await _broadcast_filtered_nobility_banner(payload)
 
 
+def _room_royal_audience(sender_id, viewers):
+    from .nobility_follow_appearance import royal_room_audience
+
+    with Session(engine) as db:
+        return royal_room_audience(
+            db, sender_id, viewers
+        )
+
+
 @live_socket
 async def _broadcast_room_chat(room_id: str, payload: dict) -> None:
-    await _broadcast_room_event(room_id, payload)
+    if (
+        payload.get("type") != "room_chat"
+        or payload.get("system")
+        or not payload.get("user_id")
+    ):
+        await _broadcast_room_event(room_id, payload)
+        return
+
+    sockets = list(
+        room_chat_connections.get(room_id, set())
+    )
+
+    viewers = {
+        ws: room_socket_users[ws][1]
+        for ws in sockets
+        if ws in room_socket_users
+        and room_socket_users[ws][0] == room_id
+    }
+
+    try:
+        data, allowed = await run_in_threadpool(
+            _room_royal_audience,
+            payload["user_id"],
+            list(viewers.values()),
+        )
+    except Exception:
+        # Appearance failure must never block chat delivery.
+        data, allowed = None, set()
+
+    if not data or not allowed:
+        await _broadcast_room_event(room_id, payload)
+        return
+
+    premium = []
+    ordinary = []
+
+    for ws in sockets:
+        if ws not in room_chat_connections.get(room_id, set()):
+            continue
+
+        uid = viewers.get(ws)
+
+        if (
+            uid in allowed
+            and room_socket_users.get(ws) == (room_id, uid)
+        ):
+            premium.append(ws)
+        else:
+            ordinary.append(ws)
+
+    await asyncio.gather(
+        _send_room_sockets(
+            premium, {**payload, "nobility": data}
+        ),
+        _send_room_sockets(ordinary, payload),
+    )
 
 
 def _prepare_nobility_room_entry(user_id, room_id):
