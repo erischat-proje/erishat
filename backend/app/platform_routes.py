@@ -547,6 +547,16 @@ def register_platform_auth(current_user_dependency):
     @router.get("/discover/nearby")
     def nearby(limit:int=Query(20,ge=1,le=50),db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         return discovery_live.people(db,user,limit)
+    @router.get("/discover/search")
+    def global_search(q: str = Query(..., min_length=1, max_length=80),
+                      kind: str = Query("people", pattern="^(people|rooms)$"),
+                      limit: int = Query(20, ge=1, le=50),
+                      offset: int = Query(0, ge=0, le=10000),
+                      db: Session = Depends(get_db),
+                      user: User = Depends(current_user_dependency)):
+        from .global_search import search_directory
+        return search_directory(db, user, q, kind, limit, offset)
+
     @router.post("/discover/random-chat")
     def random_chat(db:Session=Depends(get_db),user:User=Depends(current_user_dependency)):
         pref=db.get(DiscoveryPreference,user.id)
