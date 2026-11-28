@@ -17,6 +17,7 @@ from backend.app.platform_models import (
     UserFollow, UserBlock, PrivateProfileSetting,
 )
 from backend.app.nobility_models import NobilityMembership
+from backend.app.nobility_avatar_models import NobilityAnimatedAvatar
 
 from backend.tests.test_nobility_online_api_v13 import setup
 
@@ -41,6 +42,7 @@ def follow_api(setup, monkeypatch):
                 PrivateProfileSetting,
                 UserBan,
                 UserBrowserDevice,
+                NobilityAnimatedAvatar,
             )
         ],
     )
@@ -286,10 +288,21 @@ def test_all_nobility_ranks(follow_api, rank, kind):
         member.rank = rank
         db.commit()
 
-    assert fetch(follow_api, kind)["knight"]["nobility"] == {
+        from backend.app.nobility_policy import utc
+
+        expires = utc(member.expires_at).isoformat()
+
+    expected = {
         "rank": rank,
         "privileges": ["badge", "frame"],
     }
+
+    if rank == 4:
+        expected["privileges"].append("super_avatar")
+        expected["king_avatar_variant"] = None
+        expected["king_expires_at"] = expires
+
+    assert fetch(follow_api, kind)["knight"]["nobility"] == expected
 
 
 @pytest.mark.parametrize("rank", [2, 3, 4])

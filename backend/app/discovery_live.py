@@ -109,7 +109,20 @@ def people(db,user,limit=100,online=None):
     for r in rows:
         r.pop('_nobility_rank',None)
     for r in rows:r.pop('_distance')
-    return rows[:limit]
+
+    result = rows[:limit]
+
+    from .nobility_follow_appearance import royal_appearance_map
+
+    royal = royal_appearance_map(
+        db, user.id,
+        [row["user_id"] for row in result]
+    )
+
+    for row in result:
+        row["nobility"] = royal.get(row["user_id"])
+
+    return result
 
 def snapshot(db,user):
     online=online_ids(db);pref=db.get(DiscoveryPreference,user.id)

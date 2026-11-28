@@ -34,6 +34,11 @@ def comment_access(db,pid,cid,viewer):
     return row
 
 def comment_rows(db,items,viewer):
+    from .nobility_follow_appearance import royal_appearance_map
+
+    royal = royal_appearance_map(
+        db, viewer.id, [c.user_id for c in items]
+    )
     ids=[c.id for c in items]
     if not ids:return []
     authors={u.id:u for u in db.scalars(select(User).where(User.id.in_({c.user_id for c in items})))}
@@ -42,6 +47,7 @@ def comment_rows(db,items,viewer):
     replies=dict(db.execute(select(Comment.parent_id,func.count()).where(Comment.post_id.in_({c.post_id for c in items}),Comment.parent_id.in_(ids),Comment.user_id.in_(allowed_authors(viewer))).group_by(Comment.parent_id)).all())
     return [dict(id=c.id,post_id=c.post_id,parent_id=c.parent_id,user_id=c.user_id,nickname=authors[c.user_id].nickname,
         avatar=authors[c.user_id].avatar,avatar_asset=authors[c.user_id].avatar_asset,gender=authors[c.user_id].gender,
+        frame_asset=authors[c.user_id].frame_asset,nobility=royal.get(c.user_id),
         body=c.body,created_at=c.created_at,is_pinned=c.is_pinned,is_mine=c.user_id==viewer.id,
         liked_by_me=c.id in liked,like_count=likes.get(c.id,0),reply_count=replies.get(c.id,0)) for c in items]
 

@@ -107,8 +107,12 @@
   }
 
   function followAvatar(user) {
-    const avatarAsset = assetUrl(user.avatar_asset);
     const knight=followKnightData(user);
+    const royal=window.LidyaNobilityAppearance
+      ?.royalPortrait?.(user,knight);
+    const avatarAsset=assetUrl(
+      royal?.avatar||user.avatar_asset
+    );
 
     const knightFrame=knight
       ? window.LidyaNobilityAppearance?.resolve(
@@ -116,8 +120,10 @@
         )
       : null;
 
-    const frameAsset=knightFrame ||
-      assetUrl(user.frame_asset);
+    const frameAsset=royal?.embedded?'':(
+      royal?.frame||knightFrame||
+      assetUrl(user.frame_asset)
+    );
     return `<div class="eris-follow-avatar${frameAsset ? ' has-frame' : ''}">${
       avatarAsset
         ? `<img class="eris-follow-avatar-main" src="${esc(avatarAsset)}" alt="">`
@@ -184,6 +190,20 @@
               <small>${date ? (followers ? `${esc(date)} tarihinden beri seni takip ediyor` : `${esc(date)} tarihinden beri takip ediyorsun`) : ''}</small>
             </div>
             <button type="button" class="eris-follow-remove" aria-label="Kaldır">×</button>`;
+
+          window.LidyaNobilityAppearance
+            ?.watchKingExpiryFor?.(row,user.nobility,user.user_id||user.id,()=>{
+              const current=row.querySelector(
+                '.eris-follow-avatar'
+              );
+
+              if(current){
+                current.outerHTML=followAvatar(user);
+              }
+
+              row.querySelectorAll('[data-nobility-badge]')
+                .forEach(node=>node.remove());
+            });
 
           window.ErisRoleBadges?.bind(row.querySelector('.eris-follow-info b'),user);
           const knight=followKnightData(user);

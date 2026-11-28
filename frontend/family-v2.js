@@ -1550,15 +1550,28 @@ nav.querySelectorAll('button').forEach(b=>{const active=b.dataset.ef2Tab===id;b.
           const assetUrl=value=>{
             if(!value)return '';
             const raw=String(value);
+            if(raw.startsWith('./assets/'))return raw;
             if(!/^(https?:|\/|[a-zA-Z0-9_-])/i.test(raw))return '';
             return window.ErisChatCosmetics?.assetUrl?.(raw)
               ||(raw.startsWith('/')||/^https?:/i.test(raw)?
                 raw:'/'+raw);
           };
 
-          if(person.avatar_asset){
+          const paintPortrait=()=>{
+            avatar.replaceChildren();
+            avatar.classList.remove('has-frame');
+
+          const royal=window.LidyaNobilityAppearance
+            ?.royalPortrait?.(person);
+
+          const avatarSource=royal?.avatar||person.avatar_asset;
+          const frameSource=royal?.embedded?'':(
+            royal?.frame||person.frame_asset
+          );
+
+          if(avatarSource){
             const img=element('img','ef-member-avatar-main');
-            img.src=assetUrl(person.avatar_asset);
+            img.src=assetUrl(avatarSource);
             img.alt='';
             avatar.append(img);
           }else{
@@ -1566,13 +1579,21 @@ nav.querySelectorAll('button').forEach(b=>{const active=b.dataset.ef2Tab===id;b.
               person.avatar||'👤'));
           }
 
-          if(person.frame_asset){
+          if(frameSource){
             avatar.classList.add('has-frame');
             const frame=element('img','ef-member-frame');
-            frame.src=assetUrl(person.frame_asset);
+            frame.src=assetUrl(frameSource);
             frame.alt='';
             avatar.append(frame);
           }
+
+          };
+
+          paintPortrait();
+
+          window.LidyaNobilityAppearance
+            ?.watchKingExpiryFor?.(avatar,person.nobility,person.user_id,paintPortrait
+            );
 
           const info=element('div','ef3-person');
           info.append(element('strong','',person.nickname));

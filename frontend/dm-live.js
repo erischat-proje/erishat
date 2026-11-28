@@ -174,9 +174,35 @@
     if (message?.expires_at) row.dataset.ttlExpires = message.expires_at;
     row.dataset.read = message?.is_read ? '1' : '0';
     const portrait=document.createElement('span');portrait.className='dm-message-portrait';
+
+    const systemPortrait=isSystemConversation();
+
+    const paintPortrait=()=>{
+      portrait.replaceChildren();
+
+    const royal=systemPortrait?null:
+      window.LidyaNobilityAppearance?.royalPortrait?.({
+        nobility:message.sender_nobility,
+        avatar_asset:message.sender_avatar_asset,
+        frame_asset:message.sender_frame_asset
+      });
+
+    const senderAvatar=royal?.avatar||message.sender_avatar_asset;
+    const senderFrame=royal?.embedded?'':(
+      royal?.frame||message.sender_frame_asset
+    );
     const asset=value=>/^\.?\/?assets\//.test(value)?new URL(value,document.baseURI).href:(window.ErisChatCosmetics?.assetUrl?.(value)||value);
-    if(message.sender_avatar_asset){const img=document.createElement('img');img.src=asset?.(message.sender_avatar_asset)||message.sender_avatar_asset;img.alt='';portrait.append(img)}else portrait.textContent=message.sender_avatar||'👤';
-    if(message.sender_frame_asset){const frame=document.createElement('img');frame.className='dm-message-frame';frame.src=asset?.(message.sender_frame_asset)||message.sender_frame_asset;frame.alt='';portrait.append(frame)}
+    if(senderAvatar){const img=document.createElement('img');img.src=asset?.(senderAvatar)||senderAvatar;img.alt='';portrait.append(img)}else portrait.textContent=message.sender_avatar||'👤';
+    if(senderFrame){const frame=document.createElement('img');frame.className='dm-message-frame';frame.src=asset?.(senderFrame)||senderFrame;frame.alt='';portrait.append(frame)}
+    };
+
+    paintPortrait();
+
+    window.LidyaNobilityAppearance
+      ?.watchKingExpiryFor?.(portrait,systemPortrait?null:message.sender_nobility,message.sender_id,
+        paintPortrait
+      );
+
     row.append(portrait);
     const body = document.createElement('div'); body.className='dm-message-text';
     if(message?.gift_key){
@@ -452,6 +478,10 @@
 
   function renderAvatar(el, value, fallback, frameKey = '') {
     if (!el) return;
+
+    window.LidyaNobilityAppearance
+      ?.watchKingExpiry?.(el,null);
+
     const avatar = avatarValue(value, fallback);
     el.classList.remove('visual-portrait','visual-portrait-static');
     if(el.dataset.objectUrl){URL.revokeObjectURL(el.dataset.objectUrl);delete el.dataset.objectUrl;}
@@ -1484,7 +1514,28 @@
         b.className = 'item';b.dataset.conversationId=String(id);
         b.innerHTML = '<div class="ava round"></div><div class="grow"><b></b><small></small></div><span class="dm-unread" hidden></span>';
         if(group||family)renderConversationAvatar(b.querySelector('.ava'),c,group?'👥':'👪');
-        else renderAvatar(b.querySelector('.ava'),avatar,name.slice(0,1).toUpperCase(),welcome?'':other.frame_asset);
+        else {
+          const paintInboxPortrait=()=>{
+          const royal=welcome?null:
+            window.LidyaNobilityAppearance?.royalPortrait?.(other);
+
+          renderAvatar(
+            b.querySelector('.ava'),
+            royal?.avatar||avatar,
+            name.slice(0,1).toUpperCase(),
+            welcome||royal?.embedded?'':(
+              royal?.frame||other.frame_asset
+            )
+          );
+          };
+
+          paintInboxPortrait();
+
+          window.LidyaNobilityAppearance
+            ?.watchKingExpiryFor?.(b.querySelector('.ava'),other.nobility,other.user_id||other.id,
+              paintInboxPortrait
+            );
+        }
         b.querySelector('b').textContent = name;if(!family&&!welcome&&!group)window.ErisRoleBadges?.bind(b.querySelector('b'),other);
         if(c.is_muted){const muted=document.createElement('span');muted.className='dm-list-muted';muted.textContent=' 🔕';muted.setAttribute('aria-label','Sohbet bildirimleri sessizde');muted.title=c.muted_until?'Şu zamana kadar sessizde: '+new Date(c.muted_until).toLocaleString('tr-TR'):'Süresiz sessizde';b.querySelector('.grow').append(muted)}
         if(c.pinned){const pin=document.createElement('span');pin.className='dm-list-pin';pin.textContent='📌';pin.setAttribute('aria-label','Sabitlenmiş sohbet');b.querySelector('.grow').appendChild(pin)}
@@ -2023,7 +2074,33 @@
     if(compose){compose.hidden=isSystemConversation();compose.style.display=isSystemConversation()?'none':'';compose.querySelector('[data-dm-gift]')?.toggleAttribute('hidden',/ aile sohbeti$/i.test(name)||isSystemConversation()||isGroup);}
     const headAvatar=chat.querySelector('.chatHead .ava');
     if(info?.type==='family'||isGroup)renderConversationAvatar(headAvatar,info,isGroup?'👥':'👪');
-    else renderAvatar(headAvatar,isSystemConversation()?SYSTEM_AVATAR:avatar,name?.slice(0,1)?.toUpperCase(),isSystemConversation()?'':asList(info?.members,['members']).find(m=>String(m.user_id)!==String(currentUserId))?.frame_asset);
+    else {
+      const peer=asList(info?.members,['members'])
+        .find(m=>String(m.user_id)!==String(currentUserId));
+
+      const paintHeaderPortrait=()=>{
+      if(revision!==chatRevision)return;
+
+      const royal=isSystemConversation()?null:
+        window.LidyaNobilityAppearance?.royalPortrait?.(peer);
+
+      renderAvatar(
+        headAvatar,
+        isSystemConversation()?SYSTEM_AVATAR:(royal?.avatar||avatar),
+        name?.slice(0,1)?.toUpperCase(),
+        isSystemConversation()||royal?.embedded?'':(
+          royal?.frame||peer?.frame_asset
+        )
+      );
+      };
+
+      paintHeaderPortrait();
+
+      window.LidyaNobilityAppearance
+        ?.watchKingExpiryFor?.(headAvatar,peer?.nobility,peer?.user_id||peer?.id,
+          paintHeaderPortrait
+        );
+    }
     if(!info && !participantId && !isSystemConversation() && api().conversation){
       api().conversation(id).then(details=>{
         conversationInfo.set(String(id),details);

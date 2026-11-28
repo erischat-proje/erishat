@@ -42,9 +42,35 @@
     if(wrapper)wrapper.className='eris-story-wrap';
     const button = document.createElement('button'); button.type='button'; button.className='eris-story'+(item.viewed?' seen':'')+(item.isAdd?' eris-story-add':'');
     const face=document.createElement('span');face.className='eris-story-face';
-    const avatar=item.avatar_asset||item.avatar||window.ErisChatCosmetics?.state?.user?.avatar_asset||'👤';
+    const owner=item.isAdd&&!item.user_id
+      ? window.ErisChatCosmetics?.state?.user
+      : item;
+
+    const paintPortrait=()=>{
+      face.replaceChildren();
+
+      face.classList.remove(
+        'lidya-social-royal-portrait'
+      );
+
+    const royal=window.LidyaNobilityAppearance
+      ?.royalPortrait?.(owner);
+
+    const avatar=royal?.avatar||
+      owner?.avatar_asset||owner?.avatar||'👤';
     const isAsset=typeof avatar==='string'&&(/^(https?:|\/|data:|\.\.?\/)/.test(avatar)||(/[/.]/.test(avatar)&&/\.(?:png|jpe?g|webp|gif|svg)(?:[?#].*)?$/i.test(avatar)));
     if(isAsset){const img=document.createElement('img');img.alt='';img.src=window.ErisChatCosmetics?.assetUrl?.(avatar)||avatar;face.append(img)}else if(avatar==='👤')face.innerHTML=window.ErisSocialMedia.icon('people');else face.textContent=avatar;
+    window.LidyaNobilityAppearance
+      ?.appendRoyalFrame?.(face,royal);
+
+    };
+
+    paintPortrait();
+
+    window.LidyaNobilityAppearance
+      ?.watchKingExpiryFor?.(face,owner?.nobility,owner?.user_id||owner?.id,paintPortrait
+      );
+
     const name=document.createElement('span');name.className='eris-story-name';name.textContent=item.isAdd?'Hikâyen':item.nickname||'Kullanıcı';if(!item.isAdd)window.ErisRoleBadges?.bind(name,item);button.append(face,name);
     button.setAttribute('aria-label',item.isAdd?'Hikâye ekle':`${item.nickname||'Kullanıcı'} hikâyesini görüntüle`);
     button.onclick=()=>item.isAdd?(item.ownStory?openStory(item.ownStory):compose(root)):openStory(item);

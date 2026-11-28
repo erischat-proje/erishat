@@ -68,7 +68,14 @@
         for(const row of rows){
           const item=document.createElement('div');item.className='personal-fan-row';item.dataset.rank=String(row.rank);const rank=document.createElement('span');rank.className='personal-fan-rank';rank.textContent=row.rank;
           const avatar=document.createElement('button');avatar.type='button';avatar.className='personal-fan-avatar';avatar.setAttribute('aria-label',(row.nickname||'Kullanıcı')+' profilini aç');avatar.textContent=String(row.nickname||'K').slice(0,1).toLocaleUpperCase('tr-TR');
-          const asset=row.avatar_asset&&(window.ErisChatCosmetics?.assetUrl?.(row.avatar_asset)||row.avatar_asset);
+          const royal=window.LidyaNobilityAppearance
+            ?.royalPortrait?.(row,fanKnight(row));
+
+          const avatarSource=royal?.avatar||row.avatar_asset;
+          const asset=avatarSource&&(
+            window.ErisChatCosmetics?.assetUrl?.(avatarSource)
+            ||avatarSource
+          );
           if(asset){const img=document.createElement('img');img.src=asset;img.alt='';img.onerror=()=>img.remove();avatar.append(img)}
           const knight=fanKnight(row);
           const appearance=window.LidyaNobilityAppearance;
@@ -77,7 +84,7 @@
             ? appearance?.resolve(knight,'frame')
             : null;
 
-          const frame=knightFrame || (
+          const frame=royal?.embedded?'':royal?.frame||knightFrame || (
             row.frame_asset &&
             (window.ErisChatCosmetics?.assetUrl?.(
               row.frame_asset
@@ -89,6 +96,53 @@
           );
 
           if(frame){avatar.classList.add('has-frame');const img=document.createElement('img');img.src=frame;img.alt='';img.className='personal-fan-frame';avatar.append(img)}
+          window.LidyaNobilityAppearance
+            ?.watchKingExpiryFor?.(avatar,row.nobility,row.user_id,()=>{
+                avatar.classList.remove(
+                  'lidya-fan-knight','has-frame'
+                );
+
+                avatar.textContent=String(
+                  row.nickname||'K'
+                ).slice(0,1).toLocaleUpperCase('tr-TR');
+
+                const asset=value=>value&&(
+                  window.ErisChatCosmetics
+                    ?.assetUrl?.(value)||value
+                );
+
+                const normalAvatar=asset(
+                  row.avatar_asset
+                );
+
+                const normalFrame=asset(
+                  row.frame_asset
+                );
+
+                if(normalAvatar){
+                  const image=document.createElement('img');
+                  image.src=normalAvatar;
+                  image.alt='';
+                  image.onerror=()=>image.remove();
+                  avatar.append(image);
+                }
+
+                if(normalFrame){
+                  avatar.classList.add('has-frame');
+
+                  const frame=document.createElement('img');
+                  frame.src=normalFrame;
+                  frame.className='personal-fan-frame';
+                  frame.alt='';
+                  avatar.append(frame);
+                }
+
+                item.querySelectorAll(
+                  '[data-nobility-badge]'
+                ).forEach(node=>node.remove());
+              }
+            );
+
           const person=document.createElement('div');person.className='personal-fan-person';const name=document.createElement('button');name.type='button';name.className='personal-fan-name';const nick=document.createElement('span');nick.className='personal-fan-nickname';nick.textContent=row.nickname||'Kullanıcı';name.append(nick);window.ErisRoleBadges?.bind(nick,row);
           if(knight){
             appearance?.badge(name,knight);

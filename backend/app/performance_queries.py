@@ -18,6 +18,12 @@ def message_context(db, messages, viewer_id):
         ConversationReadState.conversation_id == cid, ConversationReadState.user_id != viewer_id)) if conversation and conversation.type == 'dm' and not family else None
     from .relationship_models import CoupleRewardSelection, CoupleMember, Couple
     sender_ids={m.sender_id for m in messages}
+
+    from .nobility_follow_appearance import royal_appearance_map
+
+    royal = royal_appearance_map(
+        db, viewer_id, sender_ids
+    )
     senders={u.id:u for u in db.scalars(select(User).where(User.id.in_(sender_ids)))}
     bubbles=dict(db.execute(select(CoupleRewardSelection.user_id,CoupleRewardSelection.asset_key).join(
         CoupleMember,CoupleMember.user_id==CoupleRewardSelection.user_id).join(Couple,Couple.id==CoupleMember.couple_id).where(
@@ -29,7 +35,7 @@ def message_context(db, messages, viewer_id):
     from .message_actions import annotations
     from .message_tools import extras
     from .message_attachment_models import MessageAttachment
-    return {'receipts':summaries(db,messages,viewer_id),'polls':poll_annotations(db,messages,viewer_id),'starred':starred_ids(db,messages,viewer_id),'actions':annotations(db,messages,viewer_id),'attachments':{a.message_id:a for a in db.scalars(select(MessageAttachment).where(MessageAttachment.message_id.in_(ids)))},'details':extras(db,messages,viewer_id),'senders':senders,'bubbles':bubbles,'read': state.last_read_message_id if state else 0,
+    return {'receipts':summaries(db,messages,viewer_id),'polls':poll_annotations(db,messages,viewer_id),'starred':starred_ids(db,messages,viewer_id),'actions':annotations(db,messages,viewer_id),'attachments':{a.message_id:a for a in db.scalars(select(MessageAttachment).where(MessageAttachment.message_id.in_(ids)))},'details':extras(db,messages,viewer_id),'senders':senders,'royal':royal,'bubbles':bubbles,'read': state.last_read_message_id if state else 0,
         'hidden': set(db.scalars(select(MessageHidden.message_id).where(MessageHidden.user_id == viewer_id, MessageHidden.message_id.in_(ids)))),
         'pinned': set(db.scalars(select(PinnedMessage.message_id).where(PinnedMessage.conversation_id == cid, PinnedMessage.message_id.in_(ids)))),
         'gifts': {r.message_id: r for r in db.scalars(select(DirectMessageGift).where(DirectMessageGift.message_id.in_(ids)))},
@@ -84,11 +90,20 @@ def conversation_page(db, user_id, folder, limit, offset, q='', view='all'):
     mutes = mute_states(db, user_id, ids)
     member_rows = list(db.execute(select(ConversationMember.conversation_id, ConversationMember.user_id).where(ConversationMember.conversation_id.in_(ids))))
     users = {r.id:r for r in db.scalars(select(User).where(User.id.in_({r.user_id for r in member_rows})))}
+    from .nobility_follow_appearance import royal_appearance_map
+
+    royal = royal_appearance_map(
+        db, user_id,
+        [r.user_id for r in member_rows]
+    )
+
     members = {cid:[] for cid in ids}
     for cid, uid in member_rows:
         u = users.get(uid)
         members[cid].append({'user_id':uid, 'nickname':u.nickname if u else None, 'avatar':u.avatar if u else None,
-            'avatar_asset':u.avatar_asset if u else None, 'frame_asset':u.frame_asset if u else None})
+            'avatar_asset':u.avatar_asset if u else None,
+            'frame_asset':u.frame_asset if u else None,
+            'nobility':royal.get(uid)})
     families = dict(db.execute(select(Family.chat_conversation_id, Family.name).where(Family.chat_conversation_id.in_(ids))).all())
     family_images = dict(db.execute(select(Family.chat_conversation_id, Family.id).join(
         FamilyVisual, FamilyVisual.family_id == Family.id).where(Family.chat_conversation_id.in_(ids))).all())

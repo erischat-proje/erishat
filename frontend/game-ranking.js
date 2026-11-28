@@ -140,10 +140,13 @@ function open(selectedGame='wheel'){
       ? appearance?.resolve(knight,'frame')
       : null;
 
-    const avatar=safeAsset(row.avatar_asset);
-    const frame=knightFrame
-      ? safeAsset(knightFrame)
-      : safeAsset(row.frame_asset);
+    const royal=appearance?.royalPortrait?.(row,knight);
+    const avatar=safeAsset(
+      royal?.avatar||row.avatar_asset
+    );
+    const frame=royal?.embedded?'':safeAsset(
+      royal?.frame||knightFrame||row.frame_asset
+    );
 
     if(knightFrame&&frame){
       portrait.classList.add('lidya-ranking-knight');
@@ -166,6 +169,52 @@ function open(selectedGame='wheel'){
     }else{
       entry.append(rank,portrait,name,prize);
     }
+
+    window.LidyaNobilityAppearance
+      ?.watchKingExpiryFor?.(portrait,row.nobility,row.user_id,()=>{
+          portrait.classList.remove(
+            'lidya-ranking-knight'
+          );
+
+          portrait.replaceChildren(fallback);
+
+          const normalAvatar=safeAsset(
+            row.avatar_asset
+          );
+
+          const normalFrame=safeAsset(
+            row.frame_asset
+          );
+
+          if(normalAvatar){
+            const image=document.createElement('img');
+
+            image.className='lgr-avatar';
+            image.src=normalAvatar;
+            image.alt='';
+            image.loading='lazy';
+            image.onerror=()=>image.remove();
+
+            portrait.append(image);
+          }
+
+          if(normalFrame){
+            const image=document.createElement('img');
+
+            image.className='lgr-frame';
+            image.src=normalFrame;
+            image.alt='';
+            image.loading='lazy';
+            image.onerror=()=>image.remove();
+
+            portrait.append(image);
+          }
+
+          entry.querySelectorAll(
+            '[data-nobility-badge]'
+          ).forEach(node=>node.remove());
+        }
+      );
 
     list.append(entry);
    }

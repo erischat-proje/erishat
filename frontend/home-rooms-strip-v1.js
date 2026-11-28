@@ -21,18 +21,40 @@
     const converted = window.ErisChatCosmetics?.assetUrl?.(raw) || raw;
     return /^(https?:\/\/|\/|\.\/)/i.test(converted) ? converted : '';
   };
-  const avatarOf = room => assetUrl(room.owner_avatar_asset || room.owner_avatar || room.owner_avatar_url);
-  const frameOf = room => (
-    !String(room.owner_frame_asset||'').includes(
+  const ownerStaff = room => (
+    room.owner_management_locked === true ||
+    ['SA','UA','FA','DA'].includes(room.owner_admin_role) ||
+    String(room.owner_avatar_asset||'').includes(
+      '/role-icons/management-v1/'
+    ) ||
+    String(room.owner_frame_asset||'').includes(
       '/role-icons/management-v1/'
     )
+  );
+
+  const royalAvatarOf = room => ownerStaff(room)
+    ? null
+    : window.LidyaNobilityAppearance?.superAvatar(
+        room.owner_nobility
+      );
+
+  const avatarOf = room => royalAvatarOf(room) ||
+    assetUrl(room.owner_avatar_asset ||
+      room.owner_avatar || room.owner_avatar_url);
+  const frameOf = room => (
+    window.LidyaNobilityAppearance?.hasEmbeddedFrame(
+      room.owner_nobility,royalAvatarOf(room)
+    )
+    ? ''
+    : (
+    !ownerStaff(room)
     ? window.LidyaNobilityAppearance?.resolve(
         room.owner_nobility,'frame'
       )
     : null
   ) || assetUrl(
     room.owner_frame_asset || room.owner_frame_url
-  );
+  ));
   const open = room => {
     const id = room.id ?? room.room_id;
     if (id == null || !window.openRoom) {
@@ -63,11 +85,18 @@
 
       item.setAttribute('aria-label',`${name} odasına gir, ${countOf(room)} kişi`);
       const portrait=t('span','lhr-avatar');
+      const paintPortrait=()=>{
+        portrait.replaceChildren();
+
       const url=avatarOf(room);
       if(url){const image=t('img');image.src=url;image.alt='';image.loading='lazy';image.referrerPolicy='no-referrer';image.onerror=()=>{image.remove();portrait.textContent='👤';};portrait.append(image);}
       else portrait.textContent='👤';
       const frameUrl=frameOf(room);
       if(frameUrl){const frame=t('span','lhr-frame');frame.style.backgroundImage=`url("${frameUrl.replace(/"/g,'%22')}")`;portrait.append(frame);}
+      };
+
+      paintPortrait();
+
       const live=t('span','lhr-live-dot');live.setAttribute('aria-hidden','true');portrait.append(live);
       const title=t('span','lhr-name',name);
       const info=t('span','lhr-count',`${countOf(room)} kişi`);
@@ -75,6 +104,18 @@
       if(follow.has(keyOf(room)) || room.is_following){item.classList.add('lhr-followed');item.append(t('span','lhr-follow-mark','★'));}
       if(room.locked || room.password_set){item.classList.add('lhr-locked');item.append(t('span','lhr-lock','🔒'));}
       item.onclick=()=>open(room);
+      window.LidyaNobilityAppearance
+        ?.watchKingExpiryFor?.(portrait,room.owner_nobility,room.owner_id,()=>{
+            paintPortrait();
+            portrait.append(live);
+
+            window.LidyaNobilityAppearance
+              ?.decorateRoomCard?.(
+                item,room.owner_nobility
+              );
+          }
+        );
+
       fragment.append(item);
     });
     track.append(fragment);

@@ -208,12 +208,19 @@ def register_family_auth(current_user_dependency):
                 )
             ) or 0)
 
+        from .nobility_follow_appearance import royal_appearance_map
+
+        royal = royal_appearance_map(
+            db, user.id, [uid for uid, _ in totals]
+        )
+
         top_contributors = []
         for contributor_id, total in totals:
             contributor = db.get(User, contributor_id)
             vip = db.get(VipStatus, contributor_id) if contributor else None
             top_contributors.append({
                 "user_id": contributor_id,
+                "nobility": royal.get(contributor_id),
                 "nickname": contributor.nickname if contributor else "Eski üye",
                 "avatar": contributor.avatar if contributor else None,
                 "avatar_asset": contributor.avatar_asset if contributor else None,
@@ -413,12 +420,18 @@ def register_family_auth(current_user_dependency):
     def list_members(family_id: str, db: Session = Depends(get_db), user: User = auth()):
         get_family(db, family_id); membership(db, family_id, user.id)
         rows = list(db.scalars(select(FamilyMember).where(FamilyMember.family_id == family_id).order_by(FamilyMember.created_at.asc())))
+        from .nobility_follow_appearance import royal_appearance_map
+
+        royal = royal_appearance_map(
+            db, user.id, [r.user_id for r in rows]
+        )
+
         result=[]
         for r in rows:
             member=db.get(User,r.user_id)
             if not member: continue
             vip=db.get(VipStatus,member.id)
-            result.append({"user_id":member.id,"public_id":member.public_id,"nickname":member.nickname,"avatar":member.avatar,
+            result.append({"nobility":royal.get(member.id),"user_id":member.id,"public_id":member.public_id,"nickname":member.nickname,"avatar":member.avatar,
                            "avatar_asset":member.avatar_asset,"frame_asset":member.frame_asset,"vip_level":int(vip.level if vip else 0),
                            "role":r.role,"joined_at":r.created_at})
         return result
