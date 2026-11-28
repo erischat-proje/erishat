@@ -23,6 +23,21 @@ def inventory(db, user, now=None):
     if not user.is_active:
         return []
 
+    leases = db.scalars(
+        select(CosmeticLease).where(
+            CosmeticLease.user_id == user.id
+        )
+    ).all()
+
+    leases = [
+        lease for lease in leases
+        if is_welcome_key(lease.asset_key)
+        and entitlement_valid(user, lease, now)
+    ]
+
+    if not leases:
+        return []
+
     purchases = db.execute(
         select(WelcomePurchase, PlayPurchaseRecord)
         .join(
@@ -50,12 +65,6 @@ def inventory(db, user, now=None):
     ).all()
 
     paid_tiers = {purchase.tier for purchase, _ in purchases}
-
-    leases = db.scalars(
-        select(CosmeticLease).where(
-            CosmeticLease.user_id == user.id
-        )
-    ).all()
 
     result = []
 
