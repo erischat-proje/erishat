@@ -77,3 +77,47 @@ class WelcomePurchase(Base):
         DateTime(timezone=True),
         server_default=func.now(), nullable=False,
     )
+
+
+class WelcomePlayReceipt(Base):
+    __tablename__ = "welcome_package_play_receipts"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "google_order_id",
+            name="uq_welcome_google_order",
+        ),
+        CheckConstraint(
+            "disposition IN ('verified','review')",
+            name="ck_welcome_receipt_disposition",
+        ),
+    )
+
+    receipt_id: Mapped[int] = mapped_column(
+        ForeignKey("google_play_purchase_records.id"),
+        primary_key=True,
+    )
+
+    intent_id: Mapped[str] = mapped_column(
+        ForeignKey("welcome_package_purchases.id"),
+        nullable=False,
+        index=True,
+    )
+
+    google_order_id: Mapped[str] = mapped_column(
+        String(128), nullable=False
+    )
+
+    disposition: Mapped[str] = mapped_column(
+        String(16), nullable=False
+    )
+
+    review_reason: Mapped[str] = mapped_column(
+        String(64), default="", nullable=False
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )

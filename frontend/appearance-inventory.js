@@ -40,6 +40,16 @@
         if(item.room_id){source.textContent=item.room_name+' · '+(item.expired?'Süresi doldu':new Date(item.expires_at).toLocaleDateString('tr-TR')+' tarihine kadar');if(item.expired)use.textContent='Süresi doldu';}
         use.onclick=()=>{if(!valid()||!available(item)||pending.has(account))return;const relation=item.source==='relationship';const path=item.room_id?'/rooms/'+encodeURIComponent(item.room_id)+'/wallpaper/apply':item.entry_selection?'/me/vip/entrance/equip':item.type==='ring'?'/relationship/ring/equip':relation?'/relationship/rewards/equip':item.type==='wallpaper'?'/me/wallpaper/apply':'/me/cosmetics/apply';const payload=item.room_id?{asset_key:item.equip_key}:item.entry_selection?{asset_key:item.equip_key}:item.type==='ring'?{ring:item.equip_key}:relation?{kind:item.type,asset_key:item.equip_key}:{cosmetic_type:item.type,asset_key:item.equip_key};return mutate(path,payload)};
 
+        if(item.source==='welcome_package'){
+          card.dataset.welcomePackage='true';
+          source.textContent='Hoş Geldin Paketi · '+
+            new Date(item.expires_at).toLocaleString('tr-TR')+
+            ' tarihine kadar';
+          use.textContent='Kullanım henüz etkin değil';
+          use.disabled=true;
+          use.onclick=null;
+        }
+
         if(item.source==='nobility'){
           card.dataset.nobility='true';
 

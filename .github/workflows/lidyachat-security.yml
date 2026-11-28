@@ -229,6 +229,22 @@ jobs:
           WELCOME_PG_CONFIRM: 'YES'
         run: PYTHONPATH=. python -m pytest -v backend/tests/test_welcome_purchase_postgres_v5.py
 
+      - name: Welcome Premium V6 receipt regression
+        env:
+          DATABASE_URL: "sqlite://"
+        run: PYTHONPATH=. python -m pytest -v backend/tests/test_welcome_play_v6.py
+
+      - name: Welcome Premium V7 delivery regression
+        env:
+          DATABASE_URL: "sqlite://"
+        run: PYTHONPATH=. python -m pytest -v backend/tests/test_welcome_fulfillment_v7.py
+
+      - name: Welcome Premium V7 PostgreSQL delivery concurrency
+        env:
+          DATABASE_URL: "sqlite://"
+          WELCOME_PG_CONFIRM: 'YES'
+        run: PYTHONPATH=. python -m pytest -v backend/tests/test_welcome_delivery_postgres_v7.py
+
       - name: Custom Referral V1 PostgreSQL concurrency
         env:
           CUSTOM_REFERRAL_PG_CONFIRM: 'YES'

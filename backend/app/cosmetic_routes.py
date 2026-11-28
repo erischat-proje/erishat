@@ -34,6 +34,8 @@ def current_cosmetic_user(
         raise HTTPException(status_code=401, detail="Geçersiz veya süresi dolmuş oturum")
     from .vip_membership import sync
     sync(db,user.id)
+    from .welcome_appearance import cleanup_if_selected
+    cleanup_if_selected(db, user)
     db.commit()
     return user
 
@@ -85,8 +87,15 @@ def owned_cosmetics(user=Depends(current_cosmetic_user), db: Session = Depends(g
     active = {(i['type'], i['asset_key']) for i in catalog()}
     walls = {i['key'] for i in wallpaper_catalog()}
     permanent_items=[dict(row) for row in rows if (row['cosmetic_type'] not in ('frame', 'wallpaper') or (row['cosmetic_type'], row['asset_key']) in active or row['asset_key'] in walls)]
+    from .welcome_inventory import is_welcome_key
+    permanent_items = [
+        item for item in permanent_items
+        if not is_welcome_key(item["asset_key"])
+    ]
     rentals=[]
     for lease in db.scalars(select(CosmeticLease).where(CosmeticLease.user_id==user.id)):
+        if is_welcome_key(lease.asset_key):
+            continue
         if lease_active(lease):rentals.append({'cosmetic_type':lease.cosmetic_type,'asset_key':lease.asset_key,'expires_at':lease.expires_at.isoformat(),'rental':True})
     keys={(i['cosmetic_type'],i['asset_key']) for i in permanent_items}
     return {'items':permanent_items+[i for i in rentals if (i['cosmetic_type'],i['asset_key']) not in keys], 'vip_level':vip_level(db,user.id)}
@@ -158,7 +167,13 @@ def appearance_inventory(user=Depends(current_cosmetic_user), db: Session = Depe
     entry_mode, _ = entry_selection(db, user.id)
     labels = {'avatar':'Avatar', 'frame':'Çerçeve', 'wallpaper':'Duvar kağıdı', 'bubble':'Sohbet balonu',
               'profile':'Profil görünümü', 'room_wallpaper':'Oda duvar kâğıdı', 'title':'Ünvan', 'entrance':'Oda girişi', 'ring':'Yüzük', 'relationship_status':'İlişki düzeyi ünvanı'}
+    from .welcome_inventory import (
+        inventory as welcome_inventory,
+        is_welcome_key,
+    )
     for kind, key in sorted(owned):
+        if is_welcome_key(key):
+            continue
         if kind not in labels or kind == 'ring': continue
         if kind=='entrance' and key.startswith('shop-expansion/'):continue
         if kind in ('avatar','bubble','title','profile') and normal.get((kind,key),{}).get('gender') not in (None,entry_style(user)):continue
@@ -205,6 +220,7 @@ def appearance_inventory(user=Depends(current_cosmetic_user), db: Session = Depe
                            'name':'Yüzük', 'source':'relationship', 'level':0, 'equip_key':ring.ring, 'equipped':house.ring == ring.ring})
     from .shop_expansion import room_inventory
     result.extend(room_inventory(db,user))
+    result.extend(welcome_inventory(db,user))
 
     from .nobility_collection import (
         inventory as nobility_inventory,

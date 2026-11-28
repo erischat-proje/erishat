@@ -471,6 +471,8 @@ def current_user(db: Session = Depends(get_db), authorization: str | None = Head
         from .moderation import ban_until
         raise HTTPException(status_code=403,detail=ban_until(account_ban))
     vip_membership.sync(db,user.id)
+    from .welcome_appearance import cleanup_if_selected
+    cleanup_if_selected(db, user)
     db.commit()
     enforce_account(user.id,request)
     return user
