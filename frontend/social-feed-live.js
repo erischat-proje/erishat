@@ -320,29 +320,6 @@
       finally{like.disabled=false}
     };
 
-    function addRoyalFrame(element,row){
-      const royal=window.LidyaNobilityAppearance
-        ?.royalPortrait?.(row);
-
-      if(!royal?.frame||royal.embedded)return;
-
-      element.classList.add('lidya-social-royal-portrait');
-
-      const frame=document.createElement('img');
-      frame.className='lidya-social-royal-frame';
-      frame.src=royal.frame;
-      frame.alt='';
-      frame.draggable=false;
-      frame.onerror=()=>{
-        frame.remove();
-        element.classList.remove(
-          'lidya-social-royal-portrait'
-        );
-      };
-
-      element.append(frame);
-    }
-
     function avatarFor(row){
       const fallback=String(row.gender||row.avatar||'').toLowerCase().includes('kad')
         ? 'avatarveduvarkağıdı/BİTMİŞ AVATAR/STANDART KADIN AVATAR/1.png'
@@ -472,6 +449,29 @@
       }catch(error){window.toast?.(error.message||'Yorum gönderilemedi.')}
       finally{submit.disabled=false}
     };
+  }
+
+  function addRoyalFrame(element,row){
+    const royal=window.LidyaNobilityAppearance
+      ?.royalPortrait?.(row);
+
+    if(!royal?.frame||royal.embedded)return;
+
+    element.classList.add('lidya-social-royal-portrait');
+
+    const frame=document.createElement('img');
+    frame.className='lidya-social-royal-frame';
+    frame.src=royal.frame;
+    frame.alt='';
+    frame.draggable=false;
+    frame.onerror=()=>{
+      frame.remove();
+      element.classList.remove(
+        'lidya-social-royal-portrait'
+      );
+    };
+
+    element.append(frame);
   }
 
   async function renderPosts(container,rows,owner,append=false){
