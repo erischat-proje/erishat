@@ -15,6 +15,7 @@ from backend.app import referral_routes as routes
 from backend.app.admin_models import AdminRole, AdminAuditLog
 from backend.app.db import Base, get_db
 from backend.app.models import User
+from backend.app.room_models import Room
 from backend.app.referral_models import ReferralCode, CustomReferralReward, ReferralRedemption
 from backend.app.system_data import LidyaLedger
 
@@ -40,7 +41,7 @@ def pg_api(monkeypatch):
         created = True
         scoped = engine.execution_options(schema_translate_map={None: schema})
         Base.metadata.create_all(scoped, tables=[m.__table__ for m in (
-            User, AdminRole, AdminAuditLog, ReferralCode, CustomReferralReward,
+            User, Room, AdminRole, AdminAuditLog, ReferralCode, CustomReferralReward,
             ReferralRedemption, LidyaLedger)])
         with Session(scoped) as db:
             db.add_all([User(id=uid, public_id=str(9900000000+i), _nickname=uid,
