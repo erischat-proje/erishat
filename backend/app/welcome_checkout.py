@@ -1,11 +1,12 @@
 """Welcome Premium V10.5 - gated purchase preparation."""
 
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+from uuid import uuid4
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Response
-from pydantic import BaseModel, ConfigDict, SecretStr
+from pydantic import BaseModel, ConfigDict, SecretStr, Field
 from sqlalchemy import select
 
 from .db import get_db
@@ -155,6 +156,118 @@ def checkout_status(db, user, now=None):
     return result
 
 
+
+def launch_enabled(user):
+    pilots = {
+        value.strip()
+        for value in os.getenv(
+            "LIDYACHAT_WELCOME_LAUNCH_PILOT_IDS", ""
+        ).split(",")
+        if value.strip()
+    }
+
+    return (
+        preparation_enabled()
+        and flag("LIDYACHAT_WELCOME_LAUNCH_ENABLED")
+        and str(user.public_id) in pilots
+    )
+
+
+def reserve_launch(
+    db, user_id, tier, request_id, now=None
+):
+    import re
+    from .welcome_purchase_models import WelcomeLaunchPermit
+
+    if not isinstance(request_id, str) or not re.fullmatch(
+        r"[a-f0-9]{32}", request_id
+    ):
+        raise HTTPException(422, "Gecersiz istek")
+
+    if not preparation_enabled() or not flag(
+        "LIDYACHAT_WELCOME_LAUNCH_ENABLED"
+    ):
+        raise HTTPException(503, "Odeme baslatma kapali")
+
+    now = utc(now or datetime.now(timezone.utc))
+
+    try:
+        user = require_customer(db, user_id)
+
+        if not launch_enabled(user):
+            raise HTTPException(403, "Odeme izni bulunmuyor")
+
+        intent = prepare_intent(
+            db, user.id, tier, now
+        )
+
+        previous = db.get(
+            WelcomeLaunchPermit,
+            intent.id,
+            populate_existing=True,
+        )
+
+        if previous is not None:
+            raise HTTPException(
+                409,
+                "Onceki odeme oturumu kontrol edilmeli",
+            )
+
+        expiry = min(
+            now + timedelta(seconds=90),
+            utc(intent.offer_expires_at),
+        )
+
+        if expiry <= now:
+            raise HTTPException(403, "Kampanya sona erdi")
+
+        permit = WelcomeLaunchPermit(
+            intent_id=intent.id,
+            permit_id=str(uuid4()),
+            request_id=request_id,
+            created_at=now,
+            expires_at=expiry,
+        )
+
+        db.add(permit)
+        db.flush()
+
+        result = {
+            "permit_id": permit.permit_id,
+            "intent_id": intent.id,
+            "request_id": request_id,
+            "product_id": intent.product_id,
+            "account_hash": _account_hash(user.id),
+            "tier": intent.tier,
+            "currency": "TRY",
+            "catalog_price_kurus": intent.price_kurus,
+            "price_micros": intent.price_kurus * 10000,
+            "expires_at": expiry.isoformat(),
+            "launch_allowed": True,
+            "credited": False,
+        }
+
+        db.commit()
+
+        return result
+
+    except Exception:
+        db.rollback()
+        raise
+
+
+class LaunchPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    tier: Literal["bronze", "silver", "gold"]
+
+    request_id: str = Field(
+        pattern=r"^[a-f0-9]{32}$",
+        min_length=32,
+        max_length=32,
+    )
+
+
 class PreparePayload(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -212,6 +325,25 @@ def register_auth(current_user):
 
         return prepare_checkout(
             db, user.id, payload.tier
+        )
+
+
+
+    @router.post("/launch-authorize")
+    def authorize_launch(
+        payload: LaunchPayload,
+        response: Response,
+        user=Depends(current_user),
+        db=Depends(get_db),
+    ):
+        response.headers["Cache-Control"] = "private, no-store"
+        response.headers["Vary"] = "Authorization"
+
+        return reserve_launch(
+            db,
+            user.id,
+            payload.tier,
+            payload.request_id,
         )
 
 

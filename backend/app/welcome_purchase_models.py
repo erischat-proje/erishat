@@ -121,3 +121,36 @@ class WelcomePlayReceipt(Base):
         server_default=func.now(),
         nullable=False,
     )
+
+
+class WelcomeLaunchPermit(Base):
+    __tablename__ = "welcome_package_launch_permits"
+
+    intent_id: Mapped[str] = mapped_column(
+        ForeignKey(
+            "welcome_package_purchases.id",
+            ondelete="CASCADE",
+        ),
+        primary_key=True,
+    )
+
+    permit_id: Mapped[str] = mapped_column(
+        String(36),
+        unique=True,
+        nullable=False,
+    )
+
+    request_id: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+    )
+
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+    )

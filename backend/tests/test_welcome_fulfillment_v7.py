@@ -56,6 +56,7 @@ def db(monkeypatch, tmp_path):
         User, AdminRole, UserCosmetic,
         WelcomePurchase, PlayPurchaseRecord,
         WelcomePlayReceipt, PlayRefundCase,
+        WelcomeLaunchPermit,
         CosmeticLease, LidyaLedger,
         VipStatus, DealerInventory, DealerDesignation,
         NobilityPointsLedger, NobilityPointLot,
@@ -2901,3 +2902,234 @@ def test_complete_http_missing_receipt_recovery(
 
     assert db.get(User, "owner").lidya == 28100
     assert len(leases(db)) == 5
+
+
+from backend.app.welcome_purchase_models import (
+    WelcomeLaunchPermit,
+)
+
+LAUNCH_PATH = "/v1/welcome-packages/launch-authorize"
+REQUEST_ID = "a" * 32
+
+
+@pytest.fixture
+def launch_ready(
+    monkeypatch, checkout_ready, checkout_customer
+):
+    monkeypatch.setenv(
+        "LIDYACHAT_WELCOME_LAUNCH_ENABLED",
+        "true",
+    )
+
+    monkeypatch.setenv(
+        "LIDYACHAT_WELCOME_LAUNCH_PILOT_IDS",
+        str(checkout_customer.public_id),
+    )
+
+
+def test_launch_disabled_by_default(
+    db, monkeypatch, checkout_ready,
+    checkout_customer
+):
+    monkeypatch.delenv(
+        "LIDYACHAT_WELCOME_LAUNCH_ENABLED",
+        raising=False,
+    )
+
+    with pytest.raises(HTTPException) as error:
+        checkout.reserve_launch(
+            db, checkout_customer.id,
+            "gold", REQUEST_ID, NOW
+        )
+
+    assert error.value.status_code == 503
+    assert db.scalars(select(WelcomeLaunchPermit)).all() == []
+
+
+def test_launch_nonpilot_blocked(
+    db, monkeypatch, launch_ready,
+    checkout_customer
+):
+    monkeypatch.setenv(
+        "LIDYACHAT_WELCOME_LAUNCH_PILOT_IDS",
+        "9999999999",
+    )
+
+    with pytest.raises(HTTPException) as error:
+        checkout.reserve_launch(
+            db, checkout_customer.id,
+            "gold", REQUEST_ID, NOW
+        )
+
+    assert error.value.status_code == 403
+    assert db.scalars(select(WelcomeLaunchPermit)).all() == []
+
+
+@pytest.mark.parametrize("tier,price", [
+    ("bronze", 9999),
+    ("silver", 24999),
+    ("gold", 49999),
+])
+def test_launch_authoritative_permit(
+    db, launch_ready, checkout_customer,
+    tier, price
+):
+    result = checkout.reserve_launch(
+        db, checkout_customer.id,
+        tier, REQUEST_ID, NOW
+    )
+
+    assert result["launch_allowed"] is True
+    assert result["credited"] is False
+    assert result["product_id"] == f"welcome_{tier}_v1"
+    assert result["account_hash"] == _account_hash(
+        checkout_customer.id
+    )
+
+    assert result["currency"] == "TRY"
+    assert result["catalog_price_kurus"] == price
+    assert result["price_micros"] == price * 10000
+
+    assert datetime.fromisoformat(
+        result["expires_at"]
+    ) == NOW + timedelta(seconds=90)
+
+    permit = db.get(
+        WelcomeLaunchPermit,
+        result["intent_id"]
+    )
+
+    assert permit.permit_id == result["permit_id"]
+    assert permit.request_id == REQUEST_ID
+    assert checkout_customer.lidya == 100
+    assert checkout_customer.lidya_gem == 50
+
+
+@pytest.mark.parametrize("seconds", [0, 91])
+def test_launch_repeat_and_expired_permit_blocked(
+    db, launch_ready, checkout_customer, seconds
+):
+    checkout.reserve_launch(
+        db, checkout_customer.id,
+        "gold", REQUEST_ID, NOW
+    )
+
+    with pytest.raises(HTTPException) as error:
+        checkout.reserve_launch(
+            db,
+            checkout_customer.id,
+            "gold",
+            "b" * 32,
+            NOW + timedelta(seconds=seconds),
+        )
+
+    assert error.value.status_code == 409
+
+    assert len(db.scalars(
+        select(WelcomeLaunchPermit)
+    ).all()) == 1
+
+
+def test_launch_separate_tiers(
+    db, launch_ready, checkout_customer
+):
+    ids = set()
+
+    for tier in ("bronze", "silver", "gold"):
+        result = checkout.reserve_launch(
+            db, checkout_customer.id,
+            tier, REQUEST_ID, NOW
+        )
+
+        ids.add(result["permit_id"])
+
+    assert len(ids) == 3
+    assert checkout_customer.lidya == 100
+
+
+def test_launch_staff_blocked(
+    db, launch_ready, checkout_customer
+):
+    db.add(AdminRole(
+        user_id=checkout_customer.id,
+        role="DA",
+    ))
+
+    db.commit()
+
+    with pytest.raises(HTTPException) as error:
+        checkout.reserve_launch(
+            db, checkout_customer.id,
+            "gold", REQUEST_ID, NOW
+        )
+
+    assert error.value.status_code == 403
+
+
+def test_launch_campaign_boundary(
+    db, launch_ready, checkout_customer
+):
+    result = checkout.reserve_launch(
+        db, checkout_customer.id,
+        "gold", REQUEST_ID,
+        NOW + timedelta(days=7, seconds=-30),
+    )
+
+    assert datetime.fromisoformat(
+        result["expires_at"]
+    ) == NOW + timedelta(days=7)
+
+
+def test_launch_http_authentication(
+    db, launch_ready, checkout_http_customer,
+    admin_client
+):
+    payload = {
+        "tier": "gold",
+        "request_id": REQUEST_ID,
+    }
+
+    assert admin_client.post(
+        LAUNCH_PATH, json=payload
+    ).status_code == 401
+
+    response = admin_client.post(
+        LAUNCH_PATH,
+        json=payload,
+        headers=auth_headers(
+            db, checkout_http_customer
+        ),
+    )
+
+    assert response.status_code == 200
+    assert response.json()["launch_allowed"]
+    assert "no-store" in response.headers["cache-control"]
+
+    db.expire_all()
+
+    assert db.get(
+        User, checkout_http_customer.id
+    ).lidya == 100
+
+
+def test_launch_http_price_tampering(
+    db, launch_ready, checkout_http_customer,
+    admin_client
+):
+    response = admin_client.post(
+        LAUNCH_PATH,
+        json={
+            "tier": "gold",
+            "request_id": REQUEST_ID,
+            "price_micros": 1,
+        },
+        headers=auth_headers(
+            db, checkout_http_customer
+        ),
+    )
+
+    assert response.status_code == 422
+
+    assert db.scalars(
+        select(WelcomeLaunchPermit)
+    ).all() == []
