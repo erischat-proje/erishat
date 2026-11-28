@@ -132,7 +132,7 @@ def deliver(db, receipt_id, user_id, purchase_token, now=None):
             if intent.status != "credited":
                 raise HTTPException(409, "Invalid credited state")
 
-            verify_credited_payload(
+            google_consumed = verify_credited_payload(
                 data,
                 receipt.product_id,
                 _account_hash(user_id),
@@ -145,6 +145,7 @@ def deliver(db, receipt_id, user_id, purchase_token, now=None):
             return {
                 "credited": False,
                 "already_credited": True,
+                "google_consumed": google_consumed,
             }
 
         if (
@@ -225,6 +226,7 @@ def deliver(db, receipt_id, user_id, purchase_token, now=None):
         return {
             "credited": True,
             "already_credited": False,
+            "google_consumed": False,
             "amount": amount,
             "cosmetics": len(rewards),
             "expires_at": expires.isoformat(),

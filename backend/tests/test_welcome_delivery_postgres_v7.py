@@ -172,3 +172,124 @@ def test_concurrent_delivery(pg, monkeypatch, gender):
         assert db.get(
             PlayPurchaseRecord, rid
         ).purchase_status == "credited"
+
+
+from backend.app import welcome_recovery as recovery
+
+
+@pytest.mark.parametrize("missing_receipt", [False, True])
+def test_concurrent_recovery(
+    pg, monkeypatch, missing_receipt
+):
+    monkeypatch.setenv(
+        "LIDYACHAT_WELCOME_RECOVERY_ENABLED",
+        "true",
+    )
+
+    with Session(pg, expire_on_commit=False) as db:
+        intent, link = seed(db, monkeypatch)
+        intent_id = intent.id
+
+        if missing_receipt:
+            record = db.get(
+                PlayPurchaseRecord, link.receipt_id
+            )
+
+            db.delete(link)
+            db.flush()
+            db.delete(record)
+            intent.status = "prepared"
+            db.commit()
+
+    def verify_durable_delivery(product_id, token):
+        # Simulated Google consumption.
+        # Independent connection confirms committed rewards.
+        with Session(pg) as check:
+            assert check.get(
+                User, "owner"
+            ).lidya == 28100
+
+            assert len(check.scalars(
+                select(CosmeticLease)
+            ).all()) == 5
+
+            assert check.get(
+                WelcomePurchase, intent_id
+            ).status == "credited"
+
+    monkeypatch.setattr(
+        recovery,
+        "_consume_google",
+        verify_durable_delivery,
+    )
+
+    barrier = Barrier(6)
+
+    def worker():
+        with Session(pg) as db:
+            barrier.wait(timeout=15)
+
+            return recovery.recover(
+                db,
+                "owner",
+                "welcome_gold_v1",
+                TOKEN,
+                DELIVERED,
+            )
+
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        futures = [
+            pool.submit(worker) for _ in range(6)
+        ]
+
+        results = [
+            future.result(timeout=45)
+            for future in futures
+        ]
+
+    assert sum(
+        bool(r["credited"]) for r in results
+    ) == 1
+
+    assert sum(
+        bool(r["already_credited"]) for r in results
+    ) == 5
+
+    assert all(
+        r["status"] == "delivered"
+        and r["consumption"] == "completed"
+        for r in results
+    )
+
+    assert len({
+        r["receipt_id"] for r in results
+    }) == 1
+
+    with Session(pg) as db:
+        user = db.get(User, "owner")
+
+        assert user.lidya == 28100
+        assert user.lidya_gem == 50
+
+        assert len(db.scalars(
+            select(PlayPurchaseRecord)
+        ).all()) == 1
+
+        assert len(db.scalars(
+            select(WelcomePlayReceipt)
+        ).all()) == 1
+
+        assert len(db.scalars(
+            select(CosmeticLease)
+        ).all()) == 5
+
+        ledger = db.scalars(
+            select(LidyaLedger).where(
+                LidyaLedger.operation ==
+                "google_play_credit"
+            )
+        ).all()
+
+        assert len(ledger) == 1
+        assert ledger[0].delta == 28000
+        assert ledger[0].balance_after == 28100

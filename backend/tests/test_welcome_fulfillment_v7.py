@@ -54,6 +54,7 @@ def db(monkeypatch, tmp_path):
         WelcomePlayReceipt, PlayRefundCase,
         CosmeticLease, LidyaLedger,
         VipStatus, DealerInventory, DealerDesignation,
+        NobilityPointsLedger, NobilityPointLot,
     ):
         model.__table__.create(engine)
 
@@ -825,3 +826,456 @@ def test_emergency_disable_clears_selection(
 
     assert db.get(User, "owner").lidya == 28100
     assert len(leases(db)) == 5
+
+from backend.app.nobility_models import (
+    NobilityPointsLedger, NobilityPointLot,
+)
+from backend.app.play_billing import (
+    _refund_cases_sync,
+    _voided_audit_rows,
+    _refund_financial_review,
+)
+from backend.app import welcome_refunds
+from copy import deepcopy
+
+
+def refund_rows(db, link, token=TOKEN):
+    record = db.get(
+        PlayPurchaseRecord, link.receipt_id
+    )
+
+    return _voided_audit_rows(
+        [{
+            "purchaseToken": token,
+            "orderId": record.google_order_id,
+            "voidedQuantity": 1,
+            "voidedTimeMillis": "1795824000000",
+        }],
+        {record.token_sha256: record},
+    )
+
+
+def test_refund_revokes_all_selected_rewards(
+    db, monkeypatch, appearance_enabled
+):
+    intent, link = seed(db, monkeypatch)
+    call(db, link)
+    equip_all(db)
+
+    rows = refund_rows(db, link)
+
+    assert len(rows) == 1
+    assert rows[0]["lidya"] == 28000
+
+    assert _refund_cases_sync(db, rows)["created"] == 1
+
+    user = db.get(User, "owner")
+
+    assert user.lidya == 28100
+    assert user.lidya_gem == 50
+
+    assert all(
+        getattr(user, column) is None
+        for column in appearance.COLUMNS.values()
+    )
+
+    assert db.get(
+        VipStatus, "owner"
+    ).entry_effect is None
+
+    assert inventory(db, user, DELIVERED) == []
+
+    # Historical evidence remains available.
+    assert len(leases(db)) == 5
+    assert intent.status == "credited"
+
+    assert _refund_cases_sync(db, rows)["created"] == 0
+
+    assert len(db.scalars(
+        select(PlayRefundCase)
+    ).all()) == 1
+
+
+def test_refund_preserves_other_tier(
+    db, monkeypatch, appearance_enabled
+):
+    gold, gold_link = seed(db, monkeypatch)
+
+    first_data = deepcopy(
+        service.fetch_from_google(TOKEN)
+    )
+
+    call(db, gold_link)
+    equip_all(db)
+
+    bronze = prepare_intent(
+        db, "owner", "bronze", NOW
+    )
+    bronze.created_at = NOW
+
+    data = deepcopy(first_data)
+    data["orderId"] = "BRONZE-ORDER"
+    data["productLineItem"][0]["productId"] = bronze.product_id
+
+    bronze_token = "welcome-bronze-token"
+
+    bronze_link = capture_verified_receipt(
+        db, "owner", bronze.id,
+        bronze_token, data,
+    )
+
+    db.commit()
+
+    monkeypatch.setattr(
+        service, "fetch_from_google",
+        lambda token: data
+    )
+
+    service.deliver(
+        db,
+        bronze_link.receipt_id,
+        "owner",
+        bronze_token,
+        DELIVERED,
+    )
+
+    appearance.select_reward(
+        db, "owner", "frame",
+        "welcome_male_bronze_frame_v1",
+        DELIVERED,
+    )
+    db.commit()
+
+    _refund_cases_sync(
+        db, refund_rows(db, gold_link)
+    )
+
+    user = db.get(User, "owner")
+    items = inventory(db, user, DELIVERED)
+
+    assert len(items) == 2
+    assert all(x["tier"] == "bronze" for x in items)
+
+    assert user.frame_asset == (
+        "welcome_male_bronze_frame_v1"
+    )
+
+    assert user.lidya == 34100
+
+
+def test_duplicate_payment_refund_safe(
+    db, monkeypatch, appearance_enabled
+):
+    intent, original = seed(db, monkeypatch)
+
+    data = deepcopy(
+        service.fetch_from_google(TOKEN)
+    )
+    data["orderId"] = "DUPLICATE-ORDER"
+
+    duplicate_token = "welcome-duplicate-token"
+
+    duplicate = capture_verified_receipt(
+        db, "owner", intent.id,
+        duplicate_token, data,
+    )
+
+    db.commit()
+
+    assert duplicate.disposition == "review"
+
+    call(db, original)
+    equip_all(db)
+
+    _refund_cases_sync(
+        db,
+        refund_rows(db, duplicate, duplicate_token),
+    )
+
+    user = db.get(User, "owner")
+
+    assert len(inventory(db, user, DELIVERED)) == 5
+    assert user.lidya == 28100
+
+    assert user.frame_asset == (
+        "welcome_male_gold_frame_v1"
+    )
+
+
+def test_refund_before_delivery(
+    db, monkeypatch
+):
+    intent, link = seed(db, monkeypatch)
+
+    _refund_cases_sync(
+        db, refund_rows(db, link)
+    )
+
+    with pytest.raises(HTTPException):
+        call(db, link)
+
+    unchanged(db)
+    assert not leases(db)
+
+
+def test_refund_transaction_rollback(
+    db, monkeypatch, appearance_enabled
+):
+    intent, link = seed(db, monkeypatch)
+    call(db, link)
+    equip_all(db)
+
+    real_revoke = (
+        welcome_refunds.revoke_refunded_appearance
+    )
+
+    def fail_after_revocation(session, record):
+        real_revoke(session, record)
+        raise RuntimeError("Simulated refund failure")
+
+    monkeypatch.setattr(
+        welcome_refunds,
+        "revoke_refunded_appearance",
+        fail_after_revocation,
+    )
+
+    with pytest.raises(RuntimeError):
+        _refund_cases_sync(
+            db, refund_rows(db, link)
+        )
+
+    user = db.get(User, "owner")
+
+    assert user.frame_asset == (
+        "welcome_male_gold_frame_v1"
+    )
+
+    assert len(inventory(db, user, DELIVERED)) == 5
+    assert user.lidya == 28100
+
+    assert not db.scalars(
+        select(PlayRefundCase)
+    ).all()
+
+
+def test_da_welcome_financial_review(
+    db, monkeypatch
+):
+    intent, link = seed(db, monkeypatch)
+    call(db, link)
+
+    _refund_cases_sync(
+        db, refund_rows(db, link)
+    )
+
+    case = db.scalars(
+        select(PlayRefundCase)
+    ).one()
+
+    result = _refund_financial_review(db, case)
+
+    assert result["package_lidya"] == 28000
+    assert result["current_balance"] == 28100
+    assert result["purchase_credit_visible_in_recent_ledger"]
+    assert not result["wallet_changed"]
+
+
+from backend.app import welcome_recovery as recovery
+
+
+@pytest.fixture
+def recovery_enabled(monkeypatch):
+    monkeypatch.setenv(
+        "LIDYACHAT_WELCOME_RECOVERY_ENABLED",
+        "true",
+    )
+
+    calls = []
+
+    def consume(product_id, token):
+        calls.append((product_id, token))
+
+    monkeypatch.setattr(
+        recovery, "_consume_google", consume
+    )
+
+    return calls
+
+
+def recover_call(db, token=TOKEN, uid="owner"):
+    return recovery.recover(
+        db, uid, "welcome_gold_v1",
+        token, DELIVERED,
+    )
+
+
+def test_recovery_verified_purchase(
+    db, monkeypatch, recovery_enabled
+):
+    intent, link = seed(db, monkeypatch)
+
+    result = recover_call(db)
+
+    assert result["credited"]
+    assert result["consumption"] == "completed"
+    assert len(recovery_enabled) == 1
+    assert db.get(User, "owner").lidya == 28100
+    assert len(leases(db)) == 5
+
+
+def test_recovery_missing_receipt(
+    db, monkeypatch, recovery_enabled
+):
+    intent, link = seed(db, monkeypatch)
+
+    record = db.get(
+        PlayPurchaseRecord, link.receipt_id
+    )
+
+    db.delete(link)
+    db.flush()
+    db.delete(record)
+    intent.status = "prepared"
+    db.commit()
+
+    result = recover_call(db)
+
+    assert result["credited"]
+    assert len(recovery_enabled) == 1
+    assert db.get(User, "owner").lidya == 28100
+    assert len(leases(db)) == 5
+
+
+def test_recovery_consumption_retry(
+    db, monkeypatch, recovery_enabled
+):
+    intent, link = seed(db, monkeypatch)
+
+    def fail(*args):
+        raise RuntimeError("Simulated Google timeout")
+
+    monkeypatch.setattr(
+        recovery, "_consume_google", fail
+    )
+
+    first = recover_call(db)
+
+    assert first["credited"]
+    assert first["consumption"] == "retry_required"
+
+    monkeypatch.setattr(
+        recovery,
+        "_consume_google",
+        lambda *args: recovery_enabled.append(args),
+    )
+
+    second = recover_call(db)
+
+    assert second["already_credited"]
+    assert second["consumption"] == "completed"
+    assert len(recovery_enabled) == 1
+    assert db.get(User, "owner").lidya == 28100
+    assert len(leases(db)) == 5
+
+
+def test_recovery_already_consumed(
+    db, monkeypatch, recovery_enabled
+):
+    intent, link = seed(db, monkeypatch)
+    data = service.fetch_from_google(TOKEN)
+
+    recover_call(db)
+    recovery_enabled.clear()
+
+    data["productLineItem"][0][
+        "productOfferDetails"
+    ]["consumptionState"] = "CONSUMPTION_STATE_CONSUMED"
+
+    result = recover_call(db)
+
+    assert result["already_credited"]
+    assert result["consumption"] == "completed"
+    assert not recovery_enabled
+    assert db.get(User, "owner").lidya == 28100
+
+
+def test_recovery_duplicate_after_delivery(
+    db, monkeypatch, recovery_enabled
+):
+    intent, link = seed(db, monkeypatch)
+
+    data = deepcopy(
+        service.fetch_from_google(TOKEN)
+    )
+
+    recover_call(db)
+    recovery_enabled.clear()
+
+    data["orderId"] = "SECOND-PAID-ORDER"
+
+    monkeypatch.setattr(
+        service, "fetch_from_google",
+        lambda token: data,
+    )
+
+    result = recover_call(
+        db, token="welcome-second-token"
+    )
+
+    assert result["status"] == "review_required"
+    assert not result["credited"]
+    assert not recovery_enabled
+
+    assert db.get(User, "owner").lidya == 28100
+    assert len(leases(db)) == 5
+
+    assert len(db.scalars(
+        select(WelcomePlayReceipt)
+    ).all()) == 2
+
+
+def test_recovery_foreign_account(
+    db, monkeypatch, recovery_enabled
+):
+    seed(db, monkeypatch)
+
+    with pytest.raises(HTTPException):
+        recover_call(db, uid="another-user")
+
+    unchanged(db)
+    assert not recovery_enabled
+
+
+def test_recovery_refunded_purchase(
+    db, monkeypatch, recovery_enabled
+):
+    intent, link = seed(db, monkeypatch)
+
+    _refund_cases_sync(
+        db, refund_rows(db, link)
+    )
+
+    with pytest.raises(HTTPException):
+        recover_call(db)
+
+    unchanged(db)
+    assert not recovery_enabled
+    assert not leases(db)
+
+
+def test_recovery_disabled(
+    db, monkeypatch, recovery_enabled
+):
+    seed(db, monkeypatch)
+
+    monkeypatch.delenv(
+        "LIDYACHAT_WELCOME_RECOVERY_ENABLED",
+        raising=False,
+    )
+
+    with pytest.raises(HTTPException) as error:
+        recover_call(db)
+
+    assert error.value.status_code == 503
+    unchanged(db)
+    assert not recovery_enabled

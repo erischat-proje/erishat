@@ -15,7 +15,7 @@ def verify_welcome_receipt(
     if intent.user_id != user_id:
         raise ValueError("Account mismatch")
 
-    if intent.status not in ("prepared", "verified", "review"):
+    if intent.status not in ("prepared", "verified", "review", "credited"):
         raise ValueError("Invalid intent status")
 
     package = PRODUCTS.get(intent.product_id)
