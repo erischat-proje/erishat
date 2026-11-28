@@ -72,8 +72,25 @@ def remember_device(db, user, device_key):
     blocked = db.scalar(select(UserBan).where(UserBan.user_id.in_(owners),UserBan.ban_type=='device',UserBan.active.is_(True),
         (UserBan.expires_at.is_(None)) | (UserBan.expires_at>now())))
     if blocked: raise HTTPException(403, 'Bu tarayıcı cihaz erişimi uygulama yönetimi tarafından engellenmiştir.')
-    if not db.get(UserBrowserDevice,(user.id,digest)):
-        db.add(UserBrowserDevice(user_id=user.id,device_hash=digest)); db.commit()
+    if db.get(UserBrowserDevice, (user.id, digest)) is None:
+        dialect = db.get_bind().dialect.name
+
+        if dialect == "postgresql":
+            from sqlalchemy.dialects.postgresql import insert
+        elif dialect == "sqlite":
+            from sqlalchemy.dialects.sqlite import insert
+        else:
+            raise RuntimeError("Unsupported device database dialect")
+
+        stmt = insert(UserBrowserDevice).values(
+            user_id=user.id,
+            device_hash=digest,
+        ).on_conflict_do_nothing(
+            index_elements=["user_id", "device_hash"],
+        )
+
+        db.execute(stmt)
+        db.commit()
 
 class EvidencePayload(BaseModel):
     days: int | None = Field(default=None, ge=1, le=36500)
