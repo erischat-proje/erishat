@@ -127,7 +127,7 @@
     document.body.append(overlay);
     overlay.querySelector('.eph-dialog-content').append(hub.querySelector('.eph-body'));
     const settings=view.querySelector('[data-erischat-profile-controls]');if(settings)overlay.querySelector('.eph-dialog-content').append(settings);
-    let lastTrigger=null;const close=()=>{if(overlay.hidden)return;if(window.ErisProfileWorkspace?.canLeave&&!window.ErisProfileWorkspace.canLeave())return;if(window.ErisPrivacyCenter?.canLeave&&!window.ErisPrivacyCenter.canLeave())return;overlay.hidden=true;document.body.classList.remove('eph-dialog-open');show('overview',true);if(lastTrigger?.isConnected)lastTrigger.focus()};
+    const close=()=>{if(overlay.hidden)return;if(window.ErisProfileWorkspace?.canLeave&&!window.ErisProfileWorkspace.canLeave())return;if(window.ErisPrivacyCenter?.canLeave&&!window.ErisPrivacyCenter.canLeave())return;overlay.hidden=true;document.body.classList.remove('eph-dialog-open');show('overview',true);if(lastTrigger?.isConnected)lastTrigger.focus()};
     overlay.querySelector('.eph-close').onclick=close;
     overlay.onclick=e=>{if(e.target===overlay)close()};
     overlay.onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();close()}else if(e.key==='Tab'){const focusables=Array.from(overlay.querySelectorAll('button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),[tabindex="0"]')).filter(el=>!el.closest('[hidden]'));const first=focusables[0],last=focusables[focusables.length-1];if(!first)return;if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}};
@@ -136,14 +136,16 @@
     const icons={info:'profile',posts:'posts',social:'family','fan-ranking':'family',tasks:'posts',collection:'collection',vip:'vip',nobility:'vip',calls:'bell',gifts:'gifts',notifications:'bell',privacy:'privacy',blocked:'blocked',rooms:'discover',suggestion:'posts',settings:'security'};
     for (const [key,label] of tabs) {
       const button = document.createElement('button');button.type='button';button.role='tab';button.dataset.tab=key;button.innerHTML=(key==='game-ranking'?'<img class="eph-icon pp-icon" src="./assets/lidya-wheel/leaderboard-v1.png" alt="">':key==='topup'?'<img class="eph-icon" src="./lidya-coin.png" alt="">':'<svg class="eph-icon" aria-hidden="true"><use href="#home-'+icons[key]+'"></use></svg>')+'<span>'+escape(label)+'</span>';
-      button.onclick=()=>{if(key==='game-ranking'){window.LidyaGameRanking?.open();return}if(key==='nobility'){window.LidyaNobility?.open();return}if(key==='vip'){window.ErisChatVIP?.open?.();return}if(key==='topup'){window.ErisPurchases?.open?.();return}if(key==='suggestion'){window.ErisSuggestions?.open?.();return}if(key==='fan-ranking'){window.ErisPlatform.getMe().then(me=>window.ErisPersonalFanRanking?.(me.id)).catch(e=>window.toast?.(e.message));return}lastTrigger=button;show(key)};strip.append(button);
+      button.onclick=()=>{if(key==='game-ranking'){window.LidyaGameRanking?.open();return}if(key==='nobility'){window.LidyaNobility?.open();return}if(key==='vip'){window.ErisChatVIP?.open?.();return}if(key==='topup'){window.ErisPurchases?.open?.();return}if(key==='suggestion'){window.ErisSuggestions?.open?.();return}if(key==='fan-ranking'){window.ErisPlatform.getMe().then(me=>window.ErisPersonalFanRanking?.(me.id)).catch(e=>window.toast?.(e.message));return}show(key,false,button)};strip.append(button);
     }
     show('overview');
   }
+  let lastTrigger=null;
   let requestIndex=0;
-  async function show(key,force=false) {
+  async function show(key,force=false,trigger=null) {
     if(!force&&window.ErisProfileWorkspace?.canLeave&&!window.ErisProfileWorkspace.canLeave())return;
     if(!force&&window.ErisPrivacyCenter?.canLeave&&!window.ErisPrivacyCenter.canLeave())return;
+    if(trigger)lastTrigger=trigger;
     window.ErisProfileWorkspace?.reset();window.ErisPrivacyCenter?.reset();
     const hub=panel();if(!hub)return;
     const index=++requestIndex,session=sessionToken(),isCurrent=()=>index===requestIndex&&session===sessionToken(), overlay=document.querySelector('.eph-overlay'),body=overlay.querySelector('.eph-body');
@@ -244,7 +246,7 @@
       }
     }catch(error){if(isCurrent())body.textContent=error.message||'Profil bilgileri yüklenemedi.'}
   }
-  window.ErisProfileHub={show,close:()=>document.querySelector('.eph-close')?.click(),reset:()=>{window.ErisProfileWorkspace?.reset();const dialog=document.querySelector('.eph-overlay');if(dialog)dialog.hidden=true;document.body.classList.remove('eph-dialog-open');show('overview',true)}};
+  window.ErisProfileHub={show,openPrivacy:trigger=>show('privacy',false,trigger),close:()=>document.querySelector('.eph-close')?.click(),reset:()=>{window.ErisProfileWorkspace?.reset();const dialog=document.querySelector('.eph-overlay');if(dialog)dialog.hidden=true;document.body.classList.remove('eph-dialog-open');show('overview',true)}};
   let profileSession=sessionToken(),profileAccount=window.ErisAuth?.user?.id;
   const accountChanged=event=>{const next=sessionToken(),uid=event.detail?.user?.id;if(next!==profileSession||uid&&profileAccount&&String(uid)!==String(profileAccount)||event.detail?.state==='logged_out'){profileSession=next;profileAccount=uid;window.ErisProfileHub.reset();}else if(uid)profileAccount=uid;};
   for(const type of ['erischat:auth','erischat:auth-state','erischat:auth-ready','erischat:auth-state-changed'])window.addEventListener(type,accountChanged);
