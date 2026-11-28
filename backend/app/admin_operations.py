@@ -1,5 +1,6 @@
 """Working desks for the existing upper management buttons; no alternate wallet/ban engine."""
 import json
+import re
 from datetime import datetime,timezone,timedelta
 from fastapi import APIRouter,Depends,HTTPException,Query,Response
 from pydantic import Field
@@ -10,7 +11,8 @@ from .db import get_db
 from .models import User
 from .admin_models import AdminRole,SupportAssignment,SupportMessage,BanApproval,BanAppeal,SystemAnnouncement
 from .support_models import SupportTicket,SupportFlow
-from .referral_models import ReferralCode,ReferralRedemption
+from .referral_models import ReferralCode,ReferralRedemption,CustomReferralReward
+from .referral_routes import reward_amount
 from .suggestion_models import UserSuggestion,SuggestionReviewSession
 from .payment_assistance_models import PaymentRequest
 from .ban_workflow_models import BanWorkflow
@@ -76,8 +78,13 @@ class Key(TextModel):
     request_key:str=Field(min_length=16,max_length=64,pattern='^[A-Za-z0-9_-]+$')
 class Note(Key):note:str=Field(min_length=20,max_length=2000)
 class ReferralCreate(Key):
-    kind:str=Field(pattern='^(USER|TANIDIK)$')
+    kind:str=Field(pattern='^(USER|TANIDIK|CUSTOM)$')
     max_uses:int=Field(strict=True,ge=1,le=100000)
+    code:str|None=Field(default=None,max_length=48)
+    reward:int|None=Field(default=None,strict=True,ge=1,le=1000000)
+    active:bool=Field(default=True,strict=True)
+class ReferralState(Note):
+    active:bool=Field(strict=True)
 class SourceCase(TextModel):
     category:str
     summary:str=Field(min_length=20,max_length=3000)
@@ -170,17 +177,63 @@ def register_auth(current_user):
 
     @router.post('/referrals',status_code=201)
     def referral_create(payload:ReferralCreate,db:Session=Depends(get_db),user:User=Depends(current_user)):
-        access(db,user,4);db.scalar(select(User.id).where(User.id==user.id).with_for_update())
+        access(db,user,4)
+        custom=payload.kind=='CUSTOM'
+        if custom:
+            if not re.fullmatch(r'[A-Za-z0-9]{4,48}',payload.code or ''):
+                raise HTTPException(422,'Kod 4-48 İngilizce harf veya rakam içermeli.')
+            if payload.reward is None or payload.reward*payload.max_uses>100000000:
+                raise HTTPException(422,'Ödül gerekli; toplam bütçe 100.000.000 Lidya sınırını aşamaz.')
+            code=payload.code.upper();amount=payload.reward
+            detail=f'CUSTOM / {payload.max_uses} / {code} / reward={amount} / active={payload.active}'
+        else:
+            if payload.code is not None or payload.reward is not None or not payload.active:
+                raise HTTPException(422,'Özel kod ve ödül için CUSTOM seçin.')
+            from secrets import choice
+            code=''.join(choice('ABCDEFGHJKLMNPQRSTUVWXYZ23456789') for _ in range(14))
+            amount=2500 if payload.kind=='USER' else 12500
+            detail=payload.kind+' / '+str(payload.max_uses)
+        db.scalar(select(User.id).where(User.id==user.id).with_for_update())
         prior=db.scalar(select(OperationHistory).where(OperationHistory.request_key==payload.request_key))
+        def view(row):
+            return {'id':row.id,'code':row.code,'kind':row.kind,'max_uses':row.max_uses,'reward':reward_amount(db,row),'active':row.active and row.uses<row.max_uses}
         if prior:
             if (prior.kind,prior.action,prior.actor_id)!=('referral','code_created',user.id):raise HTTPException(409,'İstek anahtarı başka işlemde kullanılmış')
             row=db.get(ReferralCode,int(prior.source_id))
             if not row or (row.kind,row.max_uses)!=(payload.kind,payload.max_uses):raise HTTPException(409,'İstek anahtarı başka kod için kullanılmış')
-            return {'id':row.id,'code':row.code,'kind':row.kind,'max_uses':row.max_uses}
-        from secrets import choice
-        row=ReferralCode(code=''.join(choice('ABCDEFGHJKLMNPQRSTUVWXYZ23456789') for _ in range(14)),kind=payload.kind,max_uses=payload.max_uses,created_by=user.id)
-        db.add(row);db.flush();event(db,user,'referral',row.id,'code_created',payload.kind+' / '+str(payload.max_uses),payload.request_key);db.commit()
-        return {'id':row.id,'code':row.code,'kind':row.kind,'max_uses':row.max_uses}
+            if custom and (prior.note!=detail or row.code!=code or reward_amount(db,row)!=amount):
+                raise HTTPException(409,'İstek anahtarı başka kod için kullanılmış')
+            return view(row)
+        row=ReferralCode(code=code,kind=payload.kind,max_uses=payload.max_uses,created_by=user.id,active=payload.active)
+        try:
+            db.add(row);db.flush()
+            if custom:db.add(CustomReferralReward(code_id=row.id,amount=amount))
+            event(db,user,'referral',row.id,'code_created',detail,payload.request_key)
+            db.commit()
+        except IntegrityError:
+            db.rollback();raise HTTPException(409,'Kod veya istek anahtarı zaten kullanılmış.')
+        return view(row)
+
+    @router.post('/referrals/{code_id}/state')
+    def referral_state(code_id:int,payload:ReferralState,db:Session=Depends(get_db),user:User=Depends(current_user)):
+        row,_=source(db,user,'referral',str(code_id),True)
+        if row.kind!='CUSTOM':raise HTTPException(409,'Bu işlem yalnızca özel kodlara açıktır.')
+        detail=f'active={payload.active} / {payload.note}'
+        prior=db.scalar(select(OperationHistory).where(OperationHistory.request_key==payload.request_key))
+        if prior:
+            if (prior.kind,prior.source_id,prior.actor_id,prior.action,prior.note)!=('referral',str(code_id),user.id,'code_state',detail):
+                raise HTTPException(409,'İstek anahtarı başka işlemde kullanılmış')
+            return {'active':row.active}
+        if payload.active:
+            if row.uses>=row.max_uses:raise HTTPException(409,'Kullanım limiti doldu.')
+            reward_amount(db,row)
+        try:
+            row.active=payload.active
+            event(db,user,'referral',row.id,'code_state',detail,payload.request_key)
+            db.commit()
+        except IntegrityError:
+            db.rollback();raise HTTPException(409,'İstek anahtarı zaten kullanılmış.')
+        return {'active':row.active}
 
     @router.post('/referrals/{code_id}/cancel')
     def referral_cancel(code_id:int,payload:Note,db:Session=Depends(get_db),user:User=Depends(current_user)):
@@ -218,7 +271,7 @@ def register_auth(current_user):
         return {'id':r.id,'status':r.status,'reason':r.reason,'explanation':r.explanation,'images':json.loads(r.images_json),'request_id':b.id,'kind':b.kind,'days':b.days,'original_reason':b.reason,'target_public_id':p.public_id if p else None,'room_public_id':room.public_id if room else None,'room_name':room.name if room else None,'first_decision_note':first_note,'first_reviewer_id':first_reviewer,'first_reviewer_public_id':first_person.public_id if first_person else None,'requester_id':b.requester_id,'requester_public_id':requester.public_id if requester else None,'can_decide':r.status=='pending' and user.id not in {b.requester_id,b.target_user_id,b.decision_by}}
 
     @router.get('/referrals')
-    def referrals(q:str=Query('',max_length=48),state:str=Query('all',pattern='^(all|active|exhausted|cancelled)$'),kind:str=Query('',pattern='^(|USER|TANIDIK)$'),before:int|None=Query(None,ge=1),db:Session=Depends(get_db),user:User=Depends(current_user)):
+    def referrals(q:str=Query('',max_length=48),state:str=Query('all',pattern='^(all|active|exhausted|cancelled)$'),kind:str=Query('',pattern='^(|USER|TANIDIK|CUSTOM)$'),before:int|None=Query(None,ge=1),db:Session=Depends(get_db),user:User=Depends(current_user)):
         access(db,user,4);query=select(ReferralCode)
         if q:query=query.where(ReferralCode.code.contains(q.strip().upper(),autoescape=True))
         if kind:query=query.where(ReferralCode.kind==kind)
@@ -227,7 +280,10 @@ def register_auth(current_user):
         if state=='cancelled':query=query.where(ReferralCode.active.is_(False),ReferralCode.uses<ReferralCode.max_uses)
         if before:query=query.where(ReferralCode.id<before)
         rows=list(db.scalars(query.order_by(ReferralCode.id.desc()).limit(31)))
-        return {'items':[{'id':r.id,'code':r.code,'kind':r.kind,'uses':r.uses,'max_uses':r.max_uses,'state':'exhausted' if r.uses>=r.max_uses else 'active' if r.active else 'cancelled','created_at':stamp(r.created_at),'total_awarded':str(db.scalar(select(func.coalesce(func.sum(ReferralRedemption.amount),0)).where(ReferralRedemption.code_id==r.id)))} for r in rows[:30]],'next_before':rows[29].id if len(rows)>30 else None}
+        def listed_reward(row):
+            try:return reward_amount(db,row)
+            except HTTPException:return None
+        return {'items':[{'id':r.id,'code':r.code,'kind':r.kind,'reward':listed_reward(r),'uses':r.uses,'max_uses':r.max_uses,'state':'exhausted' if r.uses>=r.max_uses else 'active' if r.active else 'cancelled','created_at':stamp(r.created_at),'total_awarded':str(db.scalar(select(func.coalesce(func.sum(ReferralRedemption.amount),0)).where(ReferralRedemption.code_id==r.id)))} for r in rows[:30]],'next_before':rows[29].id if len(rows)>30 else None}
 
     @router.get('/referrals/{code_id}/uses')
     def uses(code_id:int,before:int|None=Query(None,ge=1),db:Session=Depends(get_db),user:User=Depends(current_user)):
