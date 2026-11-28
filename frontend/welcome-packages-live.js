@@ -13,6 +13,16 @@
   let checkoutPending=null;
   let checkoutRevision=0;
   let allowedTiers=new Set();
+  let launchTiers=new Set();
+
+  function nativeLaunchAvailable(){
+    try{
+      return bridge()?.welcomeLaunchAvailable?.()===true
+        && typeof bridge()?.startWelcomePurchase==='function';
+    }catch(_){
+      return false;
+    }
+  }
 
   const bridge=()=>window.ErisChatAndroid;
 
@@ -24,10 +34,11 @@
 
       try{
         bridge()?.cancelWelcomePreflight?.();
+        bridge()?.cancelWelcomeLaunch?.();
       }catch(_){}
     }
 
-    allowedTiers.clear();
+    allowedTiers.clear();launchTiers.clear();
   }
 
   function checkoutMessage(message){
@@ -48,7 +59,9 @@
       button.textContent=checkoutPending?.tier===button.dataset.tier
         ?'Güvenli kontrol yapılıyor…'
         :allowed
-          ?'Ödeme uygunluğunu kontrol et'
+          ?(launchTiers.has(button.dataset.tier)
+            ?'Google Play ile satın al'
+            :'Ödeme uygunluğunu kontrol et')
           :'Satış henüz açık değil';
     }
   }
@@ -58,7 +71,7 @@
     const panel=overlay;
     const owner=account;
 
-    allowedTiers.clear();
+    allowedTiers.clear();launchTiers.clear();
     paintCheckout();
 
     if(!panel||
@@ -87,11 +100,28 @@
         );
       }
 
+
+      if(result.launch_allowed===true &&
+         result.preparation_enabled===true &&
+         nativeLaunchAvailable() &&
+         Array.isArray(result.available_tiers) &&
+         Array.isArray(result.launch_tiers)){
+
+        launchTiers=new Set(
+          result.launch_tiers.filter(
+            tier=>['bronze','silver','gold'].includes(tier)
+              && result.available_tiers.includes(tier)
+          )
+        );
+
+        allowedTiers=new Set(launchTiers);
+      }
+
       paintCheckout();
 
     }catch(_){
       if(version!==checkoutRevision||panel!==overlay)return;
-      allowedTiers.clear();
+      allowedTiers.clear();launchTiers.clear();
       paintCheckout();
     }
   }
@@ -119,6 +149,7 @@
       requestId,
       owner:account,
       panel:overlay,
+      mode:launchTiers.has(tier)?'launch':'prepare',
       timer:null
     };
 
@@ -128,7 +159,11 @@
       if(checkoutPending!==pending)return;
 
       cancelCheckout();
-      checkoutMessage('Bağlantı zaman aşımına uğradı. Yeniden deneyin.');
+      checkoutMessage(
+        pending.mode==='launch'
+          ?'Ödeme durumu kontrol ediliyor. Tekrar ödeme yapmayın.'
+          :'Bağlantı zaman aşımına uğradı. Yeniden deneyin.'
+      );
       loadCheckout();
     },25000);
 
@@ -139,11 +174,25 @@
     );
 
     try{
-      bridge().prepareWelcomePurchase(
-        productId,
-        pending.owner,
-        requestId
-      );
+      if(pending.mode==='launch'){
+
+        if(!nativeLaunchAvailable())
+          throw Error('Native checkout unavailable');
+
+        bridge().startWelcomePurchase(
+          productId,
+          pending.owner,
+          requestId
+        );
+
+      }else{
+
+        bridge().prepareWelcomePurchase(
+          productId,
+          pending.owner,
+          requestId
+        );
+      }
 
     }catch(_){
       cancelCheckout();
@@ -164,6 +213,7 @@
       const detail=event.detail;
 
       if(!pending||
+         pending.mode!=='prepare'||
          !detail||
          pending.owner!==token()||
          pending.panel!==overlay||
@@ -216,7 +266,9 @@
     priorFocus=null;
   }
   function clear(){state=null;deadline=0;trigger.hidden=true;close(false)}
-  function syncAccount(){const next=token();if(next!==account){account=next;revision++;pending=false;lastRequest=-Infinity;clear()}return !!account}
+  function syncAccount(){const next=token();if(next!==account){
+      try{bridge()?.cancelWelcomeLaunch?.()}catch(_){}
+      account=next;revision++;pending=false;lastRequest=-Infinity;clear()}return !!account}
   function valid(data){
     if(data?.eligible_for_offer!==true||!['male','female'].includes(data.collection)||!Number.isInteger(data.remaining_seconds)||data.remaining_seconds<=0||data.remaining_seconds>604800||!Array.isArray(data.packages)||data.packages.length!==3)return false;
     const tiers=['bronze','silver','gold'];

@@ -104,7 +104,9 @@ def prepare_checkout(db, user_id, tier, now=None):
 
 def checkout_status(db, user, now=None):
     from .welcome_packages import offer_status
-    from .welcome_purchase_models import WelcomePurchase
+    from .welcome_purchase_models import (
+        WelcomePurchase, WelcomeLaunchPermit,
+    )
 
     now = utc(now or datetime.now(timezone.utc))
 
@@ -112,6 +114,7 @@ def checkout_status(db, user, now=None):
         "preparation_enabled": False,
         "launch_allowed": False,
         "available_tiers": [],
+        "launch_tiers": [],
         "read_only": True,
     }
 
@@ -140,17 +143,39 @@ def checkout_status(db, user, now=None):
 
     previous = {row.tier: row for row in rows}
 
+    reserved = set()
+
+    if rows:
+        reserved = set(db.scalars(
+            select(WelcomeLaunchPermit.intent_id).where(
+                WelcomeLaunchPermit.intent_id.in_(
+                    [row.id for row in rows]
+                )
+            )
+        ).all())
+
     for tier in ("bronze", "silver", "gold"):
         row = previous.get(tier)
 
         if row is None or (
             row.status == "prepared"
+            and row.id not in reserved
             and row.gender == user.gender
         ):
             result["available_tiers"].append(tier)
 
     result["preparation_enabled"] = bool(
         result["available_tiers"]
+    )
+
+
+    if launch_enabled(user):
+        result["launch_tiers"] = list(
+            result["available_tiers"]
+        )
+
+    result["launch_allowed"] = bool(
+        result["launch_tiers"]
     )
 
     return result

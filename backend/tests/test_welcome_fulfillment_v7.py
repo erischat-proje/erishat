@@ -3133,3 +3133,72 @@ def test_launch_http_price_tampering(
     assert db.scalars(
         select(WelcomeLaunchPermit)
     ).all() == []
+
+
+def test_launch_status_pilot_tiers(
+    db, launch_ready, checkout_customer
+):
+    result = checkout.checkout_status(
+        db, checkout_customer, NOW
+    )
+
+    assert result["launch_allowed"] is True
+    assert result["launch_tiers"] == [
+        "bronze", "silver", "gold"
+    ]
+
+
+def test_launch_status_reserved_excluded(
+    db, launch_ready, checkout_customer
+):
+    checkout.reserve_launch(
+        db, checkout_customer.id,
+        "gold", REQUEST_ID, NOW
+    )
+
+    result = checkout.checkout_status(
+        db, checkout_customer, NOW
+    )
+
+    assert result["available_tiers"] == [
+        "bronze", "silver"
+    ]
+
+    assert result["launch_tiers"] == [
+        "bronze", "silver"
+    ]
+
+
+def test_launch_status_expired_reservation_excluded(
+    db, launch_ready, checkout_customer
+):
+    checkout.reserve_launch(
+        db, checkout_customer.id,
+        "gold", REQUEST_ID, NOW
+    )
+
+    result = checkout.checkout_status(
+        db, checkout_customer,
+        NOW + timedelta(seconds=91)
+    )
+
+    assert "gold" not in result["available_tiers"]
+    assert "gold" not in result["launch_tiers"]
+
+
+def test_launch_status_nonpilot(
+    db, monkeypatch, launch_ready,
+    checkout_customer
+):
+    monkeypatch.setenv(
+        "LIDYACHAT_WELCOME_LAUNCH_PILOT_IDS",
+        "9999999999",
+    )
+
+    result = checkout.checkout_status(
+        db, checkout_customer, NOW
+    )
+
+    assert result["launch_allowed"] is False
+    assert result["launch_tiers"] == []
+    assert result["preparation_enabled"] is True

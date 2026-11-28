@@ -418,6 +418,10 @@ public final class PlayBillingCatalog {
     // Internal welcome checkout engine.
     // Not exposed to JavaScript in this stage.
 
+    static boolean welcomeLaunchAvailable() {
+        return WELCOME_NATIVE_LAUNCH_ENABLED;
+    }
+
     void purchaseWelcome(
         String productId,
         String accessToken,

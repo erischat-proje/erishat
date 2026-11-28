@@ -60,6 +60,7 @@ public class MainActivity extends Activity {
             new java.util.concurrent.atomic.AtomicBoolean(false);
 
     private volatile int welcomePreflightGeneration = 0;
+    private volatile int welcomeLaunchGeneration = 0;
 
     private static final int DOCUMENT_SAVE = 9005;
     private MessageFileDownloads documentDownloads;
@@ -199,6 +200,7 @@ public class MainActivity extends Activity {
             @Override public void onPageStarted(WebView view, String url, Bitmap icon) {
                 bundledContent.refresh();
                 pageGeneration++;
+                welcomeLaunchGeneration++;
                 welcomePreflightGeneration++;
                 documentPageTrusted = trustedOrigin(Uri.parse(url));
                 documentDownloads.cancelAll(); pendingDocument = null;
@@ -252,6 +254,7 @@ public class MainActivity extends Activity {
 
     @Override protected void onPause() {
         activityResumed = false;
+        welcomeLaunchGeneration++;
         applyScreenAwake();
         super.onPause();
     }
@@ -456,6 +459,59 @@ public class MainActivity extends Activity {
             });
         }
 
+
+
+        @JavascriptInterface
+        public boolean welcomeLaunchAvailable() {
+            return PlayBillingCatalog.welcomeLaunchAvailable();
+        }
+
+        @JavascriptInterface
+        public void startWelcomePurchase(
+            String productId,
+            String accessToken,
+            String requestId
+        ) {
+
+            runOnUiThread(() -> {
+
+                if (!PlayBillingCatalog.welcomeLaunchAvailable())
+                    return;
+
+                if (!trustedPage()
+                    || !activityResumed
+                    || isFinishing()
+                    || isDestroyed())
+                    return;
+
+                if (!PlayProductPolicy.isWelcome(productId)
+                    || !PlayProductPolicy.validSessionToken(accessToken)
+                    || !WelcomeLaunchPolicy.validRequest(requestId))
+                    return;
+
+                final int page = pageGeneration;
+                final int generation = welcomeLaunchGeneration;
+
+                playBillingCatalog.purchaseWelcome(
+                    productId,
+                    accessToken,
+                    requestId,
+                    () -> page == pageGeneration
+                        && generation == welcomeLaunchGeneration
+                        && trustedPage()
+                        && activityResumed
+                        && !isFinishing()
+                        && !isDestroyed()
+                );
+            });
+        }
+
+        @JavascriptInterface
+        public void cancelWelcomeLaunch() {
+            runOnUiThread(() -> {
+                welcomeLaunchGeneration++;
+            });
+        }
 
         @JavascriptInterface
         public void recoverWelcomePurchases() {
