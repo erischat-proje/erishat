@@ -471,6 +471,8 @@ def current_user(db: Session = Depends(get_db), authorization: str | None = Head
         from .moderation import ban_until
         raise HTTPException(status_code=403,detail=ban_until(account_ban))
     vip_membership.sync(db,user.id)
+    from .welcome_appearance import cleanup_if_selected
+    cleanup_if_selected(db, user)
     db.commit()
     enforce_account(user.id,request)
     return user
@@ -521,6 +523,15 @@ play_billing.register_refund_case_auth(current_user)
 play_billing.register_checkout_auth(current_user)
 app.include_router(play_billing.router)
 app.include_router(purchase_routes.router)
+from . import welcome_packages
+from . import welcome_purchase_models
+app.include_router(welcome_packages.register_auth(current_user))
+from . import welcome_checkout
+app.include_router(welcome_checkout.register_auth(current_user))
+
+from . import welcome_admin
+app.include_router(welcome_admin.register_auth(current_user))
+
 from . import woocommerce_account_link
 app.include_router(woocommerce_account_link.register_auth(current_user))
 from . import woocommerce_web_checkout

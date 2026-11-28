@@ -54,6 +54,14 @@ public class MainActivity extends Activity {
     private PermissionRequest pendingMicrophone;
     private boolean microphoneDialogOpen;
     private volatile int pageGeneration;
+
+    private final java.util.concurrent.atomic.AtomicBoolean
+        welcomePreflightBusy =
+            new java.util.concurrent.atomic.AtomicBoolean(false);
+
+    private volatile int welcomePreflightGeneration = 0;
+    private volatile int welcomeLaunchGeneration = 0;
+
     private static final int DOCUMENT_SAVE = 9005;
     private MessageFileDownloads documentDownloads;
     private volatile MessageFileDownloads.Pending pendingDocument;
@@ -192,6 +200,8 @@ public class MainActivity extends Activity {
             @Override public void onPageStarted(WebView view, String url, Bitmap icon) {
                 bundledContent.refresh();
                 pageGeneration++;
+                welcomeLaunchGeneration++;
+                welcomePreflightGeneration++;
                 documentPageTrusted = trustedOrigin(Uri.parse(url));
                 documentDownloads.cancelAll(); pendingDocument = null;
                 cancelMedia();
@@ -244,6 +254,7 @@ public class MainActivity extends Activity {
 
     @Override protected void onPause() {
         activityResumed = false;
+        welcomeLaunchGeneration++;
         applyScreenAwake();
         super.onPause();
     }
@@ -345,16 +356,174 @@ public class MainActivity extends Activity {
         @JavascriptInterface public void queryPlayCatalog(String productId) {
             runOnUiThread(() -> {
                 if (!trustedPage() || !activityResumed || isFinishing() || isDestroyed()) return;
-                if (productId == null || !productId.matches("lidya_0(?:0[1-9]|1[0-6])")) return;
+                if (!PlayProductPolicy.isKnown(productId)) return;
                 playBillingCatalog.query(productId);
             });
         }
         @JavascriptInterface public void startPlayPurchase(String productId, String accountHash) {
             runOnUiThread(() -> {
                 if (!trustedPage() || !activityResumed || isFinishing() || isDestroyed()) return;
-                playBillingCatalog.purchase(productId, accountHash);
+                final int paymentGeneration = pageGeneration;
+
+                playBillingCatalog.purchase(
+                    productId,
+                    accountHash,
+                    () -> paymentGeneration == pageGeneration
+                        && trustedPage()
+                        && activityResumed
+                        && !isFinishing()
+                        && !isDestroyed()
+                );
             });
         }
+
+        @JavascriptInterface
+        public void prepareWelcomePurchase(
+                String productId, String accessToken, String requestId) {
+
+            runOnUiThread(() -> {
+
+                if (!trustedPage() || !activityResumed
+                    || isFinishing() || isDestroyed())
+                    return;
+
+                if (!PlayProductPolicy.isWelcome(productId)
+                    || !PlayProductPolicy.validSessionToken(accessToken))
+                    return;
+
+                if (requestId == null ||
+                    !requestId.matches("[a-f0-9]{32}"))
+                    return;
+
+                if (!welcomePreflightBusy.compareAndSet(false, true))
+                    return;
+
+                final int generation = pageGeneration;
+                final int requestGeneration =
+                    ++welcomePreflightGeneration;
+
+                new Thread(() -> {
+
+                    String result;
+
+                    try {
+                        result =
+                            WelcomeCheckoutPreflight.verify(
+                                productId, accessToken
+                            );
+                    } finally {
+                        welcomePreflightBusy.set(false);
+                    }
+
+                    final String state = result;
+
+                    runOnUiThread(() -> {
+
+                        if (generation != pageGeneration
+                            || requestGeneration != welcomePreflightGeneration
+                            || !trustedPage()
+                            || !activityResumed
+                            || isFinishing()
+                            || isDestroyed())
+                            return;
+
+                        try {
+
+                            org.json.JSONObject detail =
+                                new org.json.JSONObject();
+
+                            detail.put("productId", productId);
+                            detail.put("requestId", requestId);
+                            detail.put("state", state);
+                            detail.put("launchAllowed", false);
+
+                            webView.evaluateJavascript(
+                                "window.dispatchEvent(new CustomEvent("
+                                + "'lidyachat:welcome-preflight',"
+                                + "{detail:" + detail.toString()
+                                + "}));",
+                                null
+                            );
+
+                        } catch (Exception ignored) {}
+                    });
+
+                }, "LidyaWelcomePreflight").start();
+            });
+        }
+
+        @JavascriptInterface
+        public void cancelWelcomePreflight() {
+            runOnUiThread(() -> {
+                welcomePreflightGeneration++;
+            });
+        }
+
+
+
+        @JavascriptInterface
+        public boolean welcomeLaunchAvailable() {
+            return PlayBillingCatalog.welcomeLaunchAvailable();
+        }
+
+        @JavascriptInterface
+        public void startWelcomePurchase(
+            String productId,
+            String accessToken,
+            String requestId
+        ) {
+
+            runOnUiThread(() -> {
+
+                if (!PlayBillingCatalog.welcomeLaunchAvailable())
+                    return;
+
+                if (!trustedPage()
+                    || !activityResumed
+                    || isFinishing()
+                    || isDestroyed())
+                    return;
+
+                if (!PlayProductPolicy.isWelcome(productId)
+                    || !PlayProductPolicy.validSessionToken(accessToken)
+                    || !WelcomeLaunchPolicy.validRequest(requestId))
+                    return;
+
+                final int page = pageGeneration;
+                final int generation = welcomeLaunchGeneration;
+
+                playBillingCatalog.purchaseWelcome(
+                    productId,
+                    accessToken,
+                    requestId,
+                    () -> page == pageGeneration
+                        && generation == welcomeLaunchGeneration
+                        && trustedPage()
+                        && activityResumed
+                        && !isFinishing()
+                        && !isDestroyed()
+                );
+            });
+        }
+
+        @JavascriptInterface
+        public void cancelWelcomeLaunch() {
+            runOnUiThread(() -> {
+                welcomeLaunchGeneration++;
+            });
+        }
+
+        @JavascriptInterface
+        public void recoverWelcomePurchases() {
+            runOnUiThread(() -> {
+                if (!trustedPage() || !activityResumed
+                    || isFinishing() || isDestroyed())
+                    return;
+
+                playBillingCatalog.recoverWelcome();
+            });
+        }
+
         @JavascriptInterface public void recoverPlayPurchases() {
             runOnUiThread(() -> {
                 if (!trustedPage() || !activityResumed || isFinishing() || isDestroyed()) return;

@@ -48,6 +48,11 @@ def refresh_user(db, user, level=None):
             continue
         column = kind + '_asset'
         old = getattr(user, column)
+        if kind == 'frame' and old and old.startswith('welcome_'):
+            from .welcome_appearance import active_keys
+            if (kind, old) in active_keys(db, user):
+                continue
+
         new = replacement(old, gender, level, kind)
         if new != old:
             setattr(user, column, new)

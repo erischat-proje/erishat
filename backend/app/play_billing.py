@@ -337,6 +337,11 @@ def _voided_audit_rows(items, receipts_by_hash):
     """
     from .purchase_routes import PACKAGES
     amounts = {f"lidya_{p['id']:03d}": int(p['total']) for p in PACKAGES}
+    from .welcome_packages import PACKAGES as WELCOME_PACKAGES
+    amounts.update({
+        p["product_id"]: p["lidya"]
+        for p in WELCOME_PACKAGES
+    })
     rows, seen = [], set()
     for item in items:
         if not isinstance(item, dict):
@@ -554,6 +559,9 @@ def _refund_cases_sync(db, rows):
             if refund_play_nobility(db, receipt):
                 nobility_refunded += 1
 
+            from .welcome_refunds import revoke_refunded_appearance
+            revoke_refunded_appearance(db, receipt)
+
         db.commit()
 
     except Exception:
@@ -594,9 +602,17 @@ def _refund_financial_review(db, case):
     lines=db.scalars(select(LidyaLedger).where(LidyaLedger.user_id==case.user_id)
        .order_by(LidyaLedger.created_at.desc(),LidyaLedger.id.desc()).limit(30)).all()
     ref='play:'+str(receipt.id)
+    from .welcome_play_verifier import PRODUCTS as WELCOME_PRODUCTS
+    welcome_package = WELCOME_PRODUCTS.get(case.product_id)
+    package_lidya = (
+        int(PRODUCTS[case.product_id]['total'])
+        if case.product_id in PRODUCTS
+        else welcome_package["lidya"]
+        if welcome_package else None
+    )
     return {'case_id':case.id,'receipt_id':receipt.id,'public_id':customer.public_id,
             'product_id':case.product_id,
-            'package_lidya':int(PRODUCTS[case.product_id]['total']) if case.product_id in PRODUCTS else None,
+            'package_lidya':package_lidya,
             'current_balance':int(customer.lidya),'purchase_status':receipt.purchase_status,
             'test_purchase':bool(receipt.test_purchase), 'case_status':case.status,
             'purchase_credit_visible_in_recent_ledger':any(x.operation=='google_play_credit' and x.reference_id==ref for x in lines),
