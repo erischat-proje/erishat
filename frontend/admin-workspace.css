@@ -36,3 +36,176 @@ html body .eris-admin-overlay .aw-button:disabled{color:var(--ea-muted)!importan
 
 /* V1.4: wrap long custom referral labels on narrow displays. */
 .eris-admin-overlay .aw-card,.eris-admin-overlay .aw-card h4,.eris-admin-overlay .aw-title{min-width:0;overflow-wrap:anywhere}
+
+/* WELCOME_PREMIUM_V95_THEME */
+
+.eris-admin-overlay .welcome-admin {
+  display:grid;
+  width:100%;
+  min-width:0;
+  gap:14px;
+  color:var(--ea-ink);
+  box-sizing:border-box;
+}
+
+html body .eris-admin-overlay #eaBody .welcome-admin-menu {
+  width:100%!important;
+  min-height:76px!important;
+  padding:16px!important;
+  border:1px solid #b99552!important;
+  border-radius:16px!important;
+  background:linear-gradient(145deg,#fff7e5,#e7ce97)!important;
+  color:#523510!important;
+  font-weight:800!important;
+  white-space:normal!important;
+}
+
+.welcome-admin-hero {
+  padding:24px 18px;
+  border-radius:20px;
+  border:1px solid #b99552;
+  background:linear-gradient(145deg,#fff9ed,#dfc18a);
+  color:#523510;
+  overflow-wrap:anywhere;
+}
+
+.welcome-admin-hero small {
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:1.5px;
+}
+
+.eris-admin-overlay .welcome-admin-hero h3 {
+  font-size:25px!important;
+  color:inherit!important;
+  margin:10px 0!important;
+}
+
+.welcome-admin-hero p {
+  font-size:12px;
+  line-height:1.6;
+  color:inherit!important;
+}
+
+.welcome-admin-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+}
+
+.welcome-admin-tile {
+  display:flex;
+  flex-direction:column;
+  gap:9px;
+  padding:14px;
+  min-width:0;
+  border:1px solid var(--ea-line);
+  border-radius:16px;
+  background:var(--ea-panel);
+  color:var(--ea-ink);
+  overflow-wrap:anywhere;
+  box-sizing:border-box;
+}
+
+.welcome-admin-tile strong {
+  font-size:28px;
+  line-height:1.3;
+  color:var(--ea-gold);
+}
+
+.welcome-admin-tile small,
+.welcome-admin-tile span {
+  font-size:11px;
+  line-height:1.6;
+  color:var(--ea-ink);
+}
+
+.welcome-admin-tile button {
+  min-height:44px;
+  width:100%;
+  min-width:0;
+  margin-top:auto;
+  white-space:normal!important;
+}
+
+.welcome-admin-list {
+  display:grid;
+  gap:12px;
+  min-width:0;
+}
+
+.eris-admin-overlay .welcome-admin .aw-card {
+  margin:0;
+  min-width:0;
+  box-sizing:border-box;
+}
+
+.welcome-admin-status {
+  display:inline-block;
+  padding:7px 11px;
+  margin-bottom:8px;
+  border:1px solid var(--ea-line);
+  border-radius:10px;
+  background:var(--ea-raised);
+  color:var(--ea-ink);
+  font-size:11px;
+  font-weight:700;
+}
+
+.welcome-admin-detail {
+  margin-top:12px;
+  padding:12px;
+  border:1px solid var(--ea-line);
+  border-radius:12px;
+  overflow-wrap:anywhere;
+}
+
+.welcome-admin-detail summary {
+  cursor:pointer;
+  padding:8px 0;
+  font-weight:700;
+  color:var(--ea-ink);
+}
+
+.welcome-refund-report {
+  margin-top:12px;
+  padding:12px;
+  border:1px solid var(--ea-line);
+  border-radius:12px;
+  background:var(--ea-raised);
+}
+
+.welcome-admin [data-tier="bronze"] {
+  border-top:3px solid #b77d52;
+}
+
+.welcome-admin [data-tier="silver"] {
+  border-top:3px solid #a4a7ac;
+}
+
+.welcome-admin [data-tier="gold"] {
+  border-top:3px solid #c6a04b;
+}
+
+html[data-eris-theme="dark"] .welcome-admin-hero,
+html[data-eris-theme="dark"] body .eris-admin-overlay #eaBody .welcome-admin-menu {
+  background:linear-gradient(145deg,#382418,#68482b)!important;
+  color:#fff1d4!important;
+  border-color:#a77b43!important;
+}
+
+@media(min-width:900px){
+  .welcome-admin-grid {
+    grid-template-columns:repeat(4,minmax(0,1fr));
+  }
+}
+
+@media(max-width:360px){
+  .welcome-admin-tile {
+    padding:10px;
+  }
+
+  .welcome-admin-tile strong {
+    font-size:23px;
+  }
+}

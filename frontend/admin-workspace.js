@@ -300,14 +300,541 @@ async function appealDetail(s,id,options){
  const proof=card(s.body,'İtiraz fotoğrafları');for(const url of r.images){if(!/^data:image\/(png|jpeg|webp);base64,/.test(url))continue;const img=el('img','aw-proof');img.src=url;img.alt='İtiraz kanıtı';proof.append(img);}
  if(r.can_decide)fields(s.body,[{name:'action',title:'Bağımsız karar',options:{'':'Karar seçin',approve:'İtirazı onayla',reject:'İtirazı reddet'}},{name:'note',title:'Karar gerekçesi',type:'textarea',minLength:20,maxLength:2000}],'İtiraz kararını kaydet',async v=>{await request(s,'/v1/admin/ban-workflow/appeals/'+id+'/decision','POST',v);await appealDesk(s,options);note(s.body,'İtiraz #'+id+' kararı kaydedildi.');});else note(s.body,r.status==='pending'?'Bu itirazı bağımsız farklı bir yetkili sonuçlandırmalıdır.':'İtiraz sonuçlanmış.');button(s.body,'İç not ve olay bağlantısı',()=>sourcePanel(s,'appeal',id,()=>appealDetail(s,id,options)));
 }
+
+async function welcomePremium(s, options={}){
+ const opts={
+   status:'all',
+   public_id:'',
+   before:null,
+   ...options
+ };
+
+ const version=stage(
+   s,
+   'Hoş Geldin Premium',
+   'DA · Satış ve ödeme denetimi'
+ );
+
+ const root=el('section','welcome-admin');
+ s.body.append(root);
+
+ let stopped=false;
+ const valid=()=>!stopped&&alive(s)&&
+   root.isConnected&&
+   s.generation===version&&
+   states.get(s.panel)===s;
+
+ const path='/v1/admin/welcome-packages';
+
+ // WELCOME_ADMIN_SESSION_GUARD
+ const authEvents=[
+   'erischat:auth',
+   'erischat:auth-state',
+   'erischat:auth-ready',
+   'erischat:auth-state-changed',
+   'storage'
+ ];
+
+ let sessionTimer;
+ let roleTimer;
+ let checking=false;
+
+ function stopGuard(){
+   if(stopped)return;
+
+   stopped=true;
+   window.clearInterval(sessionTimer);
+   window.clearInterval(roleTimer);
+
+   for(const event of authEvents){
+     window.removeEventListener(event,sessionCheck);
+   }
+
+   document.removeEventListener(
+     'visibilitychange',sessionCheck
+   );
+ }
+
+ function redact(){
+   stopGuard();
+
+   if(root.isConnected){
+     root.replaceChildren();
+
+     note(
+       root,
+       'Finansal erişim sona erdi. Yönetim menüsünü yeniden açın.',
+       true
+     );
+   }
+ }
+
+ function checkAccount(){
+   if(!root.isConnected ||
+      states.get(s.panel)!==s ||
+      s.generation!==version){
+     stopGuard();
+     return false;
+   }
+
+   if(!s.access || !alive(s)){
+     redact();
+     return false;
+   }
+
+   return !stopped;
+ }
+
+ async function checkRole(){
+   if(!checkAccount()||checking)return;
+
+   checking=true;
+
+   try{
+     const current=await request(s,'/v1/admin/me');
+
+     if(!checkAccount())return;
+
+     if(current.role!=='DA' || current.id!==s.me.id){
+       redact();
+     }
+
+   }catch(error){
+     if(checkAccount())redact();
+   }finally{
+     checking=false;
+   }
+ }
+
+ function sessionCheck(){
+   if(checkAccount())checkRole();
+ }
+
+ sessionTimer=window.setInterval(checkAccount,1000);
+ roleTimer=window.setInterval(checkRole,10000);
+
+ for(const event of authEvents){
+   window.addEventListener(event,sessionCheck);
+ }
+
+ document.addEventListener(
+   'visibilitychange',sessionCheck
+ );
+
+
+ const money=v=>
+   (Number(v||0)/100).toLocaleString(
+     'tr-TR',{
+       style:'currency',
+       currency:'TRY'
+     }
+   );
+
+ const number=v=>
+   Number(v||0).toLocaleString('tr-TR');
+
+ const names={
+   all:'Tüm ödemeler',
+   pending:'Teslimat bekliyor',
+   delivered:'Teslim edildi',
+   review:'İnceleme gerekiyor',
+   refunded:'İade kaydı var'
+ };
+
+ const tiers={
+   bronze:'Bronz Premium',
+   silver:'Gümüş Premium',
+   gold:'Altın Premium'
+ };
+
+ const reasons={
+   duplicate_paid_package:'Mükerrer ödeme',
+   collection_changed:'Koleksiyon değişikliği',
+   payment_requires_review:'Ödeme incelemesi'
+ };
+
+ const hero=el(
+   'header','welcome-admin-hero'
+ );
+
+ hero.append(
+   el('small','','LIDYACHAT · DA'),
+   el('h3','','Hoş Geldin Paketleri'),
+   el('p','','Satış, teslimat ve iade denetimi')
+ );
+
+ root.append(hero);
+
+ const loading=note(
+   root,'Güvenli kayıtlar yükleniyor…'
+ );
+
+ try{
+
+   const params=new URLSearchParams({
+     status:opts.status,
+     limit:'20'
+   });
+
+   if(opts.public_id)
+     params.set('public_id',opts.public_id);
+
+   if(opts.before)
+     params.set('before',String(opts.before));
+
+   const [summary,data]=await Promise.all([
+     request(s,path+'/overview'),
+     request(s,path+'/payments?'+params)
+   ]);
+
+   if(!valid())return;
+
+   loading.remove();
+
+   const grid=el(
+     'div','welcome-admin-grid'
+   );
+
+   for(const key of [
+     'delivered','pending','review','refunded'
+   ]){
+
+     const item=summary.states[key];
+
+     const tile=el(
+       'article','welcome-admin-tile'
+     );
+
+     tile.dataset.state=key;
+
+     tile.append(
+       el('small','',names[key]),
+       el('strong','',number(item.count)),
+       el('span','','Katalog: '+money(
+         item.catalog_value_kurus
+       )),
+       el('span','','Teslimat: '+number(
+         item.historically_delivered_lidya
+       )+' Lidya')
+     );
+
+     button(tile,'Kayıtları göster',()=>{
+       if(valid())return welcomePremium(s,{
+         ...opts,status:key,before:null
+       });
+     });
+
+     grid.append(tile);
+   }
+
+   root.append(grid);
+
+   note(root,
+     'Tutarlar katalog değeridir; gerçek net gelir değildir.'
+   );
+
+   note(root,
+     'Hazırlanmış satın alma kayıtları: '+
+     number(summary.prepared_intents)
+   );
+
+   const filter=card(root,'Ödeme sorgula');
+
+   fields(filter,[
+     {
+       name:'public_id',
+       title:'Kullanıcı profil ID',
+       value:opts.public_id,
+       required:false,
+       maxLength:32
+     },
+     {
+       name:'status',
+       title:'Ödeme durumu',
+       value:opts.status,
+       options:names
+     }
+   ],'Sorgula',v=>{
+     if(!valid())return;
+
+     return welcomePremium(s,{
+       public_id:v.public_id.trim(),
+       status:v.status
+     });
+   });
+
+   const actions=el('div','aw-actions');
+
+   button(actions,'Yenile',()=>{
+     if(valid())return welcomePremium(s,opts);
+   });
+
+   button(actions,'Filtreleri temizle',()=>{
+     if(valid())return welcomePremium(s);
+   });
+
+   root.append(actions);
+
+   const list=el(
+     'section','welcome-admin-list'
+   );
+
+   list.append(
+     el('h3','','Ödeme kayıtları')
+   );
+
+   root.append(list);
+
+   if(!data.items.length){
+     note(
+       list,
+       'Bu filtreye uygun ödeme kaydı bulunamadı.'
+     );
+   }
+
+   for(const item of data.items){
+
+     const c=card(
+       list,
+       (tiers[item.tier]||item.tier)+
+       ' · #'+item.receipt_id
+     );
+
+     c.dataset.tier=item.tier;
+
+     c.append(
+       el(
+         'span',
+         'welcome-admin-status',
+         names[item.status]||item.status
+       )
+     );
+
+     info(c,'Profil ID',item.public_id);
+
+     info(c,'Koleksiyon',
+       item.collection==='male'?'Erkek':'Kadın'
+     );
+
+     info(c,'Katalog fiyatı',
+       money(item.catalog_price_kurus)
+     );
+
+     info(c,'Teslim edilen Lidya',
+       number(item.delivered_lidya)
+     );
+
+     const details=el(
+       'details','welcome-admin-detail'
+     );
+
+     details.append(
+       el('summary','','Ödeme ayrıntıları')
+     );
+
+     info(details,'Ürün kodu',item.product_id);
+
+     info(details,'Paket içeriği',
+       number(item.package_lidya)+' Lidya'
+     );
+
+     info(details,'Kozmetik süresi',
+       item.duration_days+' gün'
+     );
+
+     info(details,'Kayıt tarihi',
+       date(item.created_at)
+     );
+
+     if(item.review_reason){
+       info(details,'İnceleme nedeni',
+         reasons[item.review_reason]||
+         'Özel inceleme gerekli'
+       );
+     }
+
+     if(item.refund_case_id){
+
+       info(details,'İade dosyası',
+         '#'+item.refund_case_id
+       );
+
+       info(details,'İade incelemesi',
+         item.refund_case_status
+       );
+
+       button(
+         details,
+         'Finansal incelemeyi aç',
+         async()=>{
+
+           if(!valid())return;
+
+           let report;
+
+           try{
+             report=await request(
+             s,
+             '/v1/google-play/refund-cases/'+
+             encodeURIComponent(item.refund_case_id)+
+             '/financial-review'
+             );
+           }catch(error){
+             if(checkAccount())redact();
+             return;
+           }
+
+           if(!valid())return;
+
+           details.querySelector(
+             '.welcome-refund-report'
+           )?.remove();
+
+           const result=el(
+             'section',
+             'welcome-refund-report'
+           );
+
+           info(
+             result,
+             'Paket Lidya tutarı',
+             number(report.package_lidya)
+           );
+
+           info(
+             result,
+             'Güncel hesap bakiyesi',
+             number(report.current_balance)
+           );
+
+           note(result,
+             'Güncel bakiye, iade edilen paketten kalan tutar değildir.'
+           );
+
+           details.append(result);
+         }
+       );
+     }
+
+
+     button(details,'Kozmetik haklarını incele',async()=>{
+       if(!valid())return;
+
+       let report;
+
+       try{
+         report=await request(
+           s,
+           path+'/payments/'+
+           encodeURIComponent(item.receipt_id)+
+           '/cosmetics'
+         );
+       }catch(error){
+         if(checkAccount())redact();
+         return;
+       }
+
+       if(!valid())return;
+
+       details.querySelector(
+         '.welcome-cosmetic-report'
+       )?.remove();
+
+       const section=el(
+         'section','welcome-cosmetic-report'
+       );
+
+       const statusNames={
+         valid:'Hak süresi geçerli',
+         expired:'Süresi doldu',
+         refunded:'İade edildi',
+         pending:'Teslimat bekliyor',
+         review:'İnceleme gerekiyor',
+         missing:'Hak kaydı eksik',
+         account_inactive:'Hesap pasif',
+         collection_changed:'Koleksiyon uyuşmuyor'
+       };
+
+       section.append(
+         el('h4','','Paket kozmetikleri')
+       );
+
+       for(const reward of report.items){
+         const tile=card(section,reward.name);
+
+         info(tile,'Durum',
+           statusNames[reward.status]||
+           'Bilinmeyen durum'
+         );
+
+         info(tile,'Hak süresi',
+           reward.duration_days+' gün'
+         );
+
+         info(tile,'Bitiş tarihi',
+           reward.expires_at
+             ?date(reward.expires_at)
+             :'Teslimat kaydı yok'
+         );
+
+         info(tile,'Kozmetik kodu',
+           reward.asset_key
+         );
+       }
+
+       note(section,
+         'Hak denetimi salt okunurdur. Kullanım aktivasyonu ayrı değerlendirilir.'
+       );
+
+       details.append(section);
+     });
+
+     c.append(details);
+   }
+
+   if(data.has_more&&data.next_before){
+     button(root,'Sonraki 20 kayıt',()=>{
+       if(valid())return welcomePremium(s,{
+         ...opts,before:data.next_before
+       });
+     });
+   }
+
+   if(opts.before){
+     button(root,'İlk sayfaya dön',()=>{
+       if(valid())return welcomePremium(s,{
+         ...opts,before:null
+       });
+     });
+   }
+
+ }catch(error){
+
+   if(!valid())return;
+
+   root.replaceChildren();
+
+   note(
+     root,
+     'Kayıtlar görüntülenemedi: '+error.message,
+     true
+   );
+
+   button(root,'Tekrar dene',()=>{
+     if(valid())return welcomePremium(s,opts);
+   });
+ }
+}
+
 async function open(key,me,p){
- if(!['tickets','referrals','announcement','gaps','payments','banappeals','lookup','roles','deleteaccount','ghost','saactions','uaactions','faactions','daactions'].includes(key))return false;
+ if(!['welcome-premium','tickets','referrals','announcement','gaps','payments','banappeals','lookup','roles','deleteaccount','ghost','saactions','uaactions','faactions','daactions'].includes(key))return false;
  if(key==='tickets'?!['SA','UA','FA','DA'].includes(me.role):['announcement','banappeals'].includes(key)?!['FA','DA'].includes(me.role):me.role!=='DA')throw Error('Bu araca erişim yetkiniz yok.');const body=p.querySelector('#eaBody'),s={panel:p,body,me,access:token(),generation:0,back:()=>window.ErisAdmin.open()};states.set(p,s);
  if(key.endsWith('actions')){await window.LidyaManagementCenter.open('audit',{role:key.slice(0,2).toUpperCase()});return true;}
  if(key==='tickets')await supportDesk(s);
  else if(key==='referrals')await referralDesk(s);
  else if(key==='announcement')await announcementDesk(s);
  else if(key==='gaps')await feedbackDesk(s);
+ else if(key==='welcome-premium')await welcomePremium(s);
  else if(key==='payments')await paymentDesk(s);
  else if(key==='banappeals')await appealDesk(s);
  else if(key==='roles'){directory(s);}

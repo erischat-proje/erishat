@@ -46,7 +46,11 @@ def db(monkeypatch, tmp_path):
         service.settings, "google_play_test_mode", False
     )
 
-    engine = create_engine("sqlite://")
+    engine = create_engine(
+        "sqlite://",
+        poolclass=StaticPool,
+        connect_args={"check_same_thread": False},
+    )
 
     for model in (
         User, AdminRole, UserCosmetic,
@@ -55,6 +59,7 @@ def db(monkeypatch, tmp_path):
         CosmeticLease, LidyaLedger,
         VipStatus, DealerInventory, DealerDesignation,
         NobilityPointsLedger, NobilityPointLot,
+        UserSession,
     ):
         model.__table__.create(engine)
 
@@ -1279,3 +1284,640 @@ def test_recovery_disabled(
     assert error.value.status_code == 503
     unchanged(db)
     assert not recovery_enabled
+
+
+from backend.app import welcome_admin
+
+
+def make_admin(db, role="DA", active=True):
+    admin = User(
+        id="audit-admin",
+        public_id="9900000099",
+        _nickname="AuditTest",
+        gender="male",
+        is_active=active,
+        profile_completed=True,
+        created_at=NOW,
+        lidya=0,
+        lidya_gem=0,
+    )
+
+    db.add(admin)
+    db.flush()
+
+    if role:
+        db.add(AdminRole(
+            user_id=admin.id,
+            role=role,
+        ))
+
+    db.commit()
+    return admin
+
+
+@pytest.mark.parametrize("role", [
+    None, "SA", "UA", "FA",
+])
+def test_welcome_admin_access_denied(
+    db, monkeypatch, role
+):
+    seed(db, monkeypatch)
+    admin = make_admin(db, role)
+
+    for action in (
+        welcome_admin.overview,
+        welcome_admin.list_payments,
+    ):
+        with pytest.raises(HTTPException) as error:
+            action(db, admin)
+
+        assert error.value.status_code == 403
+
+
+def test_welcome_inactive_da_denied(
+    db, monkeypatch
+):
+    seed(db, monkeypatch)
+    admin = make_admin(db, active=False)
+
+    with pytest.raises(HTTPException) as error:
+        welcome_admin.overview(db, admin)
+
+    assert error.value.status_code == 403
+
+
+def test_welcome_admin_pending_payment(
+    db, monkeypatch
+):
+    seed(db, monkeypatch)
+    admin = make_admin(db)
+
+    report = welcome_admin.overview(db, admin)
+
+    assert report["states"]["pending"]["count"] == 1
+
+    assert report["states"]["pending"][
+        "historically_delivered_lidya"
+    ] == 0
+
+    assert not report["revenue_verified"]
+    assert not report["wallet_changed"]
+
+
+def test_welcome_admin_delivered_payment(
+    db, monkeypatch
+):
+    intent, link = seed(db, monkeypatch)
+    call(db, link)
+
+    admin = make_admin(db)
+
+    report = welcome_admin.overview(db, admin)
+    delivered = report["states"]["delivered"]
+
+    assert delivered["count"] == 1
+    assert delivered["catalog_value_kurus"] == 49999
+    assert delivered["historically_delivered_lidya"] == 28000
+
+    result = welcome_admin.list_payments(
+        db, admin, status="delivered"
+    )
+
+    assert len(result["items"]) == 1
+    assert result["items"][0]["public_id"] == "9900000001"
+
+    assert db.get(User, "owner").lidya == 28100
+
+
+def test_welcome_admin_refund_report(
+    db, monkeypatch
+):
+    intent, link = seed(db, monkeypatch)
+    call(db, link)
+
+    _refund_cases_sync(
+        db, refund_rows(db, link)
+    )
+
+    admin = make_admin(db)
+
+    report = welcome_admin.overview(db, admin)
+
+    assert report["states"]["delivered"]["count"] == 0
+    assert report["states"]["refunded"]["count"] == 1
+
+    result = welcome_admin.list_payments(
+        db, admin, status="refunded"
+    )
+
+    assert len(result["items"]) == 1
+    assert result["items"][0]["refund_case_id"]
+    assert result["items"][0]["refund_case_status"] == "pending"
+
+
+def test_welcome_admin_public_id_filter(
+    db, monkeypatch
+):
+    seed(db, monkeypatch)
+    admin = make_admin(db)
+
+    assert len(welcome_admin.list_payments(
+        db, admin, public_id="9900000001"
+    )["items"]) == 1
+
+    assert welcome_admin.list_payments(
+        db, admin, public_id="9900000002"
+    )["items"] == []
+
+
+def test_welcome_admin_no_token_disclosure(
+    db, monkeypatch
+):
+    import json
+
+    intent, link = seed(db, monkeypatch)
+    admin = make_admin(db)
+
+    record = db.get(
+        PlayPurchaseRecord, link.receipt_id
+    )
+
+    result = json.dumps(
+        welcome_admin.list_payments(db, admin)
+    )
+
+    assert TOKEN not in result
+    assert record.token_sha256 not in result
+    assert "purchase_token" not in result
+    assert "token_sha256" not in result
+
+
+def test_welcome_admin_excludes_test_payments(
+    db, monkeypatch
+):
+    intent, link = seed(db, monkeypatch)
+
+    record = db.get(
+        PlayPurchaseRecord, link.receipt_id
+    )
+    record.test_purchase = True
+    db.commit()
+
+    admin = make_admin(db)
+
+    assert welcome_admin.list_payments(
+        db, admin
+    )["items"] == []
+
+    report = welcome_admin.overview(db, admin)
+
+    assert sum(
+        x["count"]
+        for x in report["states"].values()
+    ) == 0
+
+from fastapi import FastAPI, Depends, Header
+from fastapi.testclient import TestClient
+from sqlalchemy.pool import StaticPool
+from backend.app.db import get_db
+from backend.app.session import (
+    UserSession, create_session, get_user_from_token,
+)
+
+
+@pytest.fixture
+def admin_client(db):
+    app = FastAPI()
+    engine = db.get_bind()
+
+    def isolated_db():
+        with Session(
+            engine, expire_on_commit=False
+        ) as session:
+            yield session
+
+    def authenticated_user(
+        authorization: str | None = Header(None),
+        session=Depends(get_db),
+    ):
+        if (
+            not authorization
+            or not authorization.startswith("Bearer ")
+        ):
+            raise HTTPException(401, "Session required")
+
+        token = authorization.split(" ", 1)[1]
+
+        user = get_user_from_token(
+            session, token
+        )
+
+        if user is None or not user.is_active:
+            raise HTTPException(401, "Invalid session")
+
+        return user
+
+    app.dependency_overrides[get_db] = isolated_db
+
+    app.include_router(
+        welcome_admin.register_auth(
+            authenticated_user
+        )
+    )
+
+    with TestClient(app) as client:
+        yield client
+
+
+ADMIN_PATH = "/v1/admin/welcome-packages"
+
+
+def auth_headers(db, user):
+    return {
+        "Authorization": "Bearer " +
+        create_session(db, user)
+    }
+
+
+def test_da_http_requires_real_token(
+    db, monkeypatch, admin_client
+):
+    seed(db, monkeypatch)
+
+    for endpoint in ("overview", "payments"):
+        path = f"{ADMIN_PATH}/{endpoint}"
+
+        assert admin_client.get(
+            path
+        ).status_code == 401
+
+        assert admin_client.get(
+            path,
+            headers={
+                "Authorization":
+                    "Bearer forged-token"
+            },
+        ).status_code == 401
+
+
+@pytest.mark.parametrize("role", [
+    None, "SA", "UA", "FA", "LB", "BT"
+])
+def test_da_http_role_denied(
+    db, monkeypatch, admin_client, role
+):
+    seed(db, monkeypatch)
+
+    admin = make_admin(
+        db,
+        None if role in ("LB", "BT") else role,
+    )
+
+    if role in ("LB", "BT"):
+        db.add(DealerInventory(
+            user_id=admin.id,
+            active=True,
+            stock=0,
+        ))
+
+        if role == "BT":
+            db.add(DealerDesignation(
+                user_id=admin.id,
+                kind="support",
+            ))
+
+        db.commit()
+
+    headers = auth_headers(db, admin)
+
+    for endpoint in ("overview", "payments"):
+        result = admin_client.get(
+            f"{ADMIN_PATH}/{endpoint}",
+            headers=headers,
+        )
+
+        assert result.status_code == 403
+
+
+def test_da_http_success_and_cache(
+    db, monkeypatch, admin_client
+):
+    intent, link = seed(db, monkeypatch)
+    call(db, link)
+
+    admin = make_admin(db)
+    headers = auth_headers(db, admin)
+
+    for endpoint in ("overview", "payments"):
+        result = admin_client.get(
+            f"{ADMIN_PATH}/{endpoint}",
+            headers=headers,
+        )
+
+        assert result.status_code == 200
+        assert "no-store" in result.headers[
+            "cache-control"
+        ]
+        assert result.headers["vary"] == "Authorization"
+
+        assert result.json()["read_only"]
+        assert not result.json()["wallet_changed"]
+        assert TOKEN not in result.text
+
+    db.expire_all()
+
+    assert db.get(User, "owner").lidya == 28100
+
+
+def test_da_http_revoked_role(
+    db, monkeypatch, admin_client
+):
+    seed(db, monkeypatch)
+    admin = make_admin(db)
+    headers = auth_headers(db, admin)
+
+    assert admin_client.get(
+        f"{ADMIN_PATH}/overview",
+        headers=headers,
+    ).status_code == 200
+
+    role = db.get(AdminRole, admin.id)
+    role.role = "FA"
+    db.commit()
+
+    for endpoint in ("overview", "payments"):
+        assert admin_client.get(
+            f"{ADMIN_PATH}/{endpoint}",
+            headers=headers,
+        ).status_code == 403
+
+
+def test_da_http_payment_pagination(
+    db, monkeypatch, admin_client
+):
+    intent, original = seed(db, monkeypatch)
+
+    data = deepcopy(
+        service.fetch_from_google(TOKEN)
+    )
+
+    call(db, original)
+
+    data["orderId"] = "SECOND-PAGINATION-ORDER"
+
+    duplicate = capture_verified_receipt(
+        db,
+        "owner",
+        intent.id,
+        "welcome-pagination-token",
+        data,
+    )
+
+    db.commit()
+
+    assert duplicate.disposition == "review"
+
+    admin = make_admin(db)
+    headers = auth_headers(db, admin)
+
+    first = admin_client.get(
+        f"{ADMIN_PATH}/payments",
+        params={"limit": 1},
+        headers=headers,
+    )
+
+    assert first.status_code == 200
+
+    page = first.json()
+
+    assert len(page["items"]) == 1
+    assert page["has_more"]
+    assert page["next_before"]
+
+    second = admin_client.get(
+        f"{ADMIN_PATH}/payments",
+        params={
+            "limit": 1,
+            "before": page["next_before"],
+        },
+        headers=headers,
+    )
+
+    assert second.status_code == 200
+
+    next_page = second.json()
+
+    assert len(next_page["items"]) == 1
+    assert not next_page["has_more"]
+
+    assert (
+        page["items"][0]["receipt_id"]
+        != next_page["items"][0]["receipt_id"]
+    )
+
+
+def test_da_http_query_validation(
+    db, monkeypatch, admin_client
+):
+    seed(db, monkeypatch)
+
+    admin = make_admin(db)
+    headers = auth_headers(db, admin)
+
+    for params in (
+        {"limit": 101},
+        {"limit": 0},
+        {"before": -1},
+        {"status": "unknown"},
+        {"public_id": "x" * 100},
+    ):
+        result = admin_client.get(
+            f"{ADMIN_PATH}/payments",
+            params=params,
+            headers=headers,
+        )
+
+        assert result.status_code == 422
+
+
+@pytest.mark.parametrize("tier,count", [
+    ("bronze", 2),
+    ("silver", 4),
+    ("gold", 5),
+])
+def test_da_cosmetic_package(
+    db, monkeypatch, tier, count
+):
+    intent, link = seed(
+        db, monkeypatch, tier
+    )
+
+    call(db, link)
+    admin = make_admin(db)
+
+    result = welcome_admin.payment_cosmetics(
+        db, admin, link.receipt_id, DELIVERED
+    )
+
+    assert result["delivered"]
+    assert len(result["items"]) == count
+    assert result["read_only"]
+    assert not result["wallet_changed"]
+
+    assert all(
+        item["status"] == "valid"
+        and item["expires_at"]
+        and item["lease_recorded"]
+        for item in result["items"]
+    )
+
+
+def test_da_cosmetic_pending(
+    db, monkeypatch
+):
+    intent, link = seed(db, monkeypatch)
+    admin = make_admin(db)
+
+    result = welcome_admin.payment_cosmetics(
+        db, admin, link.receipt_id, DELIVERED
+    )
+
+    assert not result["delivered"]
+
+    assert all(
+        item["status"] == "pending"
+        and item["expires_at"] is None
+        for item in result["items"]
+    )
+
+    unchanged(db)
+
+
+def test_da_cosmetic_refunded(
+    db, monkeypatch
+):
+    intent, link = seed(db, monkeypatch)
+    call(db, link)
+
+    _refund_cases_sync(
+        db, refund_rows(db, link)
+    )
+
+    admin = make_admin(db)
+
+    result = welcome_admin.payment_cosmetics(
+        db, admin, link.receipt_id, DELIVERED
+    )
+
+    assert all(
+        item["status"] == "refunded"
+        and item["lease_recorded"]
+        for item in result["items"]
+    )
+
+    assert db.get(User, "owner").lidya == 28100
+
+
+def test_da_cosmetic_expired(
+    db, monkeypatch
+):
+    intent, link = seed(db, monkeypatch)
+    call(db, link)
+
+    admin = make_admin(db)
+
+    result = welcome_admin.payment_cosmetics(
+        db,
+        admin,
+        link.receipt_id,
+        DELIVERED + timedelta(days=31),
+    )
+
+    assert all(
+        item["status"] == "expired"
+        for item in result["items"]
+    )
+
+
+def test_da_cosmetic_duplicate_isolation(
+    db, monkeypatch
+):
+    intent, original = seed(db, monkeypatch)
+
+    data = deepcopy(
+        service.fetch_from_google(TOKEN)
+    )
+
+    call(db, original)
+
+    data["orderId"] = "COSMETIC-DUPLICATE-ORDER"
+
+    duplicate = capture_verified_receipt(
+        db,
+        "owner",
+        intent.id,
+        "welcome-cosmetic-duplicate",
+        data,
+    )
+
+    db.commit()
+
+    admin = make_admin(db)
+
+    result = welcome_admin.payment_cosmetics(
+        db, admin, duplicate.receipt_id, DELIVERED
+    )
+
+    assert not result["delivered"]
+
+    assert all(
+        item["status"] == "review"
+        and item["expires_at"] is None
+        and not item["lease_recorded"]
+        for item in result["items"]
+    )
+
+    assert len(leases(db)) == 5
+
+
+def test_da_cosmetic_http_denied(
+    db, monkeypatch, admin_client
+):
+    intent, link = seed(db, monkeypatch)
+    admin = make_admin(db, "FA")
+
+    result = admin_client.get(
+        f"{ADMIN_PATH}/payments/"
+        f"{link.receipt_id}/cosmetics",
+        headers=auth_headers(db, admin),
+    )
+
+    assert result.status_code == 403
+
+
+def test_da_cosmetic_http_success(
+    db, monkeypatch, admin_client
+):
+    intent, link = seed(db, monkeypatch)
+    call(db, link)
+
+    admin = make_admin(db)
+    headers = auth_headers(db, admin)
+
+    result = admin_client.get(
+        f"{ADMIN_PATH}/payments/"
+        f"{link.receipt_id}/cosmetics",
+        headers=headers,
+    )
+
+    assert result.status_code == 200
+    assert len(result.json()["items"]) == 5
+    assert "no-store" in result.headers["cache-control"]
+    assert TOKEN not in result.text
+
+    missing = admin_client.get(
+        f"{ADMIN_PATH}/payments/99999999/cosmetics",
+        headers=headers,
+    )
+
+    assert missing.status_code == 404

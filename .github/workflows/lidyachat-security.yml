@@ -67,6 +67,8 @@ jobs:
 
             /tests/explore-workspace.dom.cjs
             /tests/welcome-packages.dom.cjs
+            /frontend/admin-workspace.js
+            /tests/welcome-admin.dom.cjs
             /frontend/welcome-packages-live.js
             /frontend/welcome-packages.css
             /frontend/welcome-premium-v3/
@@ -233,6 +235,9 @@ jobs:
         env:
           DATABASE_URL: "sqlite://"
         run: PYTHONPATH=. python -m pytest -v backend/tests/test_welcome_play_v6.py
+
+      - name: Welcome Premium V9 DA browser security
+        run: NODE_PATH="$RUNNER_TEMP/lidya-da-tests/node_modules" node tests/welcome-admin.dom.cjs
 
       - name: Welcome Premium V7 delivery regression
         env:

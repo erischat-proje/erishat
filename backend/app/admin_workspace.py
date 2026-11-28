@@ -51,6 +51,7 @@ CATALOG=[
  ('lm-finance','Lidya Denetimi','Mali yönetim',REVIEW,'Kanıtlı mali düzeltmenin bağımsız inceleme ve uygulama zinciri.','Talep sahibi → farklı inceleyen → farklı son onaycı.'),
  ('lm-fraud','Dolandırıcılık İnceleme','Denetim',DA,'Mali göstergeleri inceleme, açıklama ve olay dosyasına sevk.','Gösterge → gerçek işlem → inceleme sonucu veya dosya.'),
  ('lm-audit','Yönetici Denetimi','Denetim',DA,'Rol/aktör/tarih/işlem filtreleriyle kayıtlar ve CSV çıktısı.','Filtrele → detay → görüntülenen kayıtları dışa aktar.'),
+ ('welcome-premium','Hoş Geldin Paketleri','Mali yönetim',DA,'Özel paket satışları, teslimat, iade ve ödeme inceleme kayıtları.','Özeti incele → profil ID ile filtrele → ödeme kaydını aç.'),
  ('lm-woocommerce','WooCommerce Siparişleri','Mali yönetim',DA,'Coin siparişlerini salt okunur listeleme ve WooCommerce karşılaştırması.','Sipariş → kimlik ve fiyat kontrolü → manuel inceleme.'),
 ]
 
