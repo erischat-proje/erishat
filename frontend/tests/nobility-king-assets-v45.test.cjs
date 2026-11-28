@@ -69,7 +69,7 @@ test('Count and Duke bonus assets remain independent',()=>{
 
 for(const [id,filename,liveFile] of [
  ['gift_bonus','gift-bonus-preview.png','gift-bonus.png'],
- ['daily_banner','daily-banner-preview.png','king-daily-banner-v5.png']
+ ['daily_banner','daily-banner-preview.png','king-daily-banner-v52-283f0ee2.png']
 ]){
  test('King preview is independent: '+id,()=>{
   const prefix='./assets/lidya-nobility/king/';
