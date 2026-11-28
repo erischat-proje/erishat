@@ -212,6 +212,10 @@ jobs:
           DEVICE_AUDIT_CONFIRM: 'YES'
           DATABASE_URL: "sqlite+pysqlite:///:memory:"
         run: PYTHONPATH=. python -m pytest -v backend/tests/test_device_registration_audit_v11.py
+      - name: Custom Referral V1 PostgreSQL concurrency
+        env:
+          CUSTOM_REFERRAL_PG_CONFIRM: 'YES'
+        run: PYTHONPATH=. python -m pytest -v backend/tests/test_custom_referral_v1.py backend/tests/test_custom_referral_postgres_v1.py
       - name: Run LB V2 referral concurrency test
         env:
           LB_V2_TEST_CONFIRM: 'YES'

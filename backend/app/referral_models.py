@@ -14,6 +14,13 @@ class ReferralCode(Base):
     created_by: Mapped[str] = mapped_column(ForeignKey('users.id'), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
+class CustomReferralReward(Base):
+    # Separate table: existing referral_codes rows and schema remain unchanged.
+    __tablename__ = 'custom_referral_rewards_v1'
+    code_id: Mapped[int] = mapped_column(ForeignKey('referral_codes.id', ondelete='CASCADE'), primary_key=True)
+    amount: Mapped[int] = mapped_column(BigInteger, nullable=False)
+
+
 class ReferralRedemption(Base):
     __tablename__ = 'referral_redemptions'
     __table_args__ = (UniqueConstraint('code_id', 'user_id', name='uq_referral_redemption'),)

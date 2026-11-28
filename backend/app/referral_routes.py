@@ -1,3 +1,4 @@
+import re
 from datetime import datetime, timedelta, timezone
 from secrets import choice
 from string import ascii_uppercase, digits
@@ -5,11 +6,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from .db import get_db
 from .models import User
 from .admin_models import AdminRole, AdminAuditLog
 from .platform_models import Family, FamilyMember, Notification
-from .referral_models import ReferralCode, ReferralRedemption, FamilyReferralClaim, FamilyReferralReceipt
+from .referral_models import ReferralCode, ReferralRedemption, FamilyReferralClaim, FamilyReferralReceipt, CustomReferralReward
 
 router = APIRouter(prefix='/v1', tags=['referrals'])
 _current_user = None
@@ -25,8 +27,25 @@ def auth_user():
         raise RuntimeError('Referral auth not registered')
 
 class NewCode(BaseModel):
-    kind: str = Field(pattern='^(USER|TANIDIK)$')
-    max_uses: int = Field(ge=1, le=100000)
+    kind: str = Field(pattern='^(USER|TANIDIK|CUSTOM)$')
+    max_uses: int = Field(ge=1, le=100000, strict=True)
+    code: str | None = Field(default=None, max_length=48)
+    reward: int | None = Field(default=None, ge=1, le=1000000, strict=True)
+    active: bool = Field(default=True, strict=True)
+
+
+class CodeState(BaseModel):
+    active: bool = Field(strict=True)
+
+
+def reward_amount(db, row):
+    if row.kind == 'USER': return 2500
+    if row.kind == 'TANIDIK': return 12500
+    if row.kind == 'CUSTOM':
+        custom = db.get(CustomReferralReward, row.id)
+        if custom and 1 <= custom.amount <= 1000000:
+            return int(custom.amount)
+    raise HTTPException(409, 'Kod ödülü geçersiz; yönetim ile iletişime geçin.')
 
 class Redeem(BaseModel):
     code: str = Field(min_length=4, max_length=48)
@@ -45,18 +64,66 @@ def install_routes(current_user):
     @router.post('/admin/referrals')
     def create_code(payload: NewCode, db: Session = Depends(get_db), user: User = Depends(current_user)):
         require_da(db, user)
-        code = ''.join(__import__('secrets').choice('ABCDEFGHJKLMNPQRSTUVWXYZ23456789') for _ in range(14))
-        obj = ReferralCode(code=code, kind=payload.kind, max_uses=payload.max_uses, created_by=user.id)
-        db.add(obj)
-        db.add(AdminAuditLog(admin_id=user.id, action='referral_create', target_id=code, details=f'{payload.kind}:{payload.max_uses}'))
-        db.commit()
-        return {'code': code, 'kind': payload.kind, 'max_uses': payload.max_uses, 'reward': 2500 if payload.kind == 'USER' else 12500}
+        if payload.kind == 'CUSTOM':
+            raw = (payload.code or '').strip()
+            if not re.fullmatch(r'[A-Za-z0-9]{4,48}', raw):
+                raise HTTPException(422, 'Kod 4-48 İngilizce harf veya rakam içermeli.')
+            code = raw.upper()
+            amount = payload.reward
+            if amount is None:
+                raise HTTPException(422, 'Ödül miktarı gerekli.')
+            if amount * payload.max_uses > 100000000:
+                raise HTTPException(422, 'Bir kodun toplam ödül bütçesi 100.000.000 Lidya sınırını aşamaz.')
+        else:
+            if payload.code is not None or payload.reward is not None:
+                raise HTTPException(422, 'Özel kod ve ödül için CUSTOM seçin.')
+            code = ''.join(choice('ABCDEFGHJKLMNPQRSTUVWXYZ23456789') for _ in range(14))
+            amount = 2500 if payload.kind == 'USER' else 12500
+        obj = ReferralCode(code=code, kind=payload.kind, max_uses=payload.max_uses,
+                           created_by=user.id, active=payload.active)
+        try:
+            db.add(obj)
+            db.flush()
+            if payload.kind == 'CUSTOM':
+                db.add(CustomReferralReward(code_id=obj.id, amount=amount))
+            db.add(AdminAuditLog(admin_id=user.id, action='referral_create', target_id=code,
+                details=f'{payload.kind}:{payload.max_uses}:reward={amount}:active={payload.active}'))
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+            raise HTTPException(409, 'Bu referans kodu zaten mevcut veya kayıt oluşturulamadı.')
+        return {'id':obj.id, 'code': code, 'kind': payload.kind, 'max_uses': payload.max_uses,
+                'reward': amount, 'active': obj.active}
 
     @router.get('/admin/referrals')
     def list_codes(db: Session = Depends(get_db), user: User = Depends(current_user)):
         require_da(db, user)
-        rows = db.scalars(select(ReferralCode).where(ReferralCode.active.is_(True), ReferralCode.uses < ReferralCode.max_uses).order_by(ReferralCode.created_at.desc()).limit(200)).all()
-        return [{'id': r.id, 'code': r.code, 'kind': r.kind, 'uses': r.uses, 'max_uses': r.max_uses, 'active': r.active and r.uses < r.max_uses} for r in rows]
+        rows = db.scalars(select(ReferralCode).order_by(ReferralCode.created_at.desc(), ReferralCode.id.desc()).limit(200)).all()
+        result = []
+        for r in rows:
+            try:
+                amount = reward_amount(db, r)
+            except HTTPException:
+                amount = None
+            result.append({'id': r.id, 'code': r.code, 'kind': r.kind, 'uses': r.uses,
+                'max_uses': r.max_uses, 'active': r.active and r.uses < r.max_uses and amount is not None,
+                'reward': amount, 'remaining': max(0, r.max_uses-r.uses)})
+        return result
+
+    @router.patch('/admin/referrals/{code_id}/state')
+    def set_code_state(code_id: int, payload: CodeState, db: Session = Depends(get_db), user: User = Depends(current_user)):
+        require_da(db, user)
+        row = db.get(ReferralCode, code_id, with_for_update=True)
+        if not row: raise HTTPException(404, 'Kod bulunamadı')
+        if row.kind != 'CUSTOM': raise HTTPException(409, 'Yeniden aktifleştirme yalnızca özel kodlara açıktır.')
+        if payload.active:
+            if row.uses >= row.max_uses: raise HTTPException(409, 'Kullanım limiti doldu.')
+            reward_amount(db, row)
+        row.active = payload.active
+        db.add(AdminAuditLog(admin_id=user.id, action='referral_state', target_id=row.code,
+            details=f'active={payload.active}'))
+        db.commit()
+        return {'ok': True, 'active': row.active}
 
     @router.delete('/admin/referrals/{code_id}')
     def cancel_code(code_id: int, db: Session = Depends(get_db), user: User = Depends(current_user)):
@@ -79,7 +146,12 @@ def install_routes(current_user):
         if not code.active: raise HTTPException(409, 'Bu kod artık aktif değil')
         wallet = db.scalar(select(User).where(User.id == user.id).with_for_update().execution_options(populate_existing=True))
         if not wallet: raise HTTPException(404, 'Kullanıcı bulunamadı')
-        amount = 2500 if code.kind == 'USER' else 12500
+        amount = reward_amount(db, code)
+        if not wallet.is_active: raise HTTPException(403, 'Hesap aktif değil.')
+        if int(wallet.lidya or 0) > 9223372036854775807 - amount:
+            raise HTTPException(409, 'Bakiye sınırı aşılıyor.')
+        db.info.update(lidya_operation='referral_reward', lidya_reference_id=str(code.id),
+                       lidya_actor_id=code.created_by, lidya_details=code.kind)
         wallet.lidya = int(wallet.lidya or 0) + amount
         code.uses += 1
         if code.uses >= code.max_uses: code.active = False
