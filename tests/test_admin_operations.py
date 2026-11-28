@@ -14,7 +14,7 @@ from backend.app.admin_models import AdminRole,SupportAssignment,SupportMessage,
 from backend.app.support_models import SupportTicket,SupportFlow,SupportReview
 from backend.app.suggestion_models import UserSuggestion,SuggestionReviewSession,SuggestionEvent
 from backend.app.admin_operations_models import OperationHistory,OperationCaseLink,FeedbackWork,AnnouncementDraft
-from backend.app.referral_models import ReferralCode,ReferralRedemption
+from backend.app.referral_models import ReferralCode,ReferralRedemption,CustomReferralReward
 from backend.app.case_models import ManagementCase
 from backend.app.ban_workflow_models import BanWorkflow,BanReviewSession,BanPresence,BanEvent
 from backend.app.room_ban_models import RoomBanRequestBinding,RoomUserBan,BanRestrictionReason
@@ -27,7 +27,7 @@ class Operations(shared.ManagementAPI):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.tables.extend([m.__table__ for m in (BanApproval,BanAppeal,BanWorkflow,BanReviewSession,BanPresence,BanEvent,RoomBanRequestBinding,RoomUserBan,BanRestrictionReason,ChatBanRequestBinding,SuggestionReviewSession,SuggestionEvent,SupportReview,PaymentRequest)])
+        cls.tables.extend([m.__table__ for m in (CustomReferralReward,BanApproval,BanAppeal,BanWorkflow,BanReviewSession,BanPresence,BanEvent,RoomBanRequestBinding,RoomUserBan,BanRestrictionReason,ChatBanRequestBinding,SuggestionReviewSession,SuggestionEvent,SupportReview,PaymentRequest)])
         def identity(x_test_user:str=Header(default=''),db:Session=Depends(get_db)):
             user=db.get(User,x_test_user) if x_test_user else None
             if not user:raise HTTPException(401,'Fixture identity required')
@@ -86,6 +86,27 @@ class Operations(shared.ManagementAPI):
         self.assertEqual(self.post('/referrals',{**payload,'request_key':str(uuid4()),'max_uses':True}).status_code,422)
         note={'note':'Withdraw this fixture referral code after the documented review','request_key':str(uuid4())};self.assertEqual(self.post('/referrals/1/cancel',note).status_code,200);self.assertEqual(self.post('/referrals/1/cancel',note).status_code,200)
         with Session(self.engine) as db:self.assertFalse(db.get(ReferralCode,1).active);self.assertEqual(db.scalar(select(func.sum(ReferralRedemption.amount))),2500);self.assertEqual(db.get(User,'USER').lidya,0)
+    def test_custom_reference_workspace_lifecycle(self):
+        payload={'kind':'CUSTOM','code':'vusal75','reward':7500,'max_uses':75,'active':False,'request_key':str(uuid4())}
+        for role in ('SA','UA','FA','USER','INACTIVE'):
+            self.assertEqual(self.post('/referrals',payload,role).status_code,403)
+        a=self.post('/referrals',payload);self.assertEqual(a.status_code,201,a.text);r=a.json();cid=r['id']
+        self.assertEqual(r['code'],'VUSAL75');self.assertEqual(r['reward'],7500);self.assertFalse(r['active'])
+        self.assertEqual(self.post('/referrals',payload).json()['id'],cid)
+        self.assertEqual(self.post('/referrals',{**payload,'reward':7501}).status_code,409)
+        self.assertEqual(self.post('/referrals',{**payload,'code':'VUSAL75','request_key':str(uuid4())},'DA2').status_code,409)
+        for extra in ({'reward':0},{'reward':True},{'reward':1000000,'max_uses':101},{'code':'INVALID!'}):
+            self.assertEqual(self.post('/referrals',{**payload,**extra,'request_key':str(uuid4())}).status_code,422)
+        path=f'/referrals/{cid}/state';state={'active':True,'note':'Activate the verified custom campaign after review','request_key':str(uuid4())}
+        self.assertEqual(self.post(path,state,'FA').status_code,403)
+        self.assertTrue(self.post(path,state).json()['active']);self.assertTrue(self.post(path,state).json()['active'])
+        listed=self.request('/v1/admin/operations-desk/referrals?kind=CUSTOM&state=active').json()['items'];self.assertEqual(len(listed),1);self.assertEqual(listed[0]['reward'],7500)
+        self.assertFalse(self.post(path,{**state,'active':False,'request_key':str(uuid4())}).json()['active'])
+        with Session(self.engine) as db:
+            self.assertEqual(db.get(CustomReferralReward,cid).amount,7500)
+            self.assertEqual(db.scalar(select(func.count()).select_from(OperationHistory).where(OperationHistory.action=='code_state')),2)
+            self.assertFalse(db.get(ReferralCode,cid).active)
+            self.assertEqual(db.get(User,'USER').lidya,0)
     def test_feedback_requires_own_original_read_ack(self):
         payload={'status':'planned','assignee_id':'DA2','revision':0,'note':'The suggestion is accepted into planning with a clear accountable owner'}
         self.assertEqual(self.post('/feedback/1/workflow',payload).status_code,409);self.ack();r=self.post('/feedback/1/workflow',payload);self.assertEqual(r.status_code,200,r.text)
