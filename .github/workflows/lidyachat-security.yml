@@ -401,6 +401,13 @@ jobs:
           javac -d "$RUNNER_TEMP/welcome-checkout-tests" android-native/app/src/main/java/com/erischat/app/PlayProductPolicy.java android-native/security-tests/WelcomeCheckoutPolicyTest.java
           java -cp "$RUNNER_TEMP/welcome-checkout-tests" WelcomeCheckoutPolicyTest
 
+
+      - name: Welcome Android launch security policy
+        run: |
+          mkdir -p "$RUNNER_TEMP/welcome-launch-tests"
+          javac -d "$RUNNER_TEMP/welcome-launch-tests" android-native/app/src/main/java/com/erischat/app/PlayProductPolicy.java android-native/app/src/main/java/com/erischat/app/WelcomeLaunchPolicy.java android-native/security-tests/WelcomeLaunchPolicyTest.java
+          java -cp "$RUNNER_TEMP/welcome-launch-tests" WelcomeLaunchPolicyTest
+
       - name: Compile debug Java without signing credentials
         run: |
           chmod +x android-native/gradlew

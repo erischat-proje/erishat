@@ -131,6 +131,77 @@ public final class PlayBillingCatalog {
         });
     }
 
+
+    // V10.17: Build validated welcome payment parameters.
+    // No welcome billing launch is connected in this stage.
+
+    static BillingFlowParams buildWelcomeFlow(
+        WelcomeLaunchAuthorization.Grant grant,
+        ProductDetails product
+    ) {
+
+        if (grant == null
+            || !grant.isFresh()
+            || product == null
+            || !PlayProductPolicy.isWelcome(grant.productId)
+            || !grant.productId.equals(product.getProductId())
+            || !BillingClient.ProductType.INAPP.equals(
+                product.getProductType()))
+            return null;
+
+        List<ProductDetails.OneTimePurchaseOfferDetails>
+            offers = product.getOneTimePurchaseOfferDetailsList();
+
+        if (offers == null)
+            return null;
+
+        ProductDetails.OneTimePurchaseOfferDetails
+            selected = null;
+
+        for (ProductDetails.OneTimePurchaseOfferDetails
+                offer : offers) {
+
+            if (!"standart".equals(
+                    offer.getPurchaseOptionId())
+                || offer.getOfferId() != null)
+                continue;
+
+            if (selected != null)
+                return null;
+
+            selected = offer;
+        }
+
+        if (selected == null)
+            return null;
+
+        if (!WelcomeLaunchPolicy.matchesPlayPrice(
+            grant.currency,
+            grant.priceMicros,
+            selected.getPriceCurrencyCode(),
+            selected.getPriceAmountMicros()
+        )) return null;
+
+        String offerToken = selected.getOfferToken();
+
+        if (offerToken == null || offerToken.isEmpty())
+            return null;
+
+        BillingFlowParams.ProductDetailsParams line =
+            BillingFlowParams.ProductDetailsParams
+                .newBuilder()
+                .setProductDetails(product)
+                .setOfferToken(offerToken)
+                .build();
+
+        return BillingFlowParams.newBuilder()
+            .setProductDetailsParamsList(
+                Collections.singletonList(line)
+            )
+            .setObfuscatedAccountId(grant.accountHash)
+            .build();
+    }
+
     private void onPurchase(Purchase purchase) {
         if (purchase.getProducts() == null || purchase.getProducts().size() != 1) return;
         String product = purchase.getProducts().get(0);
