@@ -408,6 +408,13 @@ jobs:
           javac -d "$RUNNER_TEMP/welcome-launch-tests" android-native/app/src/main/java/com/erischat/app/PlayProductPolicy.java android-native/app/src/main/java/com/erischat/app/WelcomeLaunchPolicy.java android-native/security-tests/WelcomeLaunchPolicyTest.java
           java -cp "$RUNNER_TEMP/welcome-launch-tests" WelcomeLaunchPolicyTest
 
+
+      - name: Shared payment flow security tests
+        run: |
+          mkdir -p "$RUNNER_TEMP/payment-flow-tests"
+          javac -d "$RUNNER_TEMP/payment-flow-tests" android-native/app/src/main/java/com/erischat/app/PlayProductPolicy.java android-native/app/src/main/java/com/erischat/app/PaymentFlowGate.java android-native/security-tests/PaymentFlowGateTest.java
+          java -cp "$RUNNER_TEMP/payment-flow-tests" PaymentFlowGateTest
+
       - name: Compile debug Java without signing credentials
         run: |
           chmod +x android-native/gradlew

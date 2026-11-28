@@ -14,11 +14,48 @@ public final class PlayBillingCatalog {
     private final BillingClient billing;
     private volatile boolean closed = false;
 
+    // Welcome commercial launch remains locked.
+    private static final boolean
+        WELCOME_NATIVE_LAUNCH_ENABLED = false;
+
+    private final PaymentFlowGate paymentGate =
+        new PaymentFlowGate();
+
+    private final android.os.Handler paymentHandler =
+        new android.os.Handler(
+            android.os.Looper.getMainLooper()
+        );
+
+
     public PlayBillingCatalog(Activity activity, WebView webView) {
         this.activity = activity;
         this.webView = webView;
         billing = BillingClient.newBuilder(activity)
             .setListener((result, purchases) -> {
+
+                if (purchases != null &&
+                    !purchases.isEmpty()) {
+
+                    for (Purchase purchase : purchases) {
+
+                        if (purchase.getProducts() != null &&
+                            purchase.getProducts().size() == 1) {
+
+                            paymentGate.finishCallback(
+                                purchase.getProducts().get(0),
+                                false
+                            );
+                        }
+                    }
+
+                } else if (
+                    result.getResponseCode() !=
+                        BillingClient.BillingResponseCode.OK
+                ) {
+
+                    paymentGate.finishCallback(null, true);
+                }
+
                 if (result.getResponseCode() == BillingClient.BillingResponseCode.OK && purchases != null) {
                     for (Purchase purchase : purchases) onPurchase(purchase);
                 } else if (result.getResponseCode() != BillingClient.BillingResponseCode.USER_CANCELED) {
@@ -78,59 +115,451 @@ public final class PlayBillingCatalog {
 
     public void query(String productId) {
         if (!validProduct(productId)) { report("", "invalid_product", "Invalid product"); return; }
-        connect(() -> lookup(productId, false, null), productId);
+        connect(() -> lookup(productId, false, null, null, () -> true), productId);
     }
 
-    public void purchase(String productId, String accountHash) {
-        if (PlayProductPolicy.isWelcome(productId)) {
-            report(productId, "welcome_disabled", "Welcome checkout not enabled");
+
+    private PaymentFlowGate.Ticket acquirePayment(
+        String productId
+    ) {
+
+        if (closed)
+            return null;
+
+        PaymentFlowGate.Ticket ticket =
+            paymentGate.acquire(productId);
+
+        if (ticket == null) {
+
+            report(
+                productId,
+                "payment_busy",
+                "Another payment is active"
+            );
+
+            return null;
+        }
+
+        paymentHandler.postDelayed(() -> {
+
+            if (paymentGate.abortPreparing(ticket)) {
+
+                report(
+                    productId,
+                    "preparation_timeout",
+                    "Payment preparation expired"
+                );
+            }
+
+        }, 30000L);
+
+        return ticket;
+    }
+
+    private void failPreparation(
+        PaymentFlowGate.Ticket ticket,
+        String productId,
+        String state
+    ) {
+
+        if (ticket == null ||
+            paymentGate.abortPreparing(ticket)) {
+
+            report(
+                productId,
+                state,
+                "Payment preparation unavailable"
+            );
+        }
+    }
+
+    public void purchase(
+        String productId,
+        String accountHash,
+        java.util.function.BooleanSupplier allowed
+    ) {
+
+        if (!PlayProductPolicy.canStartLegacyCheckout(
+                productId)
+            || !PlayProductPolicy.validAccountHash(
+                accountHash)) {
+
+            report(
+                productId,
+                "invalid_account",
+                "Invalid product or account"
+            );
+
             return;
         }
-        if (!PlayProductPolicy.canStartLegacyCheckout(productId)
-                || !PlayProductPolicy.validAccountHash(accountHash)) {
-            report(productId, "invalid_account", "Account binding missing"); return;
-        }
-        final String boundAccount = accountHash;
-        connect(() -> lookup(productId, true, boundAccount), productId);
+
+        PaymentFlowGate.Ticket ticket =
+            acquirePayment(productId);
+
+        if (ticket == null)
+            return;
+
+        connect(
+            () -> lookup(
+                productId,
+                true,
+                accountHash,
+                ticket,
+                allowed
+            ),
+            productId
+        );
     }
 
-    private void lookup(String productId, boolean startCheckout, final String boundAccount) {
-        QueryProductDetailsParams.Product item = QueryProductDetailsParams.Product.newBuilder()
-            .setProductId(productId).setProductType(BillingClient.ProductType.INAPP).build();
-        QueryProductDetailsParams params = QueryProductDetailsParams.newBuilder()
-            .setProductList(Collections.singletonList(item)).build();
-        billing.queryProductDetailsAsync(params, (result, response) -> {
-            if (result.getResponseCode() != BillingClient.BillingResponseCode.OK) {
-                report(productId, "query_failed", "Product query error " + result.getResponseCode()); return;
-            }
-            List<ProductDetails> products = response.getProductDetailsList();
-            if (products == null || products.isEmpty()) {
-                report(productId, "not_available", "Google Play product unavailable"); return;
-            }
-            if (!startCheckout) { report(productId, "available", "Product found"); return; }
-            ProductDetails p = products.get(0);
-            List<ProductDetails.OneTimePurchaseOfferDetails> offers = p.getOneTimePurchaseOfferDetailsList();
-            ProductDetails.OneTimePurchaseOfferDetails selected = null;
-            if (offers != null) for (ProductDetails.OneTimePurchaseOfferDetails offer : offers) {
-                if ("standart".equals(offer.getPurchaseOptionId()) && offer.getOfferId() == null) {
-                    selected = offer; break;
+    private void lookup(
+        String productId,
+        boolean startCheckout,
+        String boundAccount,
+        PaymentFlowGate.Ticket ticket,
+        java.util.function.BooleanSupplier allowed
+    ) {
+
+        if (closed ||
+            (startCheckout &&
+             !paymentGate.isPreparing(ticket)))
+            return;
+
+        QueryProductDetailsParams.Product item =
+            QueryProductDetailsParams.Product.newBuilder()
+                .setProductId(productId)
+                .setProductType(BillingClient.ProductType.INAPP)
+                .build();
+
+        QueryProductDetailsParams params =
+            QueryProductDetailsParams.newBuilder()
+                .setProductList(
+                    Collections.singletonList(item)
+                ).build();
+
+        billing.queryProductDetailsAsync(
+            params,
+            (result, response) -> {
+
+                if (closed ||
+                    (startCheckout &&
+                     !paymentGate.isPreparing(ticket)))
+                    return;
+
+                if (result.getResponseCode() !=
+                        BillingClient.BillingResponseCode.OK) {
+
+                    failPreparation(
+                        ticket, productId, "query_failed"
+                    );
+
+                    return;
+                }
+
+                List<ProductDetails> products =
+                    response.getProductDetailsList();
+
+                if (products == null ||
+                    products.size() != 1 ||
+                    !productId.equals(
+                        products.get(0).getProductId())) {
+
+                    failPreparation(
+                        ticket, productId, "not_available"
+                    );
+
+                    return;
+                }
+
+                if (!startCheckout) {
+
+                    report(
+                        productId, "available", "Product found"
+                    );
+
+                    return;
+                }
+
+                try {
+
+                    ProductDetails p = products.get(0);
+
+                    List<ProductDetails.OneTimePurchaseOfferDetails>
+                        offers = p.getOneTimePurchaseOfferDetailsList();
+
+                    ProductDetails.OneTimePurchaseOfferDetails
+                        selected = null;
+
+                    if (offers != null) {
+
+                        for (ProductDetails.OneTimePurchaseOfferDetails
+                                offer : offers) {
+
+                            if ("standart".equals(
+                                    offer.getPurchaseOptionId())
+                                && offer.getOfferId() == null) {
+
+                                selected = offer;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (selected == null) {
+
+                        failPreparation(
+                            ticket, productId, "offer_missing"
+                        );
+
+                        return;
+                    }
+
+                    BillingFlowParams.ProductDetailsParams line =
+                        BillingFlowParams.ProductDetailsParams
+                            .newBuilder()
+                            .setProductDetails(p)
+                            .setOfferToken(
+                                selected.getOfferToken()
+                            ).build();
+
+                    BillingFlowParams flow =
+                        BillingFlowParams.newBuilder()
+                            .setProductDetailsParamsList(
+                                Collections.singletonList(line)
+                            )
+                            .setObfuscatedAccountId(boundAccount)
+                            .build();
+
+                    activity.runOnUiThread(() ->
+                        launchLocked(
+                            ticket, flow, allowed, null
+                        )
+                    );
+
+                } catch (RuntimeException error) {
+
+                    failPreparation(
+                        ticket, productId, "invalid_offer"
+                    );
                 }
             }
-            if (selected == null) { report(productId, "offer_missing", "Standard offer unavailable"); return; }
-            BillingFlowParams.ProductDetailsParams line = BillingFlowParams.ProductDetailsParams.newBuilder()
-                .setProductDetails(p).setOfferToken(selected.getOfferToken()).build();
-            BillingFlowParams flow = BillingFlowParams.newBuilder()
-                .setProductDetailsParamsList(Collections.singletonList(line))
-                .setObfuscatedAccountId(boundAccount).build();
-            activity.runOnUiThread(() -> {
-                if (closed || activity.isFinishing() || activity.isDestroyed()) return;
-                BillingResult launched = billing.launchBillingFlow(activity, flow);
-                if (launched.getResponseCode() != BillingClient.BillingResponseCode.OK)
-                    report(productId, "launch_failed", "Play checkout error " + launched.getResponseCode());
-            });
-        });
+        );
     }
 
+    private void launchLocked(
+        PaymentFlowGate.Ticket ticket,
+        BillingFlowParams flow,
+        java.util.function.BooleanSupplier allowed,
+        WelcomeLaunchAuthorization.Grant grant
+    ) {
+
+        if (!paymentGate.isPreparing(ticket))
+            return;
+
+        if (closed || activity.isFinishing()
+            || activity.isDestroyed()
+            || allowed == null
+            || !allowed.getAsBoolean()
+            || flow == null) {
+
+            paymentGate.abortPreparing(ticket);
+            return;
+        }
+
+        if (PlayProductPolicy.isWelcome(ticket.productId)) {
+
+            if (!WELCOME_NATIVE_LAUNCH_ENABLED ||
+                grant == null ||
+                !ticket.productId.equals(grant.productId) ||
+                !grant.claim()) {
+
+                failPreparation(
+                    ticket,
+                    ticket.productId,
+                    "welcome_disabled"
+                );
+
+                return;
+            }
+        }
+
+        if (!paymentGate.markLaunched(ticket))
+            return;
+
+        try {
+
+            BillingResult result =
+                billing.launchBillingFlow(activity, flow);
+
+            if (result.getResponseCode() !=
+                    BillingClient.BillingResponseCode.OK) {
+
+                paymentGate.launchRejected(ticket);
+
+                report(
+                    ticket.productId,
+                    "launch_failed",
+                    "Google Play launch rejected"
+                );
+            }
+
+        } catch (RuntimeException ignored) {
+
+            // An uncertain launch must not permit a second
+            // payment automatically.
+
+            report(
+                ticket.productId,
+                "payment_unknown",
+                "Payment status must be checked"
+            );
+        }
+    }
+
+    // Internal welcome checkout engine.
+    // Not exposed to JavaScript in this stage.
+
+    void purchaseWelcome(
+        String productId,
+        String accessToken,
+        String requestId,
+        java.util.function.BooleanSupplier allowed
+    ) {
+
+        if (!WELCOME_NATIVE_LAUNCH_ENABLED ||
+            !PlayProductPolicy.isWelcome(productId) ||
+            !PlayProductPolicy.validSessionToken(accessToken) ||
+            !WelcomeLaunchPolicy.validRequest(requestId)) {
+
+            report(
+                productId,
+                "welcome_disabled",
+                "Welcome checkout disabled"
+            );
+
+            return;
+        }
+
+        PaymentFlowGate.Ticket ticket =
+            acquirePayment(productId);
+
+        if (ticket == null)
+            return;
+
+        new Thread(() -> {
+
+            WelcomeLaunchAuthorization.Grant grant =
+                WelcomeLaunchAuthorization.authorize(
+                    productId, accessToken, requestId
+                );
+
+            activity.runOnUiThread(() -> {
+
+                if (!paymentGate.isPreparing(ticket))
+                    return;
+
+                if (grant == null ||
+                    !grant.isFresh() ||
+                    allowed == null ||
+                    !allowed.getAsBoolean()) {
+
+                    failPreparation(
+                        ticket,
+                        productId,
+                        "authorization_failed"
+                    );
+
+                    return;
+                }
+
+                connect(
+                    () -> lookupWelcome(ticket, grant, allowed),
+                    productId
+                );
+            });
+
+        }, "LidyaWelcomeAuthorization").start();
+    }
+
+    private void lookupWelcome(
+        PaymentFlowGate.Ticket ticket,
+        WelcomeLaunchAuthorization.Grant grant,
+        java.util.function.BooleanSupplier allowed
+    ) {
+
+        if (!paymentGate.isPreparing(ticket))
+            return;
+
+        QueryProductDetailsParams.Product item =
+            QueryProductDetailsParams.Product.newBuilder()
+                .setProductId(ticket.productId)
+                .setProductType(BillingClient.ProductType.INAPP)
+                .build();
+
+        QueryProductDetailsParams params =
+            QueryProductDetailsParams.newBuilder()
+                .setProductList(
+                    Collections.singletonList(item)
+                ).build();
+
+        billing.queryProductDetailsAsync(
+            params,
+            (result, response) -> {
+
+                if (!paymentGate.isPreparing(ticket))
+                    return;
+
+                try {
+
+                    List<ProductDetails> products =
+                        response.getProductDetailsList();
+
+                    if (result.getResponseCode() !=
+                            BillingClient.BillingResponseCode.OK
+                        || products == null
+                        || products.size() != 1) {
+
+                        failPreparation(
+                            ticket,
+                            ticket.productId,
+                            "not_available"
+                        );
+
+                        return;
+                    }
+
+                    BillingFlowParams flow =
+                        buildWelcomeFlow(
+                            grant, products.get(0)
+                        );
+
+                    if (flow == null) {
+
+                        failPreparation(
+                            ticket,
+                            ticket.productId,
+                            "price_or_offer_mismatch"
+                        );
+
+                        return;
+                    }
+
+                    activity.runOnUiThread(() ->
+                        launchLocked(
+                            ticket, flow, allowed, grant
+                        )
+                    );
+
+                } catch (RuntimeException ignored) {
+
+                    failPreparation(
+                        ticket,
+                        ticket.productId,
+                        "invalid_offer"
+                    );
+                }
+            }
+        );
+    }
 
     // V10.17: Build validated welcome payment parameters.
     // No welcome billing launch is connected in this stage.
@@ -266,5 +695,9 @@ public final class PlayBillingCatalog {
         }, "");
     }
 
-    public void close() { closed = true; billing.endConnection(); }
+    public void close() {
+        closed = true;
+        paymentHandler.removeCallbacksAndMessages(null);
+        billing.endConnection();
+    }
 }

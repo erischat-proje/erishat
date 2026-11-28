@@ -360,7 +360,17 @@ public class MainActivity extends Activity {
         @JavascriptInterface public void startPlayPurchase(String productId, String accountHash) {
             runOnUiThread(() -> {
                 if (!trustedPage() || !activityResumed || isFinishing() || isDestroyed()) return;
-                playBillingCatalog.purchase(productId, accountHash);
+                final int paymentGeneration = pageGeneration;
+
+                playBillingCatalog.purchase(
+                    productId,
+                    accountHash,
+                    () -> paymentGeneration == pageGeneration
+                        && trustedPage()
+                        && activityResumed
+                        && !isFinishing()
+                        && !isDestroyed()
+                );
             });
         }
 
