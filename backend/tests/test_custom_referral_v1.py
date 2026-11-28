@@ -106,10 +106,34 @@ def test_custom_lifecycle(api):
 
 def test_budget_and_legacy(api):
     client,_=api; da={'Authorization':'Bearer owner'}; path='/v1/admin/referrals'
-    for code,reward,uses in [('BAD CODE',100,1),('TOOBIG',1000000,101)]:
+    for code,reward,uses in [('   ',100,1),('TOOBIG',1000000,101)]:
         assert client.post(path,headers=da,json=dict(kind='CUSTOM',code=code,reward=reward,max_uses=uses)).status_code==422
     for kind,reward in [('USER',2500),('TANIDIK',12500)]:
         res=client.post(path,headers=da,json=dict(kind=kind,max_uses=1))
         assert res.status_code==200,res.text
         assert res.json()['reward']==reward
         assert client.post('/v1/referrals/redeem',headers={'Authorization':'Bearer normal'},json={'code':res.json()['code']}).json()['amount']==reward
+
+
+@pytest.mark.parametrize('code', ['A', '58', 'SELÇUK58', 'ÇağrıŞahin', 'LİDYA-2026!', '★KRAL★', 'Lidya Chat 58', '👑VIP🔥', '👩‍👩‍👧‍👦', '<TEST>&%_', '中'*256, '👑'*256])
+def test_freeform_referral_roundtrip(api, code):
+    from backend.app.referral_routes import normalize_referral_code
+    client,engine=api
+    da={'Authorization':'Bearer owner'}
+    normal={'Authorization':'Bearer normal'}
+    path='/v1/admin/referrals'
+    data=dict(kind='CUSTOM',code=code,reward=15000,max_uses=1)
+    r=client.post(path,json=data,headers=da)
+    assert r.status_code==200,r.text
+    assert r.json()['code']==normalize_referral_code(code)
+    assert client.post(path,json=data,headers=da).status_code==409
+    result=client.post('/v1/referrals/redeem',json={'code':code},headers=normal)
+    assert result.status_code==200,result.text
+    assert result.json()['amount']==15000
+    assert client.post('/v1/referrals/redeem',json={'code':code},headers=normal).status_code==409
+
+@pytest.mark.parametrize('code', ['', '   ', 'A'*257, 'A\x00B', 'A\nB', 'A\u202eB', '\u200d'])
+def test_freeform_invalid_codes(api, code):
+    client,_=api
+    r=client.post('/v1/admin/referrals',headers={'Authorization':'Bearer owner'},json=dict(kind='CUSTOM',code=code,reward=1,max_uses=1))
+    assert r.status_code==422,r.text

@@ -310,6 +310,8 @@ def bootstrap_initial_developer_admins(db: Session) -> None:
 def _initialize_database() -> None:
     logger.info("LidyaChat API startup: environment=%s", settings.environment)
     Base.metadata.create_all(bind=engine)
+    with engine.begin() as referral_conn:
+        referral_models.widen_referral_code_column(referral_conn)
 
     # NOBILITY_BOOTSTRAP_V1
     if engine.dialect.name == "postgresql":

@@ -1,12 +1,24 @@
 from datetime import datetime
-from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Integer, String, UniqueConstraint, func
+from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Integer, String, UniqueConstraint, func, text
 from sqlalchemy.orm import Mapped, mapped_column
 from .db import Base
+
+REFERRAL_CODE_LIMIT = 256
+
+
+def widen_referral_code_column(conn):
+    """Idempotent PostgreSQL widening; retain existing values and unique index."""
+    if conn.dialect.name != 'postgresql':
+        return
+    width = conn.execute(text("SELECT atttypmod FROM pg_attribute WHERE attrelid = 'referral_codes'::regclass AND attname = 'code' AND NOT attisdropped")).scalar_one()
+    if 0 < width < REFERRAL_CODE_LIMIT + 4:
+        conn.execute(text(f'ALTER TABLE referral_codes ALTER COLUMN code TYPE VARCHAR({REFERRAL_CODE_LIMIT})'))
+
 
 class ReferralCode(Base):
     __tablename__ = 'referral_codes'
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    code: Mapped[str] = mapped_column(String(48), unique=True, nullable=False, index=True)
+    code: Mapped[str] = mapped_column(String(REFERRAL_CODE_LIMIT), unique=True, nullable=False, index=True)
     kind: Mapped[str] = mapped_column(String(16), nullable=False)
     max_uses: Mapped[int] = mapped_column(Integer, nullable=False)
     uses: Mapped[int] = mapped_column(Integer, default=0, server_default='0', nullable=False)

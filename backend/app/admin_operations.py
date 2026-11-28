@@ -11,8 +11,8 @@ from .db import get_db
 from .models import User
 from .admin_models import AdminRole,SupportAssignment,SupportMessage,BanApproval,BanAppeal,SystemAnnouncement
 from .support_models import SupportTicket,SupportFlow
-from .referral_models import ReferralCode,ReferralRedemption,CustomReferralReward
-from .referral_routes import reward_amount
+from .referral_models import ReferralCode,ReferralRedemption,CustomReferralReward,REFERRAL_CODE_LIMIT
+from .referral_routes import reward_amount,normalize_referral_code
 from .suggestion_models import UserSuggestion,SuggestionReviewSession
 from .payment_assistance_models import PaymentRequest
 from .ban_workflow_models import BanWorkflow
@@ -80,7 +80,7 @@ class Note(Key):note:str=Field(min_length=20,max_length=2000)
 class ReferralCreate(Key):
     kind:str=Field(pattern='^(USER|TANIDIK|CUSTOM)$')
     max_uses:int=Field(strict=True,ge=1,le=100000)
-    code:str|None=Field(default=None,max_length=48)
+    code:str|None=Field(default=None,max_length=REFERRAL_CODE_LIMIT)
     reward:int|None=Field(default=None,strict=True,ge=1,le=1000000)
     active:bool=Field(default=True,strict=True)
 class ReferralState(Note):
@@ -180,11 +180,10 @@ def register_auth(current_user):
         access(db,user,4)
         custom=payload.kind=='CUSTOM'
         if custom:
-            if not re.fullmatch(r'[A-Za-z0-9]{4,48}',payload.code or ''):
-                raise HTTPException(422,'Kod 4-48 İngilizce harf veya rakam içermeli.')
+            code=normalize_referral_code(payload.code)
             if payload.reward is None or payload.reward*payload.max_uses>100000000:
                 raise HTTPException(422,'Ödül gerekli; toplam bütçe 100.000.000 Lidya sınırını aşamaz.')
-            code=payload.code.upper();amount=payload.reward
+            amount=payload.reward
             detail=f'CUSTOM / {payload.max_uses} / {code} / reward={amount} / active={payload.active}'
         else:
             if payload.code is not None or payload.reward is not None or not payload.active:
@@ -271,9 +270,9 @@ def register_auth(current_user):
         return {'id':r.id,'status':r.status,'reason':r.reason,'explanation':r.explanation,'images':json.loads(r.images_json),'request_id':b.id,'kind':b.kind,'days':b.days,'original_reason':b.reason,'target_public_id':p.public_id if p else None,'room_public_id':room.public_id if room else None,'room_name':room.name if room else None,'first_decision_note':first_note,'first_reviewer_id':first_reviewer,'first_reviewer_public_id':first_person.public_id if first_person else None,'requester_id':b.requester_id,'requester_public_id':requester.public_id if requester else None,'can_decide':r.status=='pending' and user.id not in {b.requester_id,b.target_user_id,b.decision_by}}
 
     @router.get('/referrals')
-    def referrals(q:str=Query('',max_length=48),state:str=Query('all',pattern='^(all|active|exhausted|cancelled)$'),kind:str=Query('',pattern='^(|USER|TANIDIK|CUSTOM)$'),before:int|None=Query(None,ge=1),db:Session=Depends(get_db),user:User=Depends(current_user)):
+    def referrals(q:str=Query('',max_length=REFERRAL_CODE_LIMIT),state:str=Query('all',pattern='^(all|active|exhausted|cancelled)$'),kind:str=Query('',pattern='^(|USER|TANIDIK|CUSTOM)$'),before:int|None=Query(None,ge=1),db:Session=Depends(get_db),user:User=Depends(current_user)):
         access(db,user,4);query=select(ReferralCode)
-        if q:query=query.where(ReferralCode.code.contains(q.strip().upper(),autoescape=True))
+        if q.strip():query=query.where(ReferralCode.code.contains(normalize_referral_code(q),autoescape=True))
         if kind:query=query.where(ReferralCode.kind==kind)
         if state=='active':query=query.where(ReferralCode.active.is_(True),ReferralCode.uses<ReferralCode.max_uses)
         if state=='exhausted':query=query.where(ReferralCode.uses>=ReferralCode.max_uses)

@@ -1,4 +1,4 @@
-import re
+import unicodedata
 from datetime import datetime, timedelta, timezone
 from secrets import choice
 from string import ascii_uppercase, digits
@@ -11,7 +11,7 @@ from .db import get_db
 from .models import User
 from .admin_models import AdminRole, AdminAuditLog
 from .platform_models import Family, FamilyMember, Notification
-from .referral_models import ReferralCode, ReferralRedemption, FamilyReferralClaim, FamilyReferralReceipt, CustomReferralReward
+from .referral_models import ReferralCode, ReferralRedemption, FamilyReferralClaim, FamilyReferralReceipt, CustomReferralReward, REFERRAL_CODE_LIMIT
 
 router = APIRouter(prefix='/v1', tags=['referrals'])
 _current_user = None
@@ -26,10 +26,31 @@ def auth_user():
     if _current_user is None:
         raise RuntimeError('Referral auth not registered')
 
+def normalize_referral_code(value):
+    # Keep historical case-insensitive uppercase semantics, including old ASCII codes.
+    raw = unicodedata.normalize('NFC', value or '').strip()
+    code = unicodedata.normalize('NFC', raw.upper())
+    if not code or len(raw) > REFERRAL_CODE_LIMIT or len(code) > REFERRAL_CODE_LIMIT:
+        raise HTTPException(422, 'Referans kodu 1-256 karakter olmalı.')
+    # Reject non-storable/control characters, allow emoji joiners and all visible symbols.
+    if any(unicodedata.category(ch) in {'Cc', 'Cs', 'Zl', 'Zp'} or
+           (unicodedata.category(ch) == 'Cf' and ch not in ('\u200c', '\u200d'))
+           for ch in code):
+        raise HTTPException(422, 'Referans kodunda kontrol veya görünmez yönlendirme karakteri kullanılamaz.')
+    if all(unicodedata.category(ch) in {'Cf', 'Mn', 'Me'} or ch.isspace() for ch in code):
+        raise HTTPException(422, 'Referans kodu görünür en az bir karakter içermeli.')
+    return code
+
+
+def referral_audit_target(row):
+    # admin_audit_logs.target_id is limited to 128 characters; keep full code in audit details.
+    return row.code if len(row.code) <= 128 else str(row.id)
+
+
 class NewCode(BaseModel):
     kind: str = Field(pattern='^(USER|TANIDIK|CUSTOM)$')
     max_uses: int = Field(ge=1, le=100000, strict=True)
-    code: str | None = Field(default=None, max_length=48)
+    code: str | None = Field(default=None, max_length=REFERRAL_CODE_LIMIT)
     reward: int | None = Field(default=None, ge=1, le=1000000, strict=True)
     active: bool = Field(default=True, strict=True)
 
@@ -48,7 +69,7 @@ def reward_amount(db, row):
     raise HTTPException(409, 'Kod ödülü geçersiz; yönetim ile iletişime geçin.')
 
 class Redeem(BaseModel):
-    code: str = Field(min_length=4, max_length=48)
+    code: str = Field(min_length=1, max_length=REFERRAL_CODE_LIMIT)
 
 def utc(value):
     if not value: return None
@@ -65,10 +86,7 @@ def install_routes(current_user):
     def create_code(payload: NewCode, db: Session = Depends(get_db), user: User = Depends(current_user)):
         require_da(db, user)
         if payload.kind == 'CUSTOM':
-            raw = (payload.code or '').strip()
-            if not re.fullmatch(r'[A-Za-z0-9]{4,48}', raw):
-                raise HTTPException(422, 'Kod 4-48 İngilizce harf veya rakam içermeli.')
-            code = raw.upper()
+            code = normalize_referral_code(payload.code)
             amount = payload.reward
             if amount is None:
                 raise HTTPException(422, 'Ödül miktarı gerekli.')
@@ -86,8 +104,8 @@ def install_routes(current_user):
             db.flush()
             if payload.kind == 'CUSTOM':
                 db.add(CustomReferralReward(code_id=obj.id, amount=amount))
-            db.add(AdminAuditLog(admin_id=user.id, action='referral_create', target_id=code,
-                details=f'{payload.kind}:{payload.max_uses}:reward={amount}:active={payload.active}'))
+            db.add(AdminAuditLog(admin_id=user.id, action='referral_create', target_id=referral_audit_target(obj),
+                details=f'{payload.kind}:{payload.max_uses}:reward={amount}:active={payload.active}:code={code}'))
             db.commit()
         except IntegrityError:
             db.rollback()
@@ -120,8 +138,8 @@ def install_routes(current_user):
             if row.uses >= row.max_uses: raise HTTPException(409, 'Kullanım limiti doldu.')
             reward_amount(db, row)
         row.active = payload.active
-        db.add(AdminAuditLog(admin_id=user.id, action='referral_state', target_id=row.code,
-            details=f'active={payload.active}'))
+        db.add(AdminAuditLog(admin_id=user.id, action='referral_state', target_id=referral_audit_target(row),
+            details=f'active={payload.active}:code={row.code}'))
         db.commit()
         return {'ok': True, 'active': row.active}
 
@@ -131,14 +149,14 @@ def install_routes(current_user):
         row = db.get(ReferralCode, code_id, with_for_update=True)
         if not row: raise HTTPException(404, 'Kod bulunamadı')
         row.active = False
-        db.add(AdminAuditLog(admin_id=user.id, action='referral_cancel', target_id=row.code, details='Kod iptal edildi; ödüller korundu'))
+        db.add(AdminAuditLog(admin_id=user.id, action='referral_cancel', target_id=referral_audit_target(row), details=f'Kod iptal edildi; ödüller korundu: {row.code}'))
         db.commit()
         return {'ok': True}
 
     @router.post('/referrals/redeem')
     def redeem(payload: Redeem, db: Session = Depends(get_db), user: User = Depends(current_user)):
         # Lock code first to serialize usage count and prevent exceeding quota.
-        code = db.scalar(select(ReferralCode).where(ReferralCode.code == payload.code.strip().upper()).with_for_update())
+        code = db.scalar(select(ReferralCode).where(ReferralCode.code == normalize_referral_code(payload.code)).with_for_update())
         if not code: raise HTTPException(404, 'Geçersiz referans kodu')
         if db.scalar(select(ReferralRedemption.id).where(ReferralRedemption.code_id == code.id, ReferralRedemption.user_id == user.id)):
             raise HTTPException(409, 'Bu kodu daha önce kullandınız')
