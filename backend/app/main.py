@@ -521,6 +521,9 @@ play_billing.register_refund_case_auth(current_user)
 play_billing.register_checkout_auth(current_user)
 app.include_router(play_billing.router)
 app.include_router(purchase_routes.router)
+from . import welcome_packages
+from . import welcome_purchase_models
+app.include_router(welcome_packages.register_auth(current_user))
 from . import woocommerce_account_link
 app.include_router(woocommerce_account_link.register_auth(current_user))
 from . import woocommerce_web_checkout

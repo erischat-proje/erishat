@@ -66,6 +66,10 @@ jobs:
             /tests/security_guard/
 
             /tests/explore-workspace.dom.cjs
+            /tests/welcome-packages.dom.cjs
+            /frontend/welcome-packages-live.js
+            /frontend/welcome-packages.css
+            /frontend/welcome-premium-v3/
             /frontend/social-feed-live.js
             /frontend/stories-live.js
             /tests/explore-premium.browser.cjs
@@ -212,6 +216,19 @@ jobs:
           DEVICE_AUDIT_CONFIRM: 'YES'
           DATABASE_URL: "sqlite+pysqlite:///:memory:"
         run: PYTHONPATH=. python -m pytest -v backend/tests/test_device_registration_audit_v11.py
+      - name: Welcome Packages full regression
+        env:
+          DATABASE_URL: "sqlite://"
+        run: |
+          PYTHONPATH=. python -m pytest -v backend/tests/test_welcome_packages_v1.py backend/tests/test_welcome_cosmetics_v2.py backend/tests/test_welcome_artwork_v3.py backend/tests/test_welcome_purchase_v5.py
+          NODE_PATH="$RUNNER_TEMP/lidya-da-tests/node_modules" node tests/welcome-packages.dom.cjs
+
+      - name: Welcome Packages V5 PostgreSQL concurrency
+        env:
+          DATABASE_URL: "sqlite://"
+          WELCOME_PG_CONFIRM: 'YES'
+        run: PYTHONPATH=. python -m pytest -v backend/tests/test_welcome_purchase_postgres_v5.py
+
       - name: Custom Referral V1 PostgreSQL concurrency
         env:
           CUSTOM_REFERRAL_PG_CONFIRM: 'YES'
