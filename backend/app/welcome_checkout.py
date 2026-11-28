@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Response
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, SecretStr
 from sqlalchemy import select
 
 from .db import get_db
@@ -161,6 +161,27 @@ class PreparePayload(BaseModel):
     tier: Literal["bronze", "silver", "gold"]
 
 
+
+class CompletePayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    product_id: Literal[
+        "welcome_bronze_v1",
+        "welcome_silver_v1",
+        "welcome_gold_v1",
+    ]
+
+    purchase_token: SecretStr
+
+
+def recover_purchase(db, user_id, product_id, token):
+    from .welcome_recovery import recover
+
+    return recover(
+        db, user_id, product_id, token
+    )
+
+
 def register_auth(current_user):
     router = APIRouter(
         prefix="/v1/welcome-packages",
@@ -192,5 +213,55 @@ def register_auth(current_user):
         return prepare_checkout(
             db, user.id, payload.tier
         )
+
+
+    @router.post("/checkout-complete")
+    def complete(
+        payload: CompletePayload,
+        response: Response,
+        user=Depends(current_user),
+        db=Depends(get_db),
+    ):
+        headers = {
+            "Cache-Control": "private, no-store",
+            "Vary": "Authorization",
+        }
+
+        response.headers.update(headers)
+
+        token = payload.purchase_token.get_secret_value()
+
+        if not 8 <= len(token) <= 4096:
+            raise HTTPException(
+                422,
+                "Gecersiz odeme makbuzu",
+                headers=headers,
+            )
+
+        try:
+            return recover_purchase(
+                db,
+                user.id,
+                payload.product_id,
+                token,
+            )
+
+        except HTTPException as error:
+            db.rollback()
+
+            raise HTTPException(
+                error.status_code,
+                "Odeme dogrulamasi tamamlanamadi",
+                headers=headers,
+            ) from None
+
+        except Exception:
+            db.rollback()
+
+            raise HTTPException(
+                503,
+                "Odeme teslimati gecici olarak bekliyor",
+                headers=headers,
+            ) from None
 
     return router

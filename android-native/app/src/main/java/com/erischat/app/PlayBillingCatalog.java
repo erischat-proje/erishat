@@ -148,14 +148,50 @@ public final class PlayBillingCatalog {
         } catch (Exception ignored) { }
     }
 
+
     public void recover() {
+        recoverProducts(false);
+    }
+
+    public void recoverWelcome() {
+        recoverProducts(true);
+    }
+
+    private void recoverProducts(boolean welcomeOnly) {
         connect(() -> {
-            QueryPurchasesParams params = QueryPurchasesParams.newBuilder()
-                .setProductType(BillingClient.ProductType.INAPP).build();
-            billing.queryPurchasesAsync(params, (result, purchases) -> {
-                if (result.getResponseCode() == BillingClient.BillingResponseCode.OK && purchases != null)
-                    for (Purchase purchase : purchases) onPurchase(purchase);
-            });
+            QueryPurchasesParams params =
+                QueryPurchasesParams.newBuilder()
+                    .setProductType(BillingClient.ProductType.INAPP)
+                    .build();
+
+            billing.queryPurchasesAsync(
+                params,
+                (result, purchases) -> {
+
+                    if (closed ||
+                        result.getResponseCode() !=
+                            BillingClient.BillingResponseCode.OK
+                        || purchases == null)
+                        return;
+
+                    for (Purchase purchase : purchases) {
+
+                        if (purchase.getProducts() == null ||
+                            purchase.getProducts().size() != 1)
+                            continue;
+
+                        String product =
+                            purchase.getProducts().get(0);
+
+                        boolean allowed = welcomeOnly
+                            ? PlayProductPolicy.isWelcome(product)
+                            : PlayProductPolicy.isStandard(product);
+
+                        if (allowed)
+                            onPurchase(purchase);
+                    }
+                }
+            );
         }, "");
     }
 

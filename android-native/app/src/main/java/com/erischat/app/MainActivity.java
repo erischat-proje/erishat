@@ -446,6 +446,18 @@ public class MainActivity extends Activity {
             });
         }
 
+
+        @JavascriptInterface
+        public void recoverWelcomePurchases() {
+            runOnUiThread(() -> {
+                if (!trustedPage() || !activityResumed
+                    || isFinishing() || isDestroyed())
+                    return;
+
+                playBillingCatalog.recoverWelcome();
+            });
+        }
+
         @JavascriptInterface public void recoverPlayPurchases() {
             runOnUiThread(() -> {
                 if (!trustedPage() || !activityResumed || isFinishing() || isDestroyed()) return;

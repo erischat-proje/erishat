@@ -2583,3 +2583,321 @@ def test_checkout_status_http(
     assert "Authorization" in result.headers["vary"]
 
     assert db.scalars(select(WelcomePurchase)).all() == []
+
+
+COMPLETE_PATH = "/v1/welcome-packages/checkout-complete"
+
+
+@pytest.fixture
+def complete_clock(monkeypatch):
+    monkeypatch.setattr(
+        checkout,
+        "recover_purchase",
+        lambda db, uid, product, token:
+            recovery.recover(
+                db, uid, product, token, DELIVERED
+            )
+    )
+
+
+def post_complete(
+    client, headers=None,
+    token=TOKEN,
+    product="welcome_gold_v1",
+    **extra
+):
+    return client.post(
+        COMPLETE_PATH,
+        headers=headers or {},
+        json={
+            "product_id": product,
+            "purchase_token": token,
+            **extra
+        },
+    )
+
+
+def test_complete_http_delivery(
+    db, monkeypatch, recovery_enabled,
+    complete_clock, admin_client
+):
+    intent, link = seed(db, monkeypatch)
+    user = db.get(User, "owner")
+
+    result = post_complete(
+        admin_client, auth_headers(db, user)
+    )
+
+    assert result.status_code == 200
+    assert result.json()["credited"]
+    assert result.json()["consumption"] == "completed"
+    assert TOKEN not in result.text
+    assert "no-store" in result.headers["cache-control"]
+
+    db.expire_all()
+
+    assert db.get(User, "owner").lidya == 28100
+    assert len(leases(db)) == 5
+    assert len(recovery_enabled) == 1
+
+
+def test_complete_http_duplicate(
+    db, monkeypatch, recovery_enabled,
+    complete_clock, admin_client
+):
+    seed(db, monkeypatch)
+
+    headers = auth_headers(
+        db, db.get(User, "owner")
+    )
+
+    first = post_complete(admin_client, headers)
+    second = post_complete(admin_client, headers)
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+    assert first.json()["credited"]
+    assert second.json()["already_credited"]
+
+    db.expire_all()
+
+    assert db.get(User, "owner").lidya == 28100
+    assert len(leases(db)) == 5
+
+
+def test_complete_http_consumption_retry(
+    db, monkeypatch, recovery_enabled,
+    complete_clock, admin_client
+):
+    seed(db, monkeypatch)
+
+    headers = auth_headers(
+        db, db.get(User, "owner")
+    )
+
+    def fail(*args):
+        raise RuntimeError("Google timeout")
+
+    monkeypatch.setattr(
+        recovery, "_consume_google", fail
+    )
+
+    first = post_complete(admin_client, headers)
+
+    assert first.status_code == 200
+    assert first.json()["credited"]
+    assert first.json()["consumption"] == "retry_required"
+
+    monkeypatch.setattr(
+        recovery, "_consume_google",
+        lambda *args: recovery_enabled.append(args)
+    )
+
+    second = post_complete(admin_client, headers)
+
+    assert second.status_code == 200
+    assert second.json()["already_credited"]
+    assert second.json()["consumption"] == "completed"
+
+    db.expire_all()
+
+    assert db.get(User, "owner").lidya == 28100
+    assert len(leases(db)) == 5
+
+
+def test_complete_http_foreign_account(
+    db, monkeypatch, recovery_enabled,
+    complete_clock, admin_client
+):
+    seed(db, monkeypatch)
+    other = make_admin(db, role=None)
+
+    result = post_complete(
+        admin_client, auth_headers(db, other)
+    )
+
+    assert result.status_code == 409
+
+    db.expire_all()
+    unchanged(db)
+
+    assert not recovery_enabled
+
+
+def test_complete_http_missing_session(
+    db, recovery_enabled,
+    complete_clock, admin_client
+):
+    assert post_complete(
+        admin_client
+    ).status_code == 401
+
+    assert post_complete(
+        admin_client,
+        {"Authorization": "Bearer forged-token"}
+    ).status_code == 401
+
+    assert not recovery_enabled
+
+
+def test_complete_http_normal_product_blocked(
+    db, monkeypatch, recovery_enabled,
+    complete_clock, admin_client
+):
+    seed(db, monkeypatch)
+
+    result = post_complete(
+        admin_client,
+        auth_headers(db, db.get(User, "owner")),
+        product="lidya_001"
+    )
+
+    assert result.status_code == 422
+    assert not recovery_enabled
+    unchanged(db)
+
+
+def test_complete_http_manipulated_amount(
+    db, monkeypatch, recovery_enabled,
+    complete_clock, admin_client
+):
+    seed(db, monkeypatch)
+
+    result = post_complete(
+        admin_client,
+        auth_headers(db, db.get(User, "owner")),
+        lidya=999999999
+    )
+
+    assert result.status_code == 422
+    unchanged(db)
+    assert not recovery_enabled
+
+
+def test_complete_http_invalid_token(
+    db, monkeypatch, recovery_enabled,
+    complete_clock, admin_client
+):
+    seed(db, monkeypatch)
+
+    result = post_complete(
+        admin_client,
+        auth_headers(db, db.get(User, "owner")),
+        token="short"
+    )
+
+    assert result.status_code == 422
+    assert not recovery_enabled
+    unchanged(db)
+
+
+def test_complete_http_refunded(
+    db, monkeypatch, recovery_enabled,
+    complete_clock, admin_client
+):
+    intent, link = seed(db, monkeypatch)
+
+    _refund_cases_sync(
+        db, refund_rows(db, link)
+    )
+
+    result = post_complete(
+        admin_client,
+        auth_headers(db, db.get(User, "owner"))
+    )
+
+    assert result.status_code == 409
+    assert not recovery_enabled
+    unchanged(db)
+
+
+def test_complete_http_gate_disabled(
+    db, monkeypatch, recovery_enabled,
+    complete_clock, admin_client
+):
+    seed(db, monkeypatch)
+
+    monkeypatch.setenv(
+        "LIDYACHAT_WELCOME_RECOVERY_ENABLED",
+        "false"
+    )
+
+    result = post_complete(
+        admin_client,
+        auth_headers(db, db.get(User, "owner"))
+    )
+
+    assert result.status_code == 503
+    unchanged(db)
+    assert not recovery_enabled
+
+
+def test_complete_http_test_mode_blocked(
+    db, monkeypatch, recovery_enabled,
+    complete_clock, admin_client
+):
+    seed(db, monkeypatch)
+
+    monkeypatch.setattr(
+        service.settings,
+        "google_play_test_mode", True
+    )
+
+    result = post_complete(
+        admin_client,
+        auth_headers(db, db.get(User, "owner"))
+    )
+
+    assert result.status_code == 503
+    unchanged(db)
+    assert not recovery_enabled
+
+
+def test_complete_http_late_payment_review(
+    db, monkeypatch, recovery_enabled,
+    complete_clock, admin_client
+):
+    seed(db, monkeypatch, late=True)
+
+    result = post_complete(
+        admin_client,
+        auth_headers(db, db.get(User, "owner"))
+    )
+
+    assert result.status_code == 200
+    assert result.json()["status"] == "review_required"
+    assert not result.json()["credited"]
+
+    unchanged(db)
+    assert not recovery_enabled
+
+
+def test_complete_http_missing_receipt_recovery(
+    db, monkeypatch, recovery_enabled,
+    complete_clock, admin_client
+):
+    intent, link = seed(db, monkeypatch)
+
+    record = db.get(
+        PlayPurchaseRecord, link.receipt_id
+    )
+
+    db.delete(link)
+    db.flush()
+    db.delete(record)
+
+    intent.status = "prepared"
+    db.commit()
+
+    result = post_complete(
+        admin_client,
+        auth_headers(db, db.get(User, "owner"))
+    )
+
+    assert result.status_code == 200
+    assert result.json()["credited"]
+
+    db.expire_all()
+
+    assert db.get(User, "owner").lidya == 28100
+    assert len(leases(db)) == 5
