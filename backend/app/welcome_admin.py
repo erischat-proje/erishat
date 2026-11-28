@@ -340,11 +340,118 @@ def payment_cosmetics(db, user, receipt_id, now=None):
     }
 
 
+
+def unresolved_authorizations(
+    db, user, public_id=None, before=None,
+    limit=50, now=None,
+):
+    from datetime import datetime, timezone
+    from .welcome_cosmetics import utc
+    from .welcome_purchase_models import WelcomeLaunchPermit
+
+    require_da(db, user)
+
+    now = utc(now or datetime.now(timezone.utc))
+    limit = max(1, min(int(limit), 100))
+
+    query = (
+        select(
+            WelcomePurchase,
+            WelcomeLaunchPermit,
+            User.public_id,
+        )
+        .join(
+            WelcomeLaunchPermit,
+            WelcomeLaunchPermit.intent_id ==
+            WelcomePurchase.id,
+        )
+        .join(
+            User,
+            User.id == WelcomePurchase.user_id,
+        )
+        .where(
+            WelcomePurchase.status == "prepared",
+            ~select(WelcomePlayReceipt.receipt_id)
+            .where(
+                WelcomePlayReceipt.intent_id ==
+                WelcomePurchase.id
+            ).exists(),
+        )
+    )
+
+    if public_id:
+        query = query.where(
+            User.public_id == public_id
+        )
+
+    if before:
+        query = query.where(
+            WelcomePurchase.id < before
+        )
+
+    rows = db.execute(
+        query.order_by(
+            WelcomePurchase.id.desc()
+        ).limit(limit + 1)
+    ).all()
+
+    items = []
+
+    for intent, permit, pid in rows[:limit]:
+
+        expires = utc(permit.expires_at)
+
+        items.append({
+            "public_id": pid,
+            "tier": intent.tier,
+            "product_id": intent.product_id,
+            "catalog_price_kurus": intent.price_kurus,
+            "status": (
+                "authorization_reserved"
+                if expires > now
+                else "payment_unknown"
+            ),
+            "created_at": utc(permit.created_at).isoformat(),
+            "expires_at": expires.isoformat(),
+            "receipt_recorded": False,
+            "repurchase_blocked": True,
+        })
+
+    return {
+        "items": items,
+        "has_more": len(rows) > limit,
+        "next_before": (
+            rows[limit - 1][0].id
+            if len(rows) > limit else None
+        ),
+        "read_only": True,
+        "wallet_changed": False,
+        "automatic_reissue": False,
+    }
+
+
 def register_auth(current_user):
     router = APIRouter(
         prefix="/v1/admin/welcome-packages",
         tags=["DA Welcome Packages"],
     )
+
+
+    @router.get("/unresolved-authorizations")
+    def admin_unresolved_authorizations(
+        response: Response,
+        public_id: str | None = Query(None, max_length=32),
+        before: str | None = Query(None, max_length=36),
+        limit: int = Query(50, ge=1, le=100),
+        user=Depends(current_user),
+        db=Depends(get_db),
+    ):
+        response.headers["Cache-Control"] = "private, no-store"
+        response.headers["Vary"] = "Authorization"
+
+        return unresolved_authorizations(
+            db, user, public_id, before, limit
+        )
 
     @router.get("/overview")
     def admin_overview(

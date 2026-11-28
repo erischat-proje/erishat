@@ -3202,3 +3202,229 @@ def test_launch_status_nonpilot(
     assert result["launch_allowed"] is False
     assert result["launch_tiers"] == []
     assert result["preparation_enabled"] is True
+
+
+from backend.app.welcome_payment_status import payment_status
+
+PAYMENT_STATUS_PATH = "/v1/welcome-packages/payment-status"
+
+
+def gold_payment_state(db, user, now=NOW):
+
+    result = payment_status(db, user, now)
+
+    assert result["read_only"] is True
+    assert result["wallet_changed"] is False
+    assert result["automatic_reissue"] is False
+
+    return next(
+        x for x in result["items"]
+        if x["tier"] == "gold"
+    )
+
+
+def test_payment_status_empty(
+    db, checkout_customer
+):
+    item = gold_payment_state(
+        db, checkout_customer
+    )
+
+    assert item["status"] == "not_started"
+    assert not item["repurchase_blocked"]
+
+
+def test_payment_status_prepared(
+    db, checkout_ready, checkout_customer
+):
+    checkout.prepare_checkout(
+        db, checkout_customer.id, "gold", NOW
+    )
+
+    item = gold_payment_state(
+        db, checkout_customer
+    )
+
+    assert item["status"] == "prepared"
+    assert not item["repurchase_blocked"]
+
+
+@pytest.mark.parametrize("seconds,expected", [
+    (30, "authorization_reserved"),
+    (90, "payment_unknown"),
+    (864000, "payment_unknown"),
+])
+def test_payment_status_reserved(
+    db, launch_ready, checkout_customer,
+    seconds, expected
+):
+    checkout.reserve_launch(
+        db, checkout_customer.id,
+        "gold", REQUEST_ID, NOW
+    )
+
+    item = gold_payment_state(
+        db, checkout_customer,
+        NOW + timedelta(seconds=seconds)
+    )
+
+    assert item["status"] == expected
+    assert item["repurchase_blocked"]
+    assert checkout_customer.lidya == 100
+
+    assert len(db.scalars(
+        select(WelcomeLaunchPermit)
+    ).all()) == 1
+
+
+@pytest.mark.parametrize("expected", [
+    "delivery_pending",
+    "review_required",
+    "delivered",
+    "refund_recorded",
+])
+def test_payment_status_receipt_lifecycle(
+    db, monkeypatch, expected
+):
+    intent, link = seed(
+        db, monkeypatch,
+        late=expected == "review_required",
+    )
+
+    if expected in ("delivered", "refund_recorded"):
+        call(db, link)
+
+    if expected == "refund_recorded":
+        _refund_cases_sync(
+            db, refund_rows(db, link)
+        )
+
+    user = db.get(User, "owner")
+    previous = user.lidya
+
+    item = gold_payment_state(
+        db, user, DELIVERED
+    )
+
+    assert item["status"] == expected
+    assert item["repurchase_blocked"]
+    assert user.lidya == previous
+
+
+def test_payment_status_http_owner_isolation(
+    db, monkeypatch, admin_client,
+    checkout_customer
+):
+    seed(db, monkeypatch)
+
+    assert admin_client.get(
+        PAYMENT_STATUS_PATH
+    ).status_code == 401
+
+    owner = db.get(User, "owner")
+
+    result = admin_client.get(
+        PAYMENT_STATUS_PATH,
+        headers=auth_headers(db, owner),
+    )
+
+    assert result.status_code == 200
+    assert "no-store" in result.headers["cache-control"]
+
+    assert any(
+        x["status"] == "delivery_pending"
+        for x in result.json()["items"]
+    )
+
+    result = admin_client.get(
+        PAYMENT_STATUS_PATH,
+        headers=auth_headers(db, checkout_customer),
+    )
+
+    assert result.status_code == 200
+
+    assert all(
+        x["status"] == "not_started"
+        for x in result.json()["items"]
+    )
+
+
+def test_da_unresolved_authorization_queue(
+    db, launch_ready, checkout_customer,
+    admin_client
+):
+    checkout.reserve_launch(
+        db, checkout_customer.id,
+        "gold", REQUEST_ID, NOW
+    )
+
+    path = (
+        ADMIN_PATH + "/unresolved-authorizations"
+    )
+
+    assert admin_client.get(
+        path,
+        headers=auth_headers(db, checkout_customer),
+    ).status_code == 403
+
+    admin = make_admin(db, "DA")
+    headers = auth_headers(db, admin)
+
+    result = admin_client.get(
+        path, headers=headers
+    )
+
+    assert result.status_code == 200
+    assert len(result.json()["items"]) == 1
+
+    item = result.json()["items"][0]
+
+    assert item["public_id"] == checkout_customer.public_id
+    assert item["repurchase_blocked"]
+    assert not item["receipt_recorded"]
+    assert result.json()["wallet_changed"] is False
+
+    assert admin_client.get(
+        path + "?public_id=9999999999",
+        headers=headers,
+    ).json()["items"] == []
+
+    assert checkout_customer.lidya == 100
+
+
+@pytest.mark.parametrize("mode", [
+    "missing_product",
+    "extra_field",
+    "invalid_token_type",
+])
+def test_payment_validation_redaction(
+    db, checkout_customer, admin_client, mode
+):
+    secret = "PRIVATE-RECEIPT-NEVER-REFLECT-001"
+
+    payload = {
+        "product_id": "welcome_gold_v1",
+        "purchase_token": secret,
+    }
+
+    if mode == "missing_product":
+        del payload["product_id"]
+
+    elif mode == "extra_field":
+        payload["unexpected"] = secret
+
+    else:
+        payload["purchase_token"] = {
+            "private": secret
+        }
+
+    result = admin_client.post(
+        "/v1/welcome-packages/checkout-complete",
+        json=payload,
+        headers=auth_headers(db, checkout_customer),
+    )
+
+    assert result.status_code == 422
+    assert secret not in result.text
+    assert "no-store" in result.headers["cache-control"]
+    assert checkout_customer.lidya == 100

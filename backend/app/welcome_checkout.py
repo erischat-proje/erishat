@@ -8,6 +8,10 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel, ConfigDict, SecretStr, Field
 from sqlalchemy import select
+from fastapi.routing import APIRoute
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+
 
 from .db import get_db
 from .models import User
@@ -320,12 +324,55 @@ def recover_purchase(db, user_id, product_id, token):
     )
 
 
+
+class PrivateCheckoutRoute(APIRoute):
+
+    def get_route_handler(self):
+
+        original = super().get_route_handler()
+
+        async def private_handler(request):
+
+            try:
+                return await original(request)
+
+            except RequestValidationError:
+
+                return JSONResponse(
+                    status_code=422,
+                    content={
+                        "detail": "Gecersiz odeme istegi"
+                    },
+                    headers={
+                        "Cache-Control": "private, no-store",
+                        "Vary": "Authorization",
+                    },
+                )
+
+        return private_handler
+
+
 def register_auth(current_user):
     router = APIRouter(
         prefix="/v1/welcome-packages",
         tags=["welcome-checkout"],
+        route_class=PrivateCheckoutRoute,
     )
 
+
+
+    @router.get("/payment-status")
+    def owner_payment_status(
+        response: Response,
+        user=Depends(current_user),
+        db=Depends(get_db),
+    ):
+        from .welcome_payment_status import payment_status
+
+        response.headers["Cache-Control"] = "private, no-store"
+        response.headers["Vary"] = "Authorization"
+
+        return payment_status(db, user)
 
     @router.get("/checkout-status")
     def status(
