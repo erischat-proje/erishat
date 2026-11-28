@@ -8,11 +8,209 @@
   const price=n=>new Intl.NumberFormat('tr-TR',{style:'currency',currency:'TRY'}).format(n/100);
   const node=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e};
   let account='', revision=0, state=null, deadline=0, lastRequest=-Infinity, pending=false, overlay=null, priorFocus=null;
+
+  // WELCOME_CHECKOUT_V109
+  let checkoutPending=null;
+  let checkoutRevision=0;
+  let allowedTiers=new Set();
+
+  const bridge=()=>window.ErisChatAndroid;
+
+  function cancelCheckout(){
+    checkoutRevision++;
+    if(checkoutPending){
+      clearTimeout(checkoutPending.timer);
+      checkoutPending=null;
+
+      try{
+        bridge()?.cancelWelcomePreflight?.();
+      }catch(_){}
+    }
+
+    allowedTiers.clear();
+  }
+
+  function checkoutMessage(message){
+    const output=overlay?.querySelector('.lwp-checkout-status');
+    if(output)output.textContent=message;
+  }
+
+  function paintCheckout(){
+    if(!overlay)return;
+
+    for(const button of overlay.querySelectorAll('.lwp-buy')){
+      const allowed=eligible()&&
+        allowedTiers.has(button.dataset.tier)&&
+        typeof bridge()?.prepareWelcomePurchase==='function';
+
+      button.disabled=!allowed||!!checkoutPending;
+
+      button.textContent=checkoutPending?.tier===button.dataset.tier
+        ?'Güvenli kontrol yapılıyor…'
+        :allowed
+          ?'Ödeme uygunluğunu kontrol et'
+          :'Satış henüz açık değil';
+    }
+  }
+
+  async function loadCheckout(){
+    const version=++checkoutRevision;
+    const panel=overlay;
+    const owner=account;
+
+    allowedTiers.clear();
+    paintCheckout();
+
+    if(!panel||
+       typeof bridge()?.prepareWelcomePurchase!=='function')
+      return;
+
+    try{
+      const result=await window.ErisPlatform.api(
+        '/welcome-packages/checkout-status',
+        {method:'GET',cache:'no-store'}
+      );
+
+      if(version!==checkoutRevision||
+         panel!==overlay||
+         owner!==token()||
+         !eligible())return;
+
+      if(result.preparation_enabled===true&&
+         result.launch_allowed===false&&
+         Array.isArray(result.available_tiers)){
+
+        allowedTiers=new Set(
+          result.available_tiers.filter(
+            tier=>['bronze','silver','gold'].includes(tier)
+          )
+        );
+      }
+
+      paintCheckout();
+
+    }catch(_){
+      if(version!==checkoutRevision||panel!==overlay)return;
+      allowedTiers.clear();
+      paintCheckout();
+    }
+  }
+
+  function startCheckout(tier){
+    if(!syncAccount()||
+       !eligible()||
+       !overlay||
+       checkoutPending||
+       !allowedTiers.has(tier))
+      return;
+
+    const productId=`welcome_${tier}_v1`;
+
+    const bytes=new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+
+    const requestId=Array.from(bytes,b=>
+      b.toString(16).padStart(2,'0')
+    ).join('');
+
+    const pending={
+      tier,
+      productId,
+      requestId,
+      owner:account,
+      panel:overlay,
+      timer:null
+    };
+
+    checkoutPending=pending;
+
+    pending.timer=setTimeout(()=>{
+      if(checkoutPending!==pending)return;
+
+      cancelCheckout();
+      checkoutMessage('Bağlantı zaman aşımına uğradı. Yeniden deneyin.');
+      loadCheckout();
+    },25000);
+
+    paintCheckout();
+
+    checkoutMessage(
+      'Hesabınız ve paket uygunluğu doğrulanıyor.'
+    );
+
+    try{
+      bridge().prepareWelcomePurchase(
+        productId,
+        pending.owner,
+        requestId
+      );
+
+    }catch(_){
+      cancelCheckout();
+
+      checkoutMessage(
+        'Android ödeme bağlantısı kurulamadı.'
+      );
+
+      loadCheckout();
+    }
+  }
+
+  window.addEventListener(
+    'lidyachat:welcome-preflight',
+    event=>{
+
+      const pending=checkoutPending;
+      const detail=event.detail;
+
+      if(!pending||
+         !detail||
+         pending.owner!==token()||
+         pending.panel!==overlay||
+         !eligible()||
+         detail.requestId!==pending.requestId||
+         detail.productId!==pending.productId)
+        return;
+
+      clearTimeout(pending.timer);
+      checkoutPending=null;
+
+      const messages={
+        prepared_locked:
+          'Uygunluk doğrulandı. Gerçek ödeme henüz etkin değil.',
+        checkout_disabled:
+          'Paket satışları şu anda kapalı.',
+        access_denied:
+          'Hesabınız bu paket için uygun değil.',
+        package_conflict:
+          'Bu paket daha önce işleme alınmış.',
+        offer_expired:
+          'Kampanya süreniz sona erdi.'
+      };
+
+      if(detail.launchAllowed!==false){
+        cancelCheckout();
+        checkoutMessage('Güvenli ödeme izni doğrulanamadı.');
+        paintCheckout();
+        return;
+      }
+
+      checkoutMessage(
+        messages[detail.state]||
+        'Ödeme uygunluğu doğrulanamadı.'
+      );
+
+      loadCheckout();
+    }
+  );
+
+
   const now=()=>performance.now();
   const remaining=()=>Math.max(0,Math.floor((deadline-now())/1000));
   const eligible=()=>!!(account&&token()===account&&state&&remaining()>0);
   function close(restore=true){
     if(!overlay)return;
+    cancelCheckout();
     overlay.remove();overlay=null;
     if(restore&&priorFocus?.isConnected&&!priorFocus.hidden)priorFocus.focus();
     priorFocus=null;
@@ -50,14 +248,27 @@
     const time=node('div',countdown(),'lwp-time');time.dataset.wpTime='';intro.append(time);body.append(intro);
     for(const p of state.packages){const card=node('article',undefined,'lwp-card');card.dataset.tier=p.id;card.append(node('h3',p.name),node('div',number(p.lidya)+' Lidya','lwp-amount'),node('p',p.duration_days+' günlük özel görünüm hakkı'));
       const grid=node('div',undefined,'lwp-rewards');for(const r of p.cosmetic_rewards){const item=node('figure');const img=node('img');img.src='./'+r.preview_asset;img.alt=r.name;img.loading='lazy';item.append(img,node('figcaption',labels[r.type]));grid.append(item)}card.append(grid);
-      const buy=node('button','Satış henüz açık değil','lwp-buy');buy.type='button';buy.disabled=true;card.append(node('strong',price(p.price_kurus),'lwp-price'),buy);body.append(card)}
+      const buy=node('button','Satış henüz açık değil','lwp-buy');buy.type='button';buy.disabled=true;buy.dataset.tier=p.id;buy.onclick=()=>startCheckout(p.id);card.append(node('strong',price(p.price_kurus),'lwp-price'),buy);body.append(card)}
+    const checkoutInfo=node('p','','lwp-checkout-status');
+    checkoutInfo.setAttribute('role','status');
+    checkoutInfo.setAttribute('aria-live','polite');
+    body.append(checkoutInfo);
     body.append(node('p','Önizleme fiyatlarıdır. Google Play satış fiyatı ve ödeme doğrulaması henüz etkin değildir.','lwp-note'));
-    overlay.append(head,body);overlay.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();close()}else if(e.key==='Tab'){e.preventDefault();x.focus()}});document.body.append(overlay);x.focus();
+    overlay.append(head,body);overlay.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();close()}});document.body.append(overlay);x.focus();
+    loadCheckout();
     refresh(true);
   }
   trigger.addEventListener('click',open);
   function tick(){syncAccount();if(state)update();refresh()}
   window.addEventListener('storage',tick);window.addEventListener('focus',tick);document.addEventListener('visibilitychange',tick);
+  for(const event of [
+    'erischat:auth',
+    'erischat:auth-state',
+    'erischat:auth-ready',
+    'erischat:auth-state-changed'
+  ]){
+    window.addEventListener(event,tick);
+  }
   setInterval(tick,1000);tick();
   window.LidyaWelcomePackages={refresh:()=>refresh(true),close};
 })();

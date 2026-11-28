@@ -366,7 +366,7 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public void prepareWelcomePurchase(
-                String productId, String accessToken) {
+                String productId, String accessToken, String requestId) {
 
             runOnUiThread(() -> {
 
@@ -376,6 +376,10 @@ public class MainActivity extends Activity {
 
                 if (!PlayProductPolicy.isWelcome(productId)
                     || !PlayProductPolicy.validSessionToken(accessToken))
+                    return;
+
+                if (requestId == null ||
+                    !requestId.matches("[a-f0-9]{32}"))
                     return;
 
                 if (!welcomePreflightBusy.compareAndSet(false, true))
@@ -416,6 +420,7 @@ public class MainActivity extends Activity {
                                 new org.json.JSONObject();
 
                             detail.put("productId", productId);
+                            detail.put("requestId", requestId);
                             detail.put("state", state);
                             detail.put("launchAllowed", false);
 

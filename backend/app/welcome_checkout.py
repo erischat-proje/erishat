@@ -100,6 +100,61 @@ def prepare_checkout(db, user_id, tier, now=None):
         raise
 
 
+
+def checkout_status(db, user, now=None):
+    from .welcome_packages import offer_status
+    from .welcome_purchase_models import WelcomePurchase
+
+    now = utc(now or datetime.now(timezone.utc))
+
+    result = {
+        "preparation_enabled": False,
+        "launch_allowed": False,
+        "available_tiers": [],
+        "read_only": True,
+    }
+
+    if not preparation_enabled():
+        return result
+
+    if not offer_status(user, now)["eligible_for_offer"]:
+        return result
+
+    if db.get(AdminRole, user.id, populate_existing=True):
+        return result
+
+    dealer = db.get(
+        DealerInventory, user.id,
+        populate_existing=True,
+    )
+
+    if dealer and dealer.active:
+        return result
+
+    rows = db.scalars(
+        select(WelcomePurchase).where(
+            WelcomePurchase.user_id == user.id
+        )
+    ).all()
+
+    previous = {row.tier: row for row in rows}
+
+    for tier in ("bronze", "silver", "gold"):
+        row = previous.get(tier)
+
+        if row is None or (
+            row.status == "prepared"
+            and row.gender == user.gender
+        ):
+            result["available_tiers"].append(tier)
+
+    result["preparation_enabled"] = bool(
+        result["available_tiers"]
+    )
+
+    return result
+
+
 class PreparePayload(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -111,6 +166,18 @@ def register_auth(current_user):
         prefix="/v1/welcome-packages",
         tags=["welcome-checkout"],
     )
+
+
+    @router.get("/checkout-status")
+    def status(
+        response: Response,
+        user=Depends(current_user),
+        db=Depends(get_db),
+    ):
+        response.headers["Cache-Control"] = "private, no-store"
+        response.headers["Vary"] = "Authorization"
+
+        return checkout_status(db, user)
 
     @router.post("/prepare")
     def prepare(

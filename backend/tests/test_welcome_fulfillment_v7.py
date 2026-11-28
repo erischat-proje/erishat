@@ -2435,3 +2435,151 @@ def test_checkout_http_inactive_account(
     assert db.scalars(
         select(WelcomePurchase)
     ).all() == []
+
+
+def test_checkout_status_available(
+    db, checkout_ready, checkout_customer
+):
+    result = checkout.checkout_status(
+        db, checkout_customer, NOW
+    )
+
+    assert result["preparation_enabled"]
+    assert result["available_tiers"] == [
+        "bronze", "silver", "gold"
+    ]
+    assert result["launch_allowed"] is False
+    assert result["read_only"]
+    assert db.scalars(select(WelcomePurchase)).all() == []
+
+
+def test_checkout_status_gate_disabled(
+    db, monkeypatch, checkout_ready,
+    checkout_customer
+):
+    monkeypatch.setenv(
+        "LIDYACHAT_WELCOME_PREPARE_ENABLED",
+        "false"
+    )
+
+    result = checkout.checkout_status(
+        db, checkout_customer, NOW
+    )
+
+    assert not result["preparation_enabled"]
+    assert result["available_tiers"] == []
+
+
+def test_checkout_status_staff(
+    db, checkout_ready, checkout_customer
+):
+    db.add(AdminRole(
+        user_id=checkout_customer.id,
+        role="DA"
+    ))
+
+    db.commit()
+
+    result = checkout.checkout_status(
+        db, checkout_customer, NOW
+    )
+
+    assert result["available_tiers"] == []
+
+
+def test_checkout_status_dealer(
+    db, checkout_ready, checkout_customer
+):
+    db.add(DealerInventory(
+        user_id=checkout_customer.id,
+        active=True,
+        stock=0
+    ))
+
+    db.commit()
+
+    result = checkout.checkout_status(
+        db, checkout_customer, NOW
+    )
+
+    assert result["available_tiers"] == []
+
+
+def test_checkout_status_expired(
+    db, checkout_ready, checkout_customer
+):
+    result = checkout.checkout_status(
+        db,
+        checkout_customer,
+        NOW + timedelta(days=7)
+    )
+
+    assert not result["preparation_enabled"]
+    assert result["available_tiers"] == []
+
+
+def test_checkout_status_delivered_excluded(
+    db, monkeypatch, checkout_ready
+):
+    intent, link = seed(db, monkeypatch)
+
+    call(db, link)
+
+    user = db.get(User, "owner")
+
+    result = checkout.checkout_status(
+        db, user, DELIVERED
+    )
+
+    assert result["available_tiers"] == [
+        "bronze", "silver"
+    ]
+
+    assert user.lidya == 28100
+
+
+def test_checkout_status_collection_changed(
+    db, checkout_ready, checkout_customer
+):
+    user = checkout_customer
+
+    checkout.prepare_checkout(
+        db, user.id, "gold", NOW
+    )
+
+    user.gender = "female"
+    db.commit()
+
+    result = checkout.checkout_status(
+        db, user, NOW
+    )
+
+    assert result["available_tiers"] == [
+        "bronze", "silver"
+    ]
+
+    assert user.lidya == 100
+
+
+def test_checkout_status_http(
+    db, checkout_ready,
+    checkout_http_customer, admin_client
+):
+    path = "/v1/welcome-packages/checkout-status"
+
+    assert admin_client.get(path).status_code == 401
+
+    result = admin_client.get(
+        path,
+        headers=auth_headers(
+            db, checkout_http_customer
+        )
+    )
+
+    assert result.status_code == 200
+    assert len(result.json()["available_tiers"]) == 3
+    assert result.json()["launch_allowed"] is False
+    assert "no-store" in result.headers["cache-control"]
+    assert "Authorization" in result.headers["vary"]
+
+    assert db.scalars(select(WelcomePurchase)).all() == []
