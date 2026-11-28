@@ -186,7 +186,7 @@ def clear_locked_appearances(db, uid, level):
 
 def record_purchase(db, uid, amount, source, reference, at=None):
     if (
-        source not in ("assisted", "order")
+        source not in ("assisted", "order", "play")
         or type(amount) is not int
         or amount <= 0
         or not reference

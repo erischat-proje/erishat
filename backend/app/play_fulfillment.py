@@ -4,6 +4,8 @@ A separate default-off fulfillment switch is mandatory. External Google receipt
 verification and Google acknowledgement/consumption are separate prerequisites.
 Only call following a freshly checked Google Play receipt; never from user input.
 """
+import os
+import re
 from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -14,6 +16,7 @@ from .play_billing_models import PlayPurchaseRecord
 from .play_refund_models import PlayRefundCase
 from .nobility_policy import paid_points_enabled
 from .nobility_points import apply_points
+from .vip_membership import record_purchase
 
 from .purchase_routes import PACKAGES, LIMIT
 
@@ -88,6 +91,41 @@ def credit_verified_purchase(db: Session, *, receipt_id: int, user_id: str, prod
 
             nobility_points = amount
 
+        vip_points = 0
+
+        if (
+            os.getenv(
+                "LIDYACHAT_VIP_PLAY_POINTS_ENABLED",
+                "false",
+            ).strip().lower() == "true"
+            and receipt.test_purchase is False
+            and not settings.google_play_test_mode
+        ):
+            fingerprint = receipt.token_sha256
+
+            if not isinstance(fingerprint, str) or not re.fullmatch(
+                r"[0-9a-f]{64}", fingerprint
+            ):
+                raise RuntimeError("Invalid Play receipt fingerprint")
+
+            from .vip_membership_models import VipPurchaseReceipt
+
+            if db.get(
+                VipPurchaseReceipt,
+                (user_id, "play:" + fingerprint),
+            ) is not None:
+                raise RuntimeError("Unexpected existing VIP credit")
+
+            record_purchase(
+                db,
+                user_id,
+                amount,
+                "play",
+                fingerprint,
+            )
+
+            vip_points = amount
+
         user.lidya = int(user.lidya) + amount
         receipt.purchase_status = "credited"
         keys = ("lidya_operation", "lidya_reference_id", "lidya_details")
@@ -105,7 +143,8 @@ def credit_verified_purchase(db: Session, *, receipt_id: int, user_id: str, prod
                     db.info[k] = saved[k]
         return {"credited": True, "already_credited": False, "receipt_id": receipt.id,
                 "amount": amount, "balance": int(user.lidya),
-                "nobility_points": nobility_points}
+                "nobility_points": nobility_points,
+                "vip_points": vip_points}
     except Exception:
         db.rollback()
         raise

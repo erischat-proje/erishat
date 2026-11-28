@@ -202,6 +202,11 @@ jobs:
 
       - run: python tests/security_guard/test_integration.py
       - run: python tests/security_guard/test_pg_wallet.py
+      - name: VIP Play Purchase Audit V1.2.2
+        env:
+          VIP_PLAY_AUDIT_CONFIRM: 'YES'
+          DATABASE_URL: "sqlite+pysqlite:///:memory:"
+        run: PYTHONPATH=backend python -m pytest -v backend/tests/test_vip_play_audit_v122.py
       - name: Device Registration Audit V1.1
         env:
           DEVICE_AUDIT_CONFIRM: 'YES'
