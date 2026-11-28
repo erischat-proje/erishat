@@ -382,6 +382,13 @@ jobs:
           target.chmod(0o600)
           print("OK: Firebase config restored")
           PYCODE
+
+      - name: Welcome Android product policy
+        run: |
+          mkdir -p "$RUNNER_TEMP/welcome-java-tests"
+          javac -d "$RUNNER_TEMP/welcome-java-tests" android-native/app/src/main/java/com/erischat/app/PlayProductPolicy.java android-native/security-tests/PlayProductPolicyTest.java
+          java -cp "$RUNNER_TEMP/welcome-java-tests" PlayProductPolicyTest
+
       - name: Compile debug Java without signing credentials
         run: |
           chmod +x android-native/gradlew

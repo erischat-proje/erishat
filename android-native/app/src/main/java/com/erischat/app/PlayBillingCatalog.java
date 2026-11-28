@@ -13,7 +13,6 @@ public final class PlayBillingCatalog {
     private final WebView webView;
     private final BillingClient billing;
     private volatile boolean closed = false;
-    private String purchaseAccountHash;
 
     public PlayBillingCatalog(Activity activity, WebView webView) {
         this.activity = activity;
@@ -74,23 +73,28 @@ public final class PlayBillingCatalog {
     }
 
     private static boolean validProduct(String productId) {
-        return productId != null && productId.matches("lidya_0(?:0[1-9]|1[0-6])");
+        return PlayProductPolicy.isKnown(productId);
     }
 
     public void query(String productId) {
         if (!validProduct(productId)) { report("", "invalid_product", "Invalid product"); return; }
-        connect(() -> lookup(productId, false), productId);
+        connect(() -> lookup(productId, false, null), productId);
     }
 
     public void purchase(String productId, String accountHash) {
-        if (!validProduct(productId) || accountHash == null || !accountHash.matches("[a-f0-9]{64}")) {
+        if (PlayProductPolicy.isWelcome(productId)) {
+            report(productId, "welcome_disabled", "Welcome checkout not enabled");
+            return;
+        }
+        if (!PlayProductPolicy.canStartLegacyCheckout(productId)
+                || !PlayProductPolicy.validAccountHash(accountHash)) {
             report(productId, "invalid_account", "Account binding missing"); return;
         }
-        purchaseAccountHash = accountHash;
-        connect(() -> lookup(productId, true), productId);
+        final String boundAccount = accountHash;
+        connect(() -> lookup(productId, true, boundAccount), productId);
     }
 
-    private void lookup(String productId, boolean startCheckout) {
+    private void lookup(String productId, boolean startCheckout, final String boundAccount) {
         QueryProductDetailsParams.Product item = QueryProductDetailsParams.Product.newBuilder()
             .setProductId(productId).setProductType(BillingClient.ProductType.INAPP).build();
         QueryProductDetailsParams params = QueryProductDetailsParams.newBuilder()
@@ -117,7 +121,7 @@ public final class PlayBillingCatalog {
                 .setProductDetails(p).setOfferToken(selected.getOfferToken()).build();
             BillingFlowParams flow = BillingFlowParams.newBuilder()
                 .setProductDetailsParamsList(Collections.singletonList(line))
-                .setObfuscatedAccountId(purchaseAccountHash).build();
+                .setObfuscatedAccountId(boundAccount).build();
             activity.runOnUiThread(() -> {
                 if (closed || activity.isFinishing() || activity.isDestroyed()) return;
                 BillingResult launched = billing.launchBillingFlow(activity, flow);
@@ -140,7 +144,7 @@ public final class PlayBillingCatalog {
             detail.put("productId", product);
             detail.put("purchaseToken", purchase.getPurchaseToken());
             // Token is transmitted only to the pinned trusted website's JS for authenticated server verification.
-            emit("lidyachat:play-purchased", detail);
+            emit(PlayProductPolicy.purchaseEvent(product), detail);
         } catch (Exception ignored) { }
     }
 
