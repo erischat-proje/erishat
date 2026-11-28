@@ -58,3 +58,18 @@ test('payment desk applies server filters and uses the original acceptance/hands
 test('announcement save and preview do not publish until an explicit native form choice',async()=>{const f=await fixture('FA');try{await f.open('announcement');await f.submit('Taslağı oluştur',{message:'A complete announcement draft that remains private until publication'});assert.ok(!f.calls.some(c=>c.p.endsWith('/publish')));await f.click('Kaydedilen sürümü önizle');assert.ok(!f.calls.some(c=>c.p.endsWith('/publish')));await f.submit('Duyuruyu yayınla',{confirm:'publish'});assert.equal(f.calls.filter(c=>c.p.endsWith('/publish')).length,1);assert.ok(f.d.body.textContent.includes('Duyuru yayınlandı'));}finally{f.close();}});
 test('publication withdrawal preserves an explicit reason and uses the receipt-safe endpoint',async()=>{const f=await fixture();try{await f.open('announcement');await f.submit('Taslağı oluştur',{message:'A complete draft published only for this isolated UI fixture'});await f.click('Kaydedilen sürümü önizle');await f.submit('Duyuruyu yayınla',{confirm:'publish'});await f.click('← Yayın masasına dön');await f.click('Aktif duyuruları yönet');await f.submit('Duyuruyu yayından kaldır',{note:'Withdraw the fixture publication after a documented content correction'});assert.ok(f.calls.some(c=>c.p.endsWith('/withdraw')&&c.body.note.length>=20));assert.ok(!f.calls.some(c=>c.method==='DELETE'));}finally{f.close();}});
 test('appeal desk shows original facts and sends an independent reasoned decision',async()=>{const f=await fixture('FA');try{await f.open('banappeals');await f.click('İlk karar ve kanıtı incele');assert.ok(f.d.body.textContent.includes('Original complaint'));await f.submit('İtiraz kararını kaydet',{action:'approve',note:'Independent review verifies the new evidence and the original sanction scope'});const c=f.calls.find(c=>c.p.endsWith('/appeals/1/decision'));assert.equal(c.body.action,'approve');assert.ok(c.body.note.length>=20);assert.ok(f.d.body.textContent.includes('kararı kaydedildi'));}finally{f.close();}});
+
+
+test('custom referral form accepts Turkish, symbols, emoji, short and long codes',async()=>{
+ const f=await fixture();try{
+  f.w.confirm=()=>true;
+  for(const code of ['A','58','SELÇUK58','Lidya Chat 58','★KRAL★','👑VIP🔥','<TEST>&%_','👑'.repeat(256)]){
+   await f.open('referrals');
+   const input=f.d.querySelector('input[name=code]');assert.ok(input);input.value=code;assert.ok(input.checkValidity());
+   await f.submit('Özel Kodu Oluştur',{code,reward:'15000',max_uses:'1',active:'true'});
+   const c=f.calls.filter(c=>c.p.endsWith('/referrals')&&c.method==='POST').at(-1);
+   assert.equal(c.body.kind,'CUSTOM');assert.equal(c.body.code,code);assert.equal(c.body.reward,15000);
+   assert.ok(f.d.body.textContent.includes(code));
+  }
+ }finally{f.close();}
+});

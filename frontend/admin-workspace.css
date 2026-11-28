@@ -33,3 +33,6 @@ html body .eris-admin-overlay .aw-button:disabled{color:var(--ea-muted)!importan
 .eris-admin-overlay .aw-button,.eris-admin-overlay .ea-head>[data-help]{--ui-button:var(--ea-raised);--ui-button-ink:var(--ea-ink)}
 .eris-admin-overlay .aw-button[aria-pressed=true]{--ui-button:var(--ea-gold);--ui-button-ink:var(--ea-page)}
 .eris-admin-overlay .aw-button.aw-star{--ui-button:transparent;--ui-button-ink:var(--ea-gold)}
+
+/* V1.4: wrap long custom referral labels on narrow displays. */
+.eris-admin-overlay .aw-card,.eris-admin-overlay .aw-card h4,.eris-admin-overlay .aw-title{min-width:0;overflow-wrap:anywhere}

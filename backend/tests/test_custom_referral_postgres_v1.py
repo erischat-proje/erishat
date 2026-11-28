@@ -132,3 +132,30 @@ def test_duplicate_code_race(pg_api):
         assert len(codes) == 1 and codes[0].code == 'VUSAL75'
         assert db.get(CustomReferralReward, codes[0].id).amount == 7500
         assert len(db.scalars(select(AdminAuditLog).where(AdminAuditLog.action=='referral_create')).all()) == 1
+
+
+def test_widen_existing_referral_column_and_unicode_roundtrip(pg_api):
+    from backend.app.referral_models import widen_referral_code_column
+    app,engine=pg_api
+    schema=engine.get_execution_options()['schema_translate_map'][None]
+    with engine.begin() as conn:
+        conn.execute(text(f'SET LOCAL search_path TO "{schema}"'))
+        conn.execute(text('ALTER TABLE referral_codes ALTER COLUMN code TYPE VARCHAR(48)'))
+    legacy_id=create(app,'VUSAL75',1)
+    with engine.begin() as conn:
+        conn.execute(text(f'SET LOCAL search_path TO "{schema}"'))
+        widen_referral_code_column(conn)
+        widen_referral_code_column(conn)
+    code='👑'*256
+    cid=create(app,code,2)
+    with TestClient(app) as client:
+        assert client.post('/v1/referrals/redeem',headers=headers('u1'),json={'code':'vusal75'}).status_code==200
+        result=client.post('/v1/referrals/redeem',headers=headers('u1'),json={'code':code})
+        assert result.status_code==200,result.text
+        assert result.json()['amount']==7500
+        assert client.patch(f'/v1/admin/referrals/{cid}/state',headers=headers('da'),json={'active':False}).status_code==200
+        assert client.delete(f'/v1/admin/referrals/{cid}',headers=headers('da')).status_code==200
+    with Session(engine) as db:
+        assert db.get(ReferralCode,legacy_id).code=='VUSAL75'
+        assert db.get(ReferralCode,cid).code==code
+        assert db.get(ReferralCode,cid).uses==1

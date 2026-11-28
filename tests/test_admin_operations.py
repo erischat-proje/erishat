@@ -95,7 +95,7 @@ class Operations(shared.ManagementAPI):
         self.assertEqual(self.post('/referrals',payload).json()['id'],cid)
         self.assertEqual(self.post('/referrals',{**payload,'reward':7501}).status_code,409)
         self.assertEqual(self.post('/referrals',{**payload,'code':'VUSAL75','request_key':str(uuid4())},'DA2').status_code,409)
-        for extra in ({'reward':0},{'reward':True},{'reward':1000000,'max_uses':101},{'code':'INVALID!'}):
+        for extra in ({'reward':0},{'reward':True},{'reward':1000000,'max_uses':101},{'code':'   '}):
             self.assertEqual(self.post('/referrals',{**payload,**extra,'request_key':str(uuid4())}).status_code,422)
         path=f'/referrals/{cid}/state';state={'active':True,'note':'Activate the verified custom campaign after review','request_key':str(uuid4())}
         self.assertEqual(self.post(path,state,'FA').status_code,403)
@@ -107,6 +107,18 @@ class Operations(shared.ManagementAPI):
             self.assertEqual(db.scalar(select(func.count()).select_from(OperationHistory).where(OperationHistory.action=='code_state')),2)
             self.assertFalse(db.get(ReferralCode,cid).active)
             self.assertEqual(db.get(User,'USER').lidya,0)
+    def test_freeform_reference_workspace(self):
+        from backend.app.referral_routes import normalize_referral_code
+        for code in ('A','58','SELÇUK58','Lidya Chat 58','★KRAL★','👑VIP🔥','<TEST>&%_','中'*256):
+            payload={'kind':'CUSTOM','code':code,'reward':15000,'max_uses':1,'active':True,'request_key':str(uuid4())}
+            a=self.post('/referrals',payload);self.assertEqual(a.status_code,201,a.text)
+            self.assertEqual(a.json()['code'],normalize_referral_code(code))
+            self.assertEqual(self.post('/referrals',payload).json()['id'],a.json()['id'])
+            from urllib.parse import urlencode
+            listed=self.request('/v1/admin/operations-desk/referrals?'+urlencode({'kind':'CUSTOM','q':code})).json()['items']
+            self.assertIn(a.json()['id'],[r['id'] for r in listed])
+        for code in ('','   ','X'*257,'A\x00B','A\u202eB'):
+            self.assertEqual(self.post('/referrals',{'kind':'CUSTOM','code':code,'reward':1,'max_uses':1,'request_key':str(uuid4())}).status_code,422)
     def test_feedback_requires_own_original_read_ack(self):
         payload={'status':'planned','assignee_id':'DA2','revision':0,'note':'The suggestion is accepted into planning with a clear accountable owner'}
         self.assertEqual(self.post('/feedback/1/workflow',payload).status_code,409);self.ack();r=self.post('/feedback/1/workflow',payload);self.assertEqual(r.status_code,200,r.text)
