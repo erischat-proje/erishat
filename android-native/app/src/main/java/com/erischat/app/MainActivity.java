@@ -54,6 +54,13 @@ public class MainActivity extends Activity {
     private PermissionRequest pendingMicrophone;
     private boolean microphoneDialogOpen;
     private volatile int pageGeneration;
+
+    private final java.util.concurrent.atomic.AtomicBoolean
+        welcomePreflightBusy =
+            new java.util.concurrent.atomic.AtomicBoolean(false);
+
+    private volatile int welcomePreflightGeneration = 0;
+
     private static final int DOCUMENT_SAVE = 9005;
     private MessageFileDownloads documentDownloads;
     private volatile MessageFileDownloads.Pending pendingDocument;
@@ -192,6 +199,7 @@ public class MainActivity extends Activity {
             @Override public void onPageStarted(WebView view, String url, Bitmap icon) {
                 bundledContent.refresh();
                 pageGeneration++;
+                welcomePreflightGeneration++;
                 documentPageTrusted = trustedOrigin(Uri.parse(url));
                 documentDownloads.cancelAll(); pendingDocument = null;
                 cancelMedia();
@@ -345,7 +353,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface public void queryPlayCatalog(String productId) {
             runOnUiThread(() -> {
                 if (!trustedPage() || !activityResumed || isFinishing() || isDestroyed()) return;
-                if (productId == null || !productId.matches("lidya_0(?:0[1-9]|1[0-6])")) return;
+                if (!PlayProductPolicy.isKnown(productId)) return;
                 playBillingCatalog.query(productId);
             });
         }
@@ -355,6 +363,84 @@ public class MainActivity extends Activity {
                 playBillingCatalog.purchase(productId, accountHash);
             });
         }
+
+        @JavascriptInterface
+        public void prepareWelcomePurchase(
+                String productId, String accessToken) {
+
+            runOnUiThread(() -> {
+
+                if (!trustedPage() || !activityResumed
+                    || isFinishing() || isDestroyed())
+                    return;
+
+                if (!PlayProductPolicy.isWelcome(productId)
+                    || !PlayProductPolicy.validSessionToken(accessToken))
+                    return;
+
+                if (!welcomePreflightBusy.compareAndSet(false, true))
+                    return;
+
+                final int generation = pageGeneration;
+                final int requestGeneration =
+                    ++welcomePreflightGeneration;
+
+                new Thread(() -> {
+
+                    String result;
+
+                    try {
+                        result =
+                            WelcomeCheckoutPreflight.verify(
+                                productId, accessToken
+                            );
+                    } finally {
+                        welcomePreflightBusy.set(false);
+                    }
+
+                    final String state = result;
+
+                    runOnUiThread(() -> {
+
+                        if (generation != pageGeneration
+                            || requestGeneration != welcomePreflightGeneration
+                            || !trustedPage()
+                            || !activityResumed
+                            || isFinishing()
+                            || isDestroyed())
+                            return;
+
+                        try {
+
+                            org.json.JSONObject detail =
+                                new org.json.JSONObject();
+
+                            detail.put("productId", productId);
+                            detail.put("state", state);
+                            detail.put("launchAllowed", false);
+
+                            webView.evaluateJavascript(
+                                "window.dispatchEvent(new CustomEvent("
+                                + "'lidyachat:welcome-preflight',"
+                                + "{detail:" + detail.toString()
+                                + "}));",
+                                null
+                            );
+
+                        } catch (Exception ignored) {}
+                    });
+
+                }, "LidyaWelcomePreflight").start();
+            });
+        }
+
+        @JavascriptInterface
+        public void cancelWelcomePreflight() {
+            runOnUiThread(() -> {
+                welcomePreflightGeneration++;
+            });
+        }
+
         @JavascriptInterface public void recoverPlayPurchases() {
             runOnUiThread(() -> {
                 if (!trustedPage() || !activityResumed || isFinishing() || isDestroyed()) return;

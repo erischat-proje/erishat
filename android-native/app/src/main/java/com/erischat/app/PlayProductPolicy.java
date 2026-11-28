@@ -16,6 +16,27 @@ public final class PlayProductPolicy {
             || "welcome_gold_v1".equals(id);
     }
 
+
+    public static String welcomeTier(String id) {
+        if ("welcome_bronze_v1".equals(id))
+            return "bronze";
+
+        if ("welcome_silver_v1".equals(id))
+            return "silver";
+
+        if ("welcome_gold_v1".equals(id))
+            return "gold";
+
+        return null;
+    }
+
+    public static boolean validSessionToken(String token) {
+        return token != null
+            && token.length() >= 32
+            && token.length() <= 512
+            && token.matches("[A-Za-z0-9_-]+");
+    }
+
     public static boolean isKnown(String id) {
         return isStandard(id) || isWelcome(id);
     }

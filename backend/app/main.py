@@ -526,6 +526,9 @@ app.include_router(purchase_routes.router)
 from . import welcome_packages
 from . import welcome_purchase_models
 app.include_router(welcome_packages.register_auth(current_user))
+from . import welcome_checkout
+app.include_router(welcome_checkout.register_auth(current_user))
+
 from . import welcome_admin
 app.include_router(welcome_admin.register_auth(current_user))
 

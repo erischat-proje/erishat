@@ -1525,6 +1525,12 @@ def admin_client(db):
         )
     )
 
+    app.include_router(
+        checkout.register_auth(
+            authenticated_user
+        )
+    )
+
     with TestClient(app) as client:
         yield client
 
@@ -1921,3 +1927,511 @@ def test_da_cosmetic_http_success(
     )
 
     assert missing.status_code == 404
+
+
+from backend.app import welcome_checkout as checkout
+
+
+@pytest.fixture
+def checkout_ready(monkeypatch):
+    for name in (
+        "LIDYACHAT_WELCOME_PREPARE_ENABLED",
+        "LIDYACHAT_WELCOME_DELIVERY_ENABLED",
+        "LIDYACHAT_WELCOME_RECOVERY_ENABLED",
+    ):
+        monkeypatch.setenv(name, "true")
+
+    monkeypatch.setattr(
+        checkout, "_checkout_ready", lambda: True
+    )
+
+    monkeypatch.setattr(
+        checkout.settings,
+        "google_play_test_mode", False
+    )
+
+
+@pytest.fixture
+def checkout_customer(db):
+    user = User(
+        id="checkout-owner",
+        public_id="9900000088",
+        _nickname="CheckoutTest",
+        gender="male",
+        profile_completed=True,
+        is_active=True,
+        created_at=NOW,
+        lidya=100,
+        lidya_gem=50,
+    )
+
+    db.add(user)
+    db.commit()
+    return user
+
+
+@pytest.mark.parametrize("tier,price,amount", [
+    ("bronze", 9999, 6000),
+    ("silver", 24999, 14000),
+    ("gold", 49999, 28000),
+])
+def test_checkout_package_preparation(
+    db, checkout_ready, checkout_customer,
+    tier, price, amount
+):
+    user = checkout_customer
+
+    result = checkout.prepare_checkout(
+        db, user.id, tier, NOW
+    )
+
+    assert result["product_id"] == f"welcome_{tier}_v1"
+    assert result["catalog_price_kurus"] == price
+    assert result["lidya"] == amount
+    assert result["account_hash"] == _account_hash(user.id)
+    assert result["launch_allowed"] is False
+    assert result["credited"] is False
+    assert user.lidya == 100
+    assert user.lidya_gem == 50
+
+
+@pytest.mark.parametrize("flag_name", [
+    "LIDYACHAT_WELCOME_PREPARE_ENABLED",
+    "LIDYACHAT_WELCOME_DELIVERY_ENABLED",
+    "LIDYACHAT_WELCOME_RECOVERY_ENABLED",
+])
+def test_checkout_requires_every_gate(
+    db, monkeypatch, checkout_ready,
+    checkout_customer, flag_name
+):
+    monkeypatch.setenv(flag_name, "false")
+
+    with pytest.raises(HTTPException) as error:
+        checkout.prepare_checkout(
+            db, checkout_customer.id, "gold", NOW
+        )
+
+    assert error.value.status_code == 503
+    assert db.scalars(select(WelcomePurchase)).all() == []
+
+
+@pytest.mark.parametrize("role", [
+    "SA", "UA", "FA", "DA"
+])
+def test_checkout_blocks_staff(
+    db, checkout_ready, checkout_customer, role
+):
+    user = checkout_customer
+
+    db.add(AdminRole(
+        user_id=user.id,
+        role=role,
+    ))
+
+    db.commit()
+
+    with pytest.raises(HTTPException) as error:
+        checkout.prepare_checkout(
+            db, user.id, "gold", NOW
+        )
+
+    assert error.value.status_code == 403
+
+
+@pytest.mark.parametrize("kind", ["coin", "support"])
+def test_checkout_blocks_dealers(
+    db, checkout_ready, checkout_customer, kind
+):
+    user = checkout_customer
+
+    db.add(DealerInventory(
+        user_id=user.id,
+        active=True,
+        stock=0,
+    ))
+
+    db.add(DealerDesignation(
+        user_id=user.id,
+        kind=kind,
+    ))
+
+    db.commit()
+
+    with pytest.raises(HTTPException) as error:
+        checkout.prepare_checkout(
+            db, user.id, "gold", NOW
+        )
+
+    assert error.value.status_code == 403
+
+
+def test_checkout_same_intent(
+    db, checkout_ready, checkout_customer
+):
+    uid = checkout_customer.id
+
+    first = checkout.prepare_checkout(
+        db, uid, "gold", NOW
+    )
+
+    second = checkout.prepare_checkout(
+        db, uid, "gold", NOW
+    )
+
+    assert first["intent_id"] == second["intent_id"]
+    assert len(db.scalars(
+        select(WelcomePurchase)
+    ).all()) == 1
+
+
+def test_checkout_already_delivered(
+    db, monkeypatch, checkout_ready
+):
+    intent, link = seed(db, monkeypatch)
+    call(db, link)
+
+    with pytest.raises(HTTPException) as error:
+        checkout.prepare_checkout(
+            db, "owner", intent.tier, DELIVERED
+        )
+
+    assert error.value.status_code == 409
+    assert db.get(User, "owner").lidya == 28100
+
+
+def test_checkout_expired_campaign(
+    db, checkout_ready, checkout_customer
+):
+    with pytest.raises(HTTPException) as error:
+        checkout.prepare_checkout(
+            db,
+            checkout_customer.id,
+            "gold",
+            NOW + timedelta(days=7),
+        )
+
+    assert error.value.status_code == 403
+
+
+def test_checkout_test_mode_blocked(
+    db, monkeypatch, checkout_ready,
+    checkout_customer
+):
+    monkeypatch.setattr(
+        checkout.settings,
+        "google_play_test_mode", True
+    )
+
+    with pytest.raises(HTTPException) as error:
+        checkout.prepare_checkout(
+            db, checkout_customer.id, "gold", NOW
+        )
+
+    assert error.value.status_code == 503
+
+
+def test_checkout_google_not_ready(
+    db, monkeypatch, checkout_ready,
+    checkout_customer
+):
+    monkeypatch.setattr(
+        checkout, "_checkout_ready", lambda: False
+    )
+
+    with pytest.raises(HTTPException) as error:
+        checkout.prepare_checkout(
+            db, checkout_customer.id, "gold", NOW
+        )
+
+    assert error.value.status_code == 503
+
+
+CHECKOUT_PATH = "/v1/welcome-packages/prepare"
+
+
+@pytest.fixture
+def checkout_http_customer(db, checkout_customer):
+    user = checkout_customer
+    user.created_at = datetime.now(timezone.utc)
+    db.commit()
+    return user
+
+
+@pytest.mark.parametrize("tier,price,amount", [
+    ("bronze", 9999, 6000),
+    ("silver", 24999, 14000),
+    ("gold", 49999, 28000),
+])
+def test_checkout_http_success(
+    db, checkout_ready,
+    checkout_http_customer, admin_client,
+    tier, price, amount
+):
+    user = checkout_http_customer
+
+    result = admin_client.post(
+        CHECKOUT_PATH,
+        json={"tier": tier},
+        headers=auth_headers(db, user),
+    )
+
+    assert result.status_code == 200
+
+    data = result.json()
+
+    assert data["product_id"] == f"welcome_{tier}_v1"
+    assert data["catalog_price_kurus"] == price
+    assert data["lidya"] == amount
+    assert data["account_hash"] == _account_hash(user.id)
+    assert data["launch_allowed"] is False
+    assert data["credited"] is False
+
+    assert "no-store" in result.headers["cache-control"]
+    assert "Authorization" in result.headers["vary"]
+
+    db.expire_all()
+
+    assert db.get(User, user.id).lidya == 100
+    assert db.get(User, user.id).lidya_gem == 50
+
+
+def test_checkout_http_missing_and_forged_token(
+    db, checkout_ready, admin_client
+):
+    assert admin_client.post(
+        CHECKOUT_PATH,
+        json={"tier": "gold"},
+    ).status_code == 401
+
+    assert admin_client.post(
+        CHECKOUT_PATH,
+        json={"tier": "gold"},
+        headers={
+            "Authorization": "Bearer forged-token"
+        },
+    ).status_code == 401
+
+    assert db.scalars(
+        select(WelcomePurchase)
+    ).all() == []
+
+
+def test_checkout_http_duplicate_intent(
+    db, checkout_ready,
+    checkout_http_customer, admin_client
+):
+    headers = auth_headers(
+        db, checkout_http_customer
+    )
+
+    first = admin_client.post(
+        CHECKOUT_PATH,
+        json={"tier": "gold"},
+        headers=headers,
+    )
+
+    second = admin_client.post(
+        CHECKOUT_PATH,
+        json={"tier": "gold"},
+        headers=headers,
+    )
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+
+    assert (
+        first.json()["intent_id"]
+        == second.json()["intent_id"]
+    )
+
+    assert len(db.scalars(
+        select(WelcomePurchase)
+    ).all()) == 1
+
+
+@pytest.mark.parametrize("field,value", [
+    ("user_id", "another-user"),
+    ("account_hash", "a" * 64),
+    ("price_kurus", 1),
+    ("lidya", 999999999),
+    ("collection", "female"),
+])
+def test_checkout_http_rejects_tampering(
+    db, checkout_ready,
+    checkout_http_customer, admin_client,
+    field, value
+):
+    result = admin_client.post(
+        CHECKOUT_PATH,
+        json={
+            "tier": "gold",
+            field: value,
+        },
+        headers=auth_headers(
+            db, checkout_http_customer
+        ),
+    )
+
+    assert result.status_code == 422
+
+    assert db.scalars(
+        select(WelcomePurchase)
+    ).all() == []
+
+
+def test_checkout_http_invalid_tier(
+    db, checkout_ready,
+    checkout_http_customer, admin_client
+):
+    result = admin_client.post(
+        CHECKOUT_PATH,
+        json={"tier": "platinum"},
+        headers=auth_headers(
+            db, checkout_http_customer
+        ),
+    )
+
+    assert result.status_code == 422
+
+
+def test_checkout_http_expired_campaign(
+    db, checkout_ready,
+    checkout_http_customer, admin_client
+):
+    user = checkout_http_customer
+
+    user.created_at = (
+        datetime.now(timezone.utc)
+        - timedelta(days=7, seconds=1)
+    )
+
+    db.commit()
+
+    result = admin_client.post(
+        CHECKOUT_PATH,
+        json={"tier": "gold"},
+        headers=auth_headers(db, user),
+    )
+
+    assert result.status_code == 403
+
+
+def test_checkout_http_staff_role_change(
+    db, checkout_ready,
+    checkout_http_customer, admin_client
+):
+    user = checkout_http_customer
+    headers = auth_headers(db, user)
+
+    db.add(AdminRole(
+        user_id=user.id,
+        role="DA",
+    ))
+
+    db.commit()
+
+    result = admin_client.post(
+        CHECKOUT_PATH,
+        json={"tier": "gold"},
+        headers=headers,
+    )
+
+    assert result.status_code == 403
+
+
+def test_checkout_http_account_isolation(
+    db, checkout_ready,
+    checkout_http_customer, admin_client
+):
+    first = checkout_http_customer
+
+    second = User(
+        id="checkout-second",
+        public_id="9900000089",
+        _nickname="SecondCheckout",
+        gender="female",
+        profile_completed=True,
+        is_active=True,
+        created_at=datetime.now(timezone.utc),
+        lidya=100,
+        lidya_gem=50,
+    )
+
+    db.add(second)
+    db.commit()
+
+    a = admin_client.post(
+        CHECKOUT_PATH,
+        json={"tier": "gold"},
+        headers=auth_headers(db, first),
+    )
+
+    b = admin_client.post(
+        CHECKOUT_PATH,
+        json={"tier": "gold"},
+        headers=auth_headers(db, second),
+    )
+
+    assert a.status_code == 200
+    assert b.status_code == 200
+
+    x, y = a.json(), b.json()
+
+    assert x["intent_id"] != y["intent_id"]
+    assert x["account_hash"] != y["account_hash"]
+
+    assert x["account_hash"] == _account_hash(first.id)
+    assert y["account_hash"] == _account_hash(second.id)
+
+    assert x["collection"] == "male"
+    assert y["collection"] == "female"
+
+    assert x["lidya"] == y["lidya"] == 28000
+
+
+def test_checkout_http_gate_disabled(
+    db, monkeypatch, checkout_ready,
+    checkout_http_customer, admin_client
+):
+    monkeypatch.setenv(
+        "LIDYACHAT_WELCOME_PREPARE_ENABLED",
+        "false"
+    )
+
+    result = admin_client.post(
+        CHECKOUT_PATH,
+        json={"tier": "gold"},
+        headers=auth_headers(
+            db, checkout_http_customer
+        ),
+    )
+
+    assert result.status_code == 503
+
+    assert db.scalars(
+        select(WelcomePurchase)
+    ).all() == []
+
+
+def test_checkout_http_inactive_account(
+    db, checkout_ready,
+    checkout_http_customer, admin_client
+):
+    user = checkout_http_customer
+
+    headers = auth_headers(db, user)
+
+    user.is_active = False
+    db.commit()
+
+    result = admin_client.post(
+        CHECKOUT_PATH,
+        json={"tier": "gold"},
+        headers=headers,
+    )
+
+    assert result.status_code == 401
+
+    assert db.scalars(
+        select(WelcomePurchase)
+    ).all() == []
